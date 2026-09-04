@@ -286,7 +286,7 @@ export function AnnotatedPhoto({ imageUrl, ocrDetails, checks, productName }: An
             ? 'लाल आयताकार बॉक्स गैर-अनुपालित व गायब घोषणाओं को दर्शाते हैं।'
             : 'Red rectangular boxes highlight non-compliant, non-standard, or missing mandatory markings.'}
         </span>
-        <span className="font-mono text-[10px]">LMPC Rules 2011 • Rule 6 / 7 / 12 / 13</span>
+        <span className="font-mono text-[10px]">LMPC Rules 2011 | Rules 6, 7, 12, 13</span>
       </div>
     </div>
   );

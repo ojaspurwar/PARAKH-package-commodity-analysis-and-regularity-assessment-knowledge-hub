@@ -156,8 +156,8 @@ export default function StyleguidePage() {
                 <ShieldAlert size={26} style={{ color: 'var(--rose-ac)' }} />
               </div>
               <div className="min-w-0 flex-1">
-                <span className="inline-block px-2 py-0.5 rounded-[var(--r-sm)] text-[11px] font-semibold tracking-wide" style={{ background: 'var(--rose-ac)', color: '#ffffff' }}>
-                  Rose · Violation & Urgent
+                <span className="inline-block px-2 py-0.5 rounded-[var(--r-sm)] text-[11px] font-semibold" style={{ background: 'var(--rose-ac)', color: '#ffffff' }}>
+                  Rose: Violation & Urgent
                 </span>
                 <h3 className="mt-1 font-semibold text-[16px] leading-[1.4]">Statutory Non-Compliance Notice</h3>
                 <p className="mt-1 text-[15px] leading-[1.6] text-[var(--text-muted)]">
@@ -195,8 +195,8 @@ export default function StyleguidePage() {
                 <ShieldCheck size={26} style={{ color: 'var(--green-ac)' }} />
               </div>
               <div className="min-w-0 flex-1">
-                <span className="inline-block px-2 py-0.5 rounded-[var(--r-sm)] text-[11px] font-semibold tracking-wide" style={{ background: 'var(--green-ac)', color: '#ffffff' }}>
-                  Green · Compliant & Verified
+                <span className="inline-block px-2 py-0.5 rounded-[var(--r-sm)] text-[11px] font-semibold" style={{ background: 'var(--green-ac)', color: '#ffffff' }}>
+                  Green: Compliant & Verified
                 </span>
                 <h3 className="mt-1 font-semibold text-[16px] leading-[1.4]">Rule 6 Mandatory Declarations Passed</h3>
                 <p className="mt-1 text-[15px] leading-[1.6] text-[var(--text-muted)]">
@@ -234,8 +234,8 @@ export default function StyleguidePage() {
                 <AlertTriangle size={26} style={{ color: 'var(--amber-ac)' }} />
               </div>
               <div className="min-w-0 flex-1">
-                <span className="inline-block px-2 py-0.5 rounded-[var(--r-sm)] text-[11px] font-semibold tracking-wide" style={{ background: 'var(--amber-ac)', color: '#ffffff' }}>
-                  Amber · Needs Review & Pending
+                <span className="inline-block px-2 py-0.5 rounded-[var(--r-sm)] text-[11px] font-semibold" style={{ background: 'var(--amber-ac)', color: '#ffffff' }}>
+                  Amber: Needs Review & Pending
                 </span>
                 <h3 className="mt-1 font-semibold text-[16px] leading-[1.4]">Faint Inkjet Stamp Verification</h3>
                 <p className="mt-1 text-[15px] leading-[1.6] text-[var(--text-muted)]">
@@ -270,8 +270,8 @@ export default function StyleguidePage() {
                 <Zap size={26} style={{ color: 'var(--cyan-ac)' }} />
               </div>
               <div className="min-w-0 flex-1">
-                <span className="inline-block px-2 py-0.5 rounded-[var(--r-sm)] text-[11px] font-semibold tracking-wide" style={{ background: 'var(--cyan-ac)', color: '#ffffff' }}>
-                  Cyan · Field Capture & Live Tools
+                <span className="inline-block px-2 py-0.5 rounded-[var(--r-sm)] text-[11px] font-semibold" style={{ background: 'var(--cyan-ac)', color: '#ffffff' }}>
+                  Cyan: Field Capture & Live Tools
                 </span>
                 <h3 className="mt-1 font-semibold text-[16px] leading-[1.4]">Multi-Panel Live Camera Scan</h3>
                 <p className="mt-1 text-[15px] leading-[1.6] text-[var(--text-muted)]">
@@ -306,8 +306,8 @@ export default function StyleguidePage() {
                 <FolderOpen size={26} style={{ color: 'var(--violet-ac)' }} />
               </div>
               <div className="min-w-0 flex-1">
-                <span className="inline-block px-2 py-0.5 rounded-[var(--r-sm)] text-[11px] font-semibold tracking-wide" style={{ background: 'var(--violet-ac)', color: '#ffffff' }}>
-                  Violet · Repository & Exports
+                <span className="inline-block px-2 py-0.5 rounded-[var(--r-sm)] text-[11px] font-semibold" style={{ background: 'var(--violet-ac)', color: '#ffffff' }}>
+                  Violet: Repository & Exports
                 </span>
                 <h3 className="mt-1 font-semibold text-[16px] leading-[1.4]">Enforcement Records Archive</h3>
                 <p className="mt-1 text-[15px] leading-[1.6] text-[var(--text-muted)]">
@@ -342,8 +342,8 @@ export default function StyleguidePage() {
                 <BookOpen size={26} style={{ color: 'var(--pink-ac)' }} />
               </div>
               <div className="min-w-0 flex-1">
-                <span className="inline-block px-2 py-0.5 rounded-[var(--r-sm)] text-[11px] font-semibold tracking-wide" style={{ background: 'var(--pink-ac)', color: '#ffffff' }}>
-                  Pink · Statutory Reference
+                <span className="inline-block px-2 py-0.5 rounded-[var(--r-sm)] text-[11px] font-semibold" style={{ background: 'var(--pink-ac)', color: '#ffffff' }}>
+                  Pink: Statutory Reference
                 </span>
                 <h3 className="mt-1 font-semibold text-[16px] leading-[1.4]">Legal Metrology Rules, 2011</h3>
                 <p className="mt-1 text-[15px] leading-[1.6] text-[var(--text-muted)]">

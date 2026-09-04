@@ -77,11 +77,11 @@ export function FontReadabilityCard({ checks, ocrDetails, ocrText }: FontReadabi
   const nonStandardMatch = ocrText.match(/\b\d+\s*(?:gms|kgs|gm\b|g\.|ml\.|litres?|ltrs?)\b/i);
 
   return (
-    <section className="appear delay-2 rounded-2xl border border-border bg-card p-6 md:p-7 space-y-6" data-testid="card-font-readability">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
+    <section className="rounded-[var(--r-md)] border border-[var(--border)] bg-white p-5 md:p-6 space-y-5" data-testid="card-font-readability">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border)] pb-3">
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-[.18em] text-secondary">
-            {language === 'hi' ? 'विधिक विनिर्देश' : 'Statutory Specifications'}
+          <p className="text-xs font-semibold text-[var(--indigo-600)]">
+            {language === 'hi' ? 'विधिक विनिर्देश' : 'Statutory specifications'}
           </p>
           <h2 className="mt-1 text-lg font-semibold flex items-center gap-2">
             <Ruler size={18} className="text-secondary" />
@@ -120,16 +120,16 @@ export function FontReadabilityCard({ checks, ocrDetails, ocrText }: FontReadabi
 
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div className="rounded-lg bg-card/80 p-2.5 border border-border">
-              <span className="text-[10px] text-muted-foreground block uppercase font-mono">
-                {language === 'hi' ? 'मापी गई ऊंचाई' : 'Measured Height'}
+              <span className="text-xs text-[var(--text-muted)] block">
+                {language === 'hi' ? 'मापी गई ऊंचाई' : 'Measured height'}
               </span>
               <span className={`text-base font-bold font-mono ${isFontCompliant ? 'text-foreground' : 'text-destructive'}`}>
                 {measuredMm} mm
               </span>
             </div>
             <div className="rounded-lg bg-card/80 p-2.5 border border-border">
-              <span className="text-[10px] text-muted-foreground block uppercase font-mono">
-                {language === 'hi' ? 'विधिक न्यूनतम' : 'Statutory Minimum'}
+              <span className="text-xs text-[var(--text-muted)] block">
+                {language === 'hi' ? 'विधिक न्यूनतम' : 'Statutory minimum'}
               </span>
               <span className="text-base font-bold font-mono text-foreground">
                 {requiredMinMm.toFixed(1)} mm
@@ -190,16 +190,16 @@ export function FontReadabilityCard({ checks, ocrDetails, ocrText }: FontReadabi
 
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div className="rounded-lg bg-card/80 p-2.5 border border-border">
-              <span className="text-[10px] text-muted-foreground block uppercase font-mono">
-                {language === 'hi' ? 'ऑप्टिकल स्पष्टता' : 'OCR Confidence'}
+              <span className="text-xs text-[var(--text-muted)] block">
+                {language === 'hi' ? 'ऑप्टिकल स्पष्टता' : 'OCR confidence'}
               </span>
               <span className="text-base font-bold font-mono text-foreground">
                 {avgConfidence}%
               </span>
             </div>
             <div className="rounded-lg bg-card/80 p-2.5 border border-border">
-              <span className="text-[10px] text-muted-foreground block uppercase font-mono">
-                {language === 'hi' ? 'कंट्रास्ट गुणवत्ता' : 'Print Contrast'}
+              <span className="text-xs text-[var(--text-muted)] block">
+                {language === 'hi' ? 'कंट्रास्ट गुणवत्ता' : 'Print contrast'}
               </span>
               <span className="text-base font-bold font-mono text-foreground">
                 {avgConfidence >= 75 ? (language === 'hi' ? 'उच्च' : 'High') : (language === 'hi' ? 'मध्यम' : 'Fair')}

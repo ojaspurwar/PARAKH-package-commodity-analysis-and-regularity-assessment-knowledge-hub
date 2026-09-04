@@ -1,4 +1,4 @@
-import { AlertTriangle, Award, CheckCircle2, Cpu, HeartPulse, Info, Layers, Leaf, Shield, ShieldAlert, Sparkles, Zap } from 'lucide-react';
+import { Award, CheckCircle2, Cpu, HeartPulse, Layers, Leaf, ShieldAlert, Zap } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
 
 interface CategoryComplianceSectionProps {
@@ -8,7 +8,7 @@ interface CategoryComplianceSectionProps {
   checks: any[];
 }
 
-export function CategoryComplianceSection({ category, productName, ocrText, checks }: CategoryComplianceSectionProps) {
+export function CategoryComplianceSection({ category, productName, ocrText }: CategoryComplianceSectionProps) {
   const { language } = useI18n();
 
   const isFood = category === 'Packaged food' || /food|snack|biscuit|oil|tea|coffee|juice|milk|masala|atta|grain/i.test(productName);
@@ -27,69 +27,69 @@ export function CategoryComplianceSection({ category, productName, ocrText, chec
 
   if (isFood) {
     return (
-      <section className="appear delay-3 rounded-2xl border border-border bg-card p-6 md:p-7 space-y-5" data-testid="section-food-category">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
+      <section className="rounded-[var(--r-md)] border border-[var(--border)] bg-white p-5 md:p-6 space-y-4" data-testid="section-food-category">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border)] pb-3">
           <div>
-            <p className="font-mono text-[10px] uppercase tracking-[.18em] text-secondary">
-              {language === 'hi' ? 'विशिष्ट श्रेणी विनिर्देश' : 'Category Section'}
-            </p>
-            <h2 className="mt-1 text-lg font-semibold flex items-center gap-2">
-              <Leaf size={18} className="text-secondary" />
-              {language === 'hi' ? 'खाद्य सुरक्षा व विधिक मापविज्ञान अनुपालन (FSSAI & LMPC)' : 'Packaged Food & Metrology Compliance Section'}
+            <h2 className="text-base font-semibold flex items-center gap-2 text-[var(--text)]">
+              <Leaf size={18} className="text-[var(--green-action)]" />
+              {language === 'hi' ? 'खाद्य सुरक्षा व विधिक मापविज्ञान अनुपालन (FSSAI & LMPC)' : 'Packaged food & metrology compliance'}
             </h2>
+            <p className="text-xs text-[var(--text-muted)] mt-0.5">
+              {language === 'hi' ? 'विशिष्ट श्रेणी विनिर्देश' : 'Category-specific statutory verification'}
+            </p>
           </div>
-          <span className="rounded-full bg-secondary/10 px-3 py-1 font-mono text-[11px] font-semibold text-secondary">
-            FSSAI Regulations, 2020 & LMPC Rule 6
+          <span className="rounded-[var(--r-sm)] bg-[var(--green-tint)] border border-[var(--green-border)] px-2.5 py-1 text-xs font-semibold text-[var(--green-action)]">
+            FSSAI Regulations, 2020 & Rule 6
           </span>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-xl border border-border bg-muted/40 p-3.5 space-y-1">
-            <span className="text-[10px] font-mono text-muted-foreground uppercase block">
-              {language === 'hi' ? 'शाकाहारी / मांसाहारी लोगो' : 'Veg / Non-Veg Emblem'}
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="rounded-[var(--r-sm)] border border-[var(--border)] bg-[var(--bg-sunken)] p-3 space-y-1">
+            <span className="text-xs text-[var(--text-muted)] block">
+              {language === 'hi' ? 'शाकाहारी / मांसाहारी लोगो' : 'Veg / non-veg emblem'}
             </span>
             <div className="flex items-center gap-2">
-              <div className="size-3.5 rounded-sm border border-secondary flex items-center justify-center">
-                <div className="size-2 rounded-full bg-secondary" />
+              <div className="size-3.5 rounded-sm border border-[var(--green-border)] flex items-center justify-center">
+                <div className="size-2 rounded-full bg-[var(--green-action)]" />
               </div>
-              <span className="text-xs font-semibold text-foreground">
-                {hasVegLogo ? (language === 'hi' ? 'प्रतीक अंकित' : 'Emblem Present') : (language === 'hi' ? 'सत्यापित' : 'Verified')}
+              <span className="text-xs font-semibold text-[var(--text)]">
+                {hasVegLogo ? (language === 'hi' ? 'प्रतीक अंकित' : 'Emblem present') : (language === 'hi' ? 'सत्यापित' : 'Verified')}
               </span>
             </div>
-            <p className="text-[10px] text-muted-foreground">FSSAI Regulation 2.2.2</p>
+            <p className="text-[11px] text-[var(--text-muted)]">FSSAI Regulation 2.2.2</p>
           </div>
 
-          <div className="rounded-xl border border-border bg-muted/40 p-3.5 space-y-1">
-            <span className="text-[10px] font-mono text-muted-foreground uppercase block">
-              {language === 'hi' ? 'FSSAI लाइसेंस' : 'FSSAI License'}
+          <div className="rounded-[var(--r-sm)] border border-[var(--border)] bg-[var(--bg-sunken)] p-3 space-y-1">
+            <span className="text-xs text-[var(--text-muted)] block">
+              {language === 'hi' ? 'FSSAI लाइसेंस' : 'FSSAI license'}
             </span>
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
-              <CheckCircle2 size={14} className={hasFssai ? 'text-secondary' : 'text-accent'} />
-              <span>{hasFssai ? 'Lic. No. Declared' : 'Standard Format'}</span>
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-[var(--text)]">
+              <CheckCircle2 size={14} className={hasFssai ? 'text-[var(--green-action)]' : 'text-[var(--amber-action)]'} />
+              <span>{hasFssai ? 'Lic. No. declared' : 'Standard format'}</span>
             </div>
-            <p className="text-[10px] text-muted-foreground">14-digit statutory license</p>
+            <p className="text-[11px] text-[var(--text-muted)]">14-digit statutory license</p>
           </div>
 
-          <div className="rounded-xl border border-border bg-muted/40 p-3.5 space-y-1">
-            <span className="text-[10px] font-mono text-muted-foreground uppercase block">
-              {language === 'hi' ? 'पोषण संबंधी जानकारी' : 'Nutritional Panel'}
+          <div className="rounded-[var(--r-sm)] border border-[var(--border)] bg-[var(--bg-sunken)] p-3 space-y-1">
+            <span className="text-xs text-[var(--text-muted)] block">
+              {language === 'hi' ? 'पोषण संबंधी जानकारी' : 'Nutritional panel'}
             </span>
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
-              <CheckCircle2 size={14} className={hasNutrition ? 'text-secondary' : 'text-accent'} />
-              <span>{hasNutrition ? 'Nutritional Values' : 'Mandatory Per 100g'}</span>
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-[var(--text)]">
+              <CheckCircle2 size={14} className={hasNutrition ? 'text-[var(--green-action)]' : 'text-[var(--amber-action)]'} />
+              <span>{hasNutrition ? 'Nutritional values' : 'Mandatory per 100g'}</span>
             </div>
-            <p className="text-[10px] text-muted-foreground">Energy, Protein, Sugars, Fat</p>
+            <p className="text-[11px] text-[var(--text-muted)]">Energy, protein, sugars, fat</p>
           </div>
 
-          <div className="rounded-xl border border-border bg-muted/40 p-3.5 space-y-1">
-            <span className="text-[10px] font-mono text-muted-foreground uppercase block">
-              {language === 'hi' ? 'अवसान / उपभोग अवधि' : 'Best Before / Expiry'}
+          <div className="rounded-[var(--r-sm)] border border-[var(--border)] bg-[var(--bg-sunken)] p-3 space-y-1">
+            <span className="text-xs text-[var(--text-muted)] block">
+              {language === 'hi' ? 'अवसान / उपभोग अवधि' : 'Best before / expiry'}
             </span>
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
-              <CheckCircle2 size={14} className={hasExpiry ? 'text-secondary' : 'text-accent'} />
-              <span>{hasExpiry ? 'Declared' : 'Check Physical Stamp'}</span>
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-[var(--text)]">
+              <CheckCircle2 size={14} className={hasExpiry ? 'text-[var(--green-action)]' : 'text-[var(--amber-action)]'} />
+              <span>{hasExpiry ? 'Declared' : 'Check physical stamp'}</span>
             </div>
-            <p className="text-[10px] text-muted-foreground">Mandatory for perishable food</p>
+            <p className="text-[11px] text-[var(--text-muted)]">Mandatory for perishable food</p>
           </div>
         </div>
       </section>
@@ -98,65 +98,65 @@ export function CategoryComplianceSection({ category, productName, ocrText, chec
 
   if (isElectrical) {
     return (
-      <section className="appear delay-3 rounded-2xl border border-border bg-card p-6 md:p-7 space-y-5" data-testid="section-electrical-category">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
+      <section className="rounded-[var(--r-md)] border border-[var(--border)] bg-white p-5 md:p-6 space-y-4" data-testid="section-electrical-category">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border)] pb-3">
           <div>
-            <p className="font-mono text-[10px] uppercase tracking-[.18em] text-secondary">
-              {language === 'hi' ? 'विशिष्ट श्रेणी विनिर्देश' : 'Category Section'}
-            </p>
-            <h2 className="mt-1 text-lg font-semibold flex items-center gap-2">
-              <Cpu size={18} className="text-secondary" />
-              {language === 'hi' ? 'विद्युत सुरक्षा व बीआईएस मानक अनुपालन (BIS & BEE)' : 'Electrical Goods & Appliance Safety Compliance'}
+            <h2 className="text-base font-semibold flex items-center gap-2 text-[var(--text)]">
+              <Cpu size={18} className="text-[var(--indigo-600)]" />
+              {language === 'hi' ? 'विद्युत सुरक्षा व बीआईएस मानक अनुपालन (BIS & BEE)' : 'Electrical goods & appliance safety'}
             </h2>
+            <p className="text-xs text-[var(--text-muted)] mt-0.5">
+              {language === 'hi' ? 'विशिष्ट श्रेणी विनिर्देश' : 'Category-specific statutory verification'}
+            </p>
           </div>
-          <span className="rounded-full bg-secondary/10 px-3 py-1 font-mono text-[11px] font-semibold text-secondary">
+          <span className="rounded-[var(--r-sm)] bg-[var(--cyan-tint)] border border-[var(--cyan-border)] px-2.5 py-1 text-xs font-semibold text-[var(--cyan-action)]">
             BIS (ISI Mark) & BEE Standards
           </span>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-xl border border-border bg-muted/40 p-3.5 space-y-1">
-            <span className="text-[10px] font-mono text-muted-foreground uppercase block">
-              {language === 'hi' ? 'बीआईएस आईएसआई मार्क' : 'BIS / ISI Mark'}
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="rounded-[var(--r-sm)] border border-[var(--border)] bg-[var(--bg-sunken)] p-3 space-y-1">
+            <span className="text-xs text-[var(--text-muted)] block">
+              {language === 'hi' ? 'बीआईएस आईएसआई मार्क' : 'BIS / ISI mark'}
             </span>
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
-              <Award size={14} className={hasIsiMark ? 'text-secondary' : 'text-foreground/70'} />
-              <span>{hasIsiMark ? 'ISI Mark Verified' : 'Mandatory under QCO'}</span>
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-[var(--text)]">
+              <Award size={14} className={hasIsiMark ? 'text-[var(--green-action)]' : 'text-[var(--text-muted)]'} />
+              <span>{hasIsiMark ? 'ISI mark verified' : 'Mandatory under QCO'}</span>
             </div>
-            <p className="text-[10px] text-muted-foreground">IS:302 Electrical Safety</p>
+            <p className="text-[11px] text-[var(--text-muted)]">IS:302 Electrical safety</p>
           </div>
 
-          <div className="rounded-xl border border-border bg-muted/40 p-3.5 space-y-1">
-            <span className="text-[10px] font-mono text-muted-foreground uppercase block">
-              {language === 'hi' ? 'ऊर्जा दक्षता लेबल' : 'BEE Star Rating'}
+          <div className="rounded-[var(--r-sm)] border border-[var(--border)] bg-[var(--bg-sunken)] p-3 space-y-1">
+            <span className="text-xs text-[var(--text-muted)] block">
+              {language === 'hi' ? 'ऊर्जा दक्षता लेबल' : 'BEE star rating'}
             </span>
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
-              <Zap size={14} className="text-secondary" />
-              <span>{hasBeeStar ? 'Energy Star Declared' : 'Energy Efficiency'}</span>
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-[var(--text)]">
+              <Zap size={14} className="text-[var(--amber-action)]" />
+              <span>{hasBeeStar ? 'Energy star declared' : 'Energy efficiency'}</span>
             </div>
-            <p className="text-[10px] text-muted-foreground">Mandatory star label</p>
+            <p className="text-[11px] text-[var(--text-muted)]">Mandatory star label</p>
           </div>
 
-          <div className="rounded-xl border border-border bg-muted/40 p-3.5 space-y-1">
-            <span className="text-[10px] font-mono text-muted-foreground uppercase block">
-              {language === 'hi' ? 'वोल्टेज व पावर रेटिंग' : 'Voltage & Wattage'}
+          <div className="rounded-[var(--r-sm)] border border-[var(--border)] bg-[var(--bg-sunken)] p-3 space-y-1">
+            <span className="text-xs text-[var(--text-muted)] block">
+              {language === 'hi' ? 'वोल्टेज व पावर रेटिंग' : 'Voltage & wattage'}
             </span>
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
-              <CheckCircle2 size={14} className={hasVoltage ? 'text-secondary' : 'text-accent'} />
-              <span>{hasVoltage ? 'Rating Declared' : '230V AC, 50Hz Standard'}</span>
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-[var(--text)]">
+              <CheckCircle2 size={14} className={hasVoltage ? 'text-[var(--green-action)]' : 'text-[var(--amber-action)]'} />
+              <span>{hasVoltage ? 'Rating declared' : '230V AC, 50Hz standard'}</span>
             </div>
-            <p className="text-[10px] text-muted-foreground">Mandatory electrical rating</p>
+            <p className="text-[11px] text-[var(--text-muted)]">Mandatory electrical rating</p>
           </div>
 
-          <div className="rounded-xl border border-border bg-muted/40 p-3.5 space-y-1">
-            <span className="text-[10px] font-mono text-muted-foreground uppercase block">
-              {language === 'hi' ? 'सुरक्षा चेतावनियां' : 'Safety Warnings'}
+          <div className="rounded-[var(--r-sm)] border border-[var(--border)] bg-[var(--bg-sunken)] p-3 space-y-1">
+            <span className="text-xs text-[var(--text-muted)] block">
+              {language === 'hi' ? 'सुरक्षा चेतावनियां' : 'Safety warnings'}
             </span>
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
-              <ShieldAlert size={14} className="text-secondary" />
-              <span>Earth Grounding / Hazard</span>
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-[var(--text)]">
+              <ShieldAlert size={14} className="text-[var(--rose-action)]" />
+              <span>Earth grounding / hazard</span>
             </div>
-            <p className="text-[10px] text-muted-foreground">Water / shock protection</p>
+            <p className="text-[11px] text-[var(--text-muted)]">Water / shock protection</p>
           </div>
         </div>
       </section>
@@ -165,45 +165,45 @@ export function CategoryComplianceSection({ category, productName, ocrText, chec
 
   if (isPersonalCare) {
     return (
-      <section className="appear delay-3 rounded-2xl border border-border bg-card p-6 md:p-7 space-y-5" data-testid="section-personal-care-category">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
+      <section className="rounded-[var(--r-md)] border border-[var(--border)] bg-white p-5 md:p-6 space-y-4" data-testid="section-personal-care-category">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border)] pb-3">
           <div>
-            <p className="font-mono text-[10px] uppercase tracking-[.18em] text-secondary">
-              {language === 'hi' ? 'विशिष्ट श्रेणी विनिर्देश' : 'Category Section'}
-            </p>
-            <h2 className="mt-1 text-lg font-semibold flex items-center gap-2">
-              <HeartPulse size={18} className="text-secondary" />
-              {language === 'hi' ? 'सौंदर्य प्रसाधन व व्यक्तिगत देखभाल अनुपालन' : 'Cosmetics & Personal Care Safety Section'}
+            <h2 className="text-base font-semibold flex items-center gap-2 text-[var(--text)]">
+              <HeartPulse size={18} className="text-[var(--pink-action)]" />
+              {language === 'hi' ? 'सौंदर्य प्रसाधन व व्यक्तिगत देखभाल अनुपालन' : 'Cosmetics & personal care safety'}
             </h2>
+            <p className="text-xs text-[var(--text-muted)] mt-0.5">
+              {language === 'hi' ? 'विशिष्ट श्रेणी विनिर्देश' : 'Category-specific statutory verification'}
+            </p>
           </div>
-          <span className="rounded-full bg-secondary/10 px-3 py-1 font-mono text-[11px] font-semibold text-secondary">
+          <span className="rounded-[var(--r-sm)] bg-[var(--pink-tint)] border border-[var(--pink-border)] px-2.5 py-1 text-xs font-semibold text-[var(--pink-action)]">
             Drugs & Cosmetics Rules & LMPC
           </span>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <div className="rounded-xl border border-border bg-muted/40 p-3.5 space-y-1">
-            <span className="text-[10px] font-mono text-muted-foreground uppercase block">
-              {language === 'hi' ? 'सामग्री प्रकटीकरण' : 'Key Ingredients'}
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="rounded-[var(--r-sm)] border border-[var(--border)] bg-[var(--bg-sunken)] p-3 space-y-1">
+            <span className="text-xs text-[var(--text-muted)] block">
+              {language === 'hi' ? 'सामग्री प्रकटीकरण' : 'Key ingredients'}
             </span>
-            <p className="text-xs font-semibold text-foreground">Full chemical formulation disclosure required</p>
-            <p className="text-[10px] text-muted-foreground">Rule 148 / 149 compliant</p>
+            <p className="text-xs font-semibold text-[var(--text)]">Full chemical formulation disclosure required</p>
+            <p className="text-[11px] text-[var(--text-muted)]">Rule 148 / 149 compliant</p>
           </div>
 
-          <div className="rounded-xl border border-border bg-muted/40 p-3.5 space-y-1">
-            <span className="text-[10px] font-mono text-muted-foreground uppercase block">
-              {language === 'hi' ? 'विनिर्माण लाइसेंस' : 'Mfg. License & Batch'}
+          <div className="rounded-[var(--r-sm)] border border-[var(--border)] bg-[var(--bg-sunken)] p-3 space-y-1">
+            <span className="text-xs text-[var(--text-muted)] block">
+              {language === 'hi' ? 'विनिर्माण लाइसेंस' : 'Mfg. license & batch'}
             </span>
-            <p className="text-xs font-semibold text-foreground">Batch No. & State Mfg. License</p>
-            <p className="text-[10px] text-muted-foreground">Mandatory traceability stamp</p>
+            <p className="text-xs font-semibold text-[var(--text)]">Batch number & state mfg. license</p>
+            <p className="text-[11px] text-[var(--text-muted)]">Mandatory traceability stamp</p>
           </div>
 
-          <div className="rounded-xl border border-border bg-muted/40 p-3.5 space-y-1">
-            <span className="text-[10px] font-mono text-muted-foreground uppercase block">
-              {language === 'hi' ? 'डर्मेटोलॉजिकल सुरक्षा' : 'Dermatological Safety'}
+          <div className="rounded-[var(--r-sm)] border border-[var(--border)] bg-[var(--bg-sunken)] p-3 space-y-1">
+            <span className="text-xs text-[var(--text-muted)] block">
+              {language === 'hi' ? 'डर्मेटोलॉजिकल सुरक्षा' : 'Dermatological safety'}
             </span>
-            <p className="text-xs font-semibold text-foreground">External use only & Eye contact caution</p>
-            <p className="text-[10px] text-muted-foreground">Safety advisory warning</p>
+            <p className="text-xs font-semibold text-[var(--text)]">External use only & eye contact caution</p>
+            <p className="text-[11px] text-[var(--text-muted)]">Safety advisory warning</p>
           </div>
         </div>
       </section>
@@ -212,45 +212,45 @@ export function CategoryComplianceSection({ category, productName, ocrText, chec
 
   // Default: General Commodities & Household Goods
   return (
-    <section className="appear delay-3 rounded-2xl border border-border bg-card p-6 md:p-7 space-y-5" data-testid="section-general-category">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
+    <section className="rounded-[var(--r-md)] border border-[var(--border)] bg-white p-5 md:p-6 space-y-4" data-testid="section-general-category">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border)] pb-3">
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-[.18em] text-secondary">
-            {language === 'hi' ? 'विशिष्ट श्रेणी विनिर्देश' : 'Category Section'}
-          </p>
-          <h2 className="mt-1 text-lg font-semibold flex items-center gap-2">
-            <Layers size={18} className="text-secondary" />
-            {language === 'hi' ? 'पैकेज्ड कमोडिटी विनिर्देश (Commodity Specifications)' : 'General Packaged Commodity Statutory Section'}
+          <h2 className="text-base font-semibold flex items-center gap-2 text-[var(--text)]">
+            <Layers size={18} className="text-[var(--indigo-600)]" />
+            {language === 'hi' ? 'पैकेज्ड कमोडिटी विनिर्देश (Commodity Specifications)' : 'General packaged commodity statutory requirements'}
           </h2>
+          <p className="text-xs text-[var(--text-muted)] mt-0.5">
+            {language === 'hi' ? 'विशिष्ट श्रेणी विनिर्देश' : 'Category-specific statutory verification'}
+          </p>
         </div>
-        <span className="rounded-full bg-secondary/10 px-3 py-1 font-mono text-[11px] font-semibold text-secondary">
+        <span className="rounded-[var(--r-sm)] bg-[var(--violet-tint)] border border-[var(--violet-border)] px-2.5 py-1 text-xs font-semibold text-[var(--violet-action)]">
           Rule 6 & Sixth Schedule LMPC
         </span>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div className="rounded-xl border border-border bg-muted/40 p-3.5 space-y-1">
-          <span className="text-[10px] font-mono text-muted-foreground uppercase block">
-            {language === 'hi' ? 'मात्रा व विमाएं' : 'Quantity / Dimensions'}
+      <div className="grid gap-3 sm:grid-cols-3">
+        <div className="rounded-[var(--r-sm)] border border-[var(--border)] bg-[var(--bg-sunken)] p-3 space-y-1">
+          <span className="text-xs text-[var(--text-muted)] block">
+            {language === 'hi' ? 'मात्रा व विमाएं' : 'Quantity / dimensions'}
           </span>
-          <p className="text-xs font-semibold text-foreground">Metric net quantity, weight or count</p>
-          <p className="text-[10px] text-muted-foreground">Rule 11-13 compliant SI units</p>
+          <p className="text-xs font-semibold text-[var(--text)]">Metric net quantity, weight or count</p>
+          <p className="text-[11px] text-[var(--text-muted)]">Rule 11-13 compliant SI units</p>
         </div>
 
-        <div className="rounded-xl border border-border bg-muted/40 p-3.5 space-y-1">
-          <span className="text-[10px] font-mono text-muted-foreground uppercase block">
-            {language === 'hi' ? 'मूल देश' : 'Country of Origin'}
+        <div className="rounded-[var(--r-sm)] border border-[var(--border)] bg-[var(--bg-sunken)] p-3 space-y-1">
+          <span className="text-xs text-[var(--text-muted)] block">
+            {language === 'hi' ? 'मूल देश' : 'Country of origin'}
           </span>
-          <p className="text-xs font-semibold text-foreground">Mandatory for all domestic & imported goods</p>
-          <p className="text-[10px] text-muted-foreground">Rule 6(1)(a) & Rule 10</p>
+          <p className="text-xs font-semibold text-[var(--text)]">Mandatory for all domestic & imported goods</p>
+          <p className="text-[11px] text-[var(--text-muted)]">Rule 6(1)(a) & Rule 10</p>
         </div>
 
-        <div className="rounded-xl border border-border bg-muted/40 p-3.5 space-y-1">
-          <span className="text-[10px] font-mono text-muted-foreground uppercase block">
-            {language === 'hi' ? 'उपभोक्ता हेल्पलाइन' : 'Consumer Redressal'}
+        <div className="rounded-[var(--r-sm)] border border-[var(--border)] bg-[var(--bg-sunken)] p-3 space-y-1">
+          <span className="text-xs text-[var(--text-muted)] block">
+            {language === 'hi' ? 'उपभोक्ता हेल्पलाइन' : 'Consumer redressal'}
           </span>
-          <p className="text-xs font-semibold text-foreground">Contact person, Phone, Email & Address</p>
-          <p className="text-[10px] text-muted-foreground">Rule 6(1)(da) grievance care</p>
+          <p className="text-xs font-semibold text-[var(--text)]">Contact person, phone, email & address</p>
+          <p className="text-[11px] text-[var(--text-muted)]">Rule 6(1)(h) grievance care</p>
         </div>
       </div>
     </section>

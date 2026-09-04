@@ -385,7 +385,7 @@ export default function HomePage() {
     }
   };
 
-  const cityLabel = language === 'hi' ? 'जयपुर' : (appConfig.defaultLocation.split(' • ')[0] || 'Jaipur');
+  const cityLabel = language === 'hi' ? 'जयपुर' : (appConfig.defaultLocation.split(',')[0]?.trim() || 'Jaipur');
   const dateStamp = new Intl.DateTimeFormat('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
     .format(new Date())
     .toUpperCase();
@@ -542,10 +542,10 @@ export default function HomePage() {
                       </span>
                       <div>
                         <div className="flex items-center gap-2">
-                          <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
-                            {language === 'hi' ? 'खाद्य सामग्री, पोषण लाभ एवं स्वास्थ्य जोखिम' : 'Food Ingredients, Nutritional Benefits & Health Harms'}
+                          <h4 className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                            {language === 'hi' ? 'खाद्य सामग्री, पोषण लाभ एवं स्वास्थ्य जोखिम' : 'Food ingredients, nutritional benefits & health harms'}
                           </h4>
-                          <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
+                          <span className="rounded-[var(--r-sm)] bg-emerald-500/20 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300">
                             FSSAI & LMPC
                           </span>
                         </div>
@@ -557,7 +557,7 @@ export default function HomePage() {
 
                     <div className="flex items-center gap-2">
                       <div className="flex items-center gap-1.5 rounded-xl border border-emerald-500/30 bg-card px-2.5 py-1 shadow-xs">
-                        <span className="text-[10px] uppercase font-mono text-muted-foreground">{language === 'hi' ? 'स्कोर:' : 'Score:'}</span>
+                        <span className="text-[11px] text-muted-foreground">{language === 'hi' ? 'स्कोर:' : 'Score:'}</span>
                         <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 font-mono">
                           {aiAnalysis.healthReport.healthScore || 'N/A'}
                         </span>
@@ -572,11 +572,11 @@ export default function HomePage() {
                   {aiAnalysis.healthReport.ingredients.length > 0 && (
                     <div className="mt-3.5">
                       <div className="flex items-center justify-between">
-                        <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
-                          {language === 'hi' ? 'पहचानी गई सामग्री (Food Ingredients)' : 'Detected Food Ingredients on Label'}
+                        <span className="text-xs text-muted-foreground font-semibold">
+                          {language === 'hi' ? 'पहचानी गई सामग्री (Food Ingredients)' : 'Detected food ingredients on label'}
                         </span>
-                        <span className="text-[10px] font-mono text-muted-foreground">
-                          {aiAnalysis.healthReport.ingredients.length} {language === 'hi' ? 'घटक' : 'items'}
+                        <span className="text-xs text-muted-foreground">
+                          <span className="font-mono">{aiAnalysis.healthReport.ingredients.length}</span> {language === 'hi' ? 'घटक' : 'items'}
                         </span>
                       </div>
                       <div className="mt-1.5 flex flex-wrap gap-1.5">
@@ -680,10 +680,10 @@ export default function HomePage() {
                       </span>
                       <div>
                         <div className="flex items-center gap-2">
-                          <h4 className="text-xs font-bold uppercase tracking-wider text-purple-700 dark:text-purple-400">
-                            {language === 'hi' ? 'पर्सनल केयर सामग्री व त्वचा सुरक्षा' : 'Personal Care Formulation & Dermatological Safety'}
+                          <h4 className="text-xs font-semibold text-purple-700 dark:text-purple-400">
+                            {language === 'hi' ? 'पर्सनल केयर सामग्री व त्वचा सुरक्षा' : 'Personal care formulation & dermatological safety'}
                           </h4>
-                          <span className="rounded-full bg-purple-500/20 px-2 py-0.5 text-[10px] font-bold text-purple-700 dark:text-purple-300">
+                          <span className="rounded-[var(--r-sm)] bg-purple-500/20 px-2 py-0.5 text-[10px] font-semibold text-purple-700 dark:text-purple-300">
                             Cosmetic Safety
                           </span>
                         </div>
@@ -703,8 +703,8 @@ export default function HomePage() {
                   {/* Ingredients */}
                   {aiAnalysis.healthReport.ingredients.length > 0 && (
                     <div className="mt-3.5">
-                      <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground font-semibold block mb-1.5">
-                        {language === 'hi' ? 'सक्रिय घटक व रसायन (Chemical Formulation)' : 'Active Formulation Ingredients'}
+                      <span className="text-xs text-muted-foreground font-semibold block mb-1.5">
+                        {language === 'hi' ? 'सक्रिय घटक व रसायन (Chemical Formulation)' : 'Active formulation ingredients'}
                       </span>
                       <div className="flex flex-wrap gap-1.5">
                         {aiAnalysis.healthReport.ingredients.map((ing, idx) => (
@@ -767,10 +767,10 @@ export default function HomePage() {
                       </span>
                       <div>
                         <div className="flex items-center gap-2">
-                          <h4 className="text-xs font-bold uppercase tracking-wider text-sky-700 dark:text-sky-400">
-                            {language === 'hi' ? 'तकनीकी विनिर्देश व सुरक्षा मानक' : 'Technical Specifications & Safety Compliance'}
+                          <h4 className="text-xs font-semibold text-sky-700 dark:text-sky-400">
+                            {language === 'hi' ? 'तकनीकी विनिर्देश व सुरक्षा मानक' : 'Technical specifications & safety compliance'}
                           </h4>
-                          <span className="rounded-full bg-sky-500/20 px-2 py-0.5 text-[10px] font-bold text-sky-700 dark:text-sky-300">
+                          <span className="rounded-[var(--r-sm)] bg-sky-500/20 px-2 py-0.5 text-[10px] font-semibold text-sky-700 dark:text-sky-300">
                             {aiAnalysis.category}
                           </span>
                         </div>
@@ -788,14 +788,14 @@ export default function HomePage() {
                   {/* Technical specs grid */}
                   {aiAnalysis.technicalSafetyReport?.technicalSpecs && aiAnalysis.technicalSafetyReport.technicalSpecs.length > 0 && (
                     <div className="mt-3.5">
-                      <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground font-semibold block mb-1.5">
-                        {language === 'hi' ? 'उत्पाद विनिर्देश (Specifications)' : 'Detected Product Specifications'}
+                      <span className="text-xs text-muted-foreground font-semibold block mb-1.5">
+                        {language === 'hi' ? 'उत्पाद विनिर्देश (Specifications)' : 'Detected product specifications'}
                       </span>
                       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                         {aiAnalysis.technicalSafetyReport.technicalSpecs.map((spec, idx) => (
                           <div key={idx} className="rounded-xl border border-border/80 bg-card p-2.5 shadow-xs">
-                            <span className="font-mono text-[10px] uppercase text-muted-foreground block">{spec.label}</span>
-                            <span className="text-xs font-semibold text-foreground mt-0.5 block">{spec.value}</span>
+                            <span className="text-xs text-muted-foreground block">{spec.label}</span>
+                            <span className="text-xs font-semibold text-foreground mt-0.5 block font-mono">{spec.value}</span>
                           </div>
                         ))}
                       </div>
@@ -853,8 +853,8 @@ export default function HomePage() {
                         <Sparkles size={15} />
                       </span>
                       <div>
-                        <h4 className="text-xs font-bold uppercase tracking-wider text-secondary">
-                          {language === 'hi' ? 'विधिक मापविज्ञान निष्कर्ष (Rule 6, 2011)' : 'Legal Metrology Intelligence (Rule 6, 2011)'}
+                        <h4 className="text-xs font-semibold text-[var(--indigo-600)]">
+                          {language === 'hi' ? 'विधिक मापविज्ञान निष्कर्ष (Rule 6, 2011)' : 'Legal Metrology intelligence (Rule 6, 2011)'}
                         </h4>
                         <p className="text-[11px] text-muted-foreground">
                           {language === 'hi' ? 'विधिक मापविज्ञान (पैक वस्तुएं) नियम, 2011' : 'Prescribed under Legal Metrology Rules, 2011'}
@@ -889,44 +889,44 @@ export default function HomePage() {
                   {/* Extracted Key Declarations Badges */}
                   <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                     <div className="rounded-xl border border-border/70 bg-card/90 p-2.5">
-                      <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground block">
-                        {language === 'hi' ? 'अधिकतम खुदरा मूल्य (MRP)' : 'MRP Declaration'}
+                      <span className="text-xs text-muted-foreground block font-semibold">
+                        {language === 'hi' ? 'अधिकतम खुदरा मूल्य (MRP)' : 'MRP declaration'}
                       </span>
                       <span className="text-xs font-semibold text-foreground mt-0.5 block">
-                        {aiAnalysis.mrp ? <span className="text-secondary font-bold">{aiAnalysis.mrp}</span> : <span className="text-destructive">{language === 'hi' ? 'अनुपस्थित (उल्लंघन)' : 'Not detected (Violation)'}</span>}
+                        {aiAnalysis.mrp ? <span className="text-secondary font-bold font-mono">{aiAnalysis.mrp}</span> : <span className="text-destructive">{language === 'hi' ? 'अनुपस्थित (उल्लंघन)' : 'Not detected (Violation)'}</span>}
                       </span>
                     </div>
 
                     <div className="rounded-xl border border-border/70 bg-card/90 p-2.5">
-                      <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground block">
-                        {language === 'hi' ? 'इकाई विक्रय मूल्य (USP)' : 'Unit Sale Price (USP)'}
+                      <span className="text-xs text-muted-foreground block font-semibold">
+                        {language === 'hi' ? 'इकाई विक्रय मूल्य (USP)' : 'Unit sale price (USP)'}
                       </span>
-                      <span className="text-xs font-semibold text-foreground mt-0.5 block">
+                      <span className="text-xs font-semibold text-foreground mt-0.5 block font-mono">
                         {aiAnalysis.unitSalePrice || (language === 'hi' ? 'लागू नहीं / नहीं मिला' : 'Not detected')}
                       </span>
                     </div>
 
                     <div className="rounded-xl border border-border/70 bg-card/90 p-2.5">
-                      <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground block">
-                        {language === 'hi' ? 'शुद्ध मात्रा (Net Qty)' : 'Net Quantity'}
+                      <span className="text-xs text-muted-foreground block font-semibold">
+                        {language === 'hi' ? 'शुद्ध मात्रा (Net Qty)' : 'Net quantity'}
                       </span>
-                      <span className="text-xs font-semibold text-foreground mt-0.5 block">
+                      <span className="text-xs font-semibold text-foreground mt-0.5 block font-mono">
                         {aiAnalysis.netQuantity ? <span className="text-secondary font-bold">{aiAnalysis.netQuantity}</span> : <span className="text-destructive">{language === 'hi' ? 'अनुपस्थित' : 'Not detected'}</span>}
                       </span>
                     </div>
 
                     <div className="rounded-xl border border-border/70 bg-card/90 p-2.5">
-                      <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground block">
-                        {language === 'hi' ? 'विनिर्माण / पैकिंग तिथि' : 'Date Marking'}
+                      <span className="text-xs text-muted-foreground block font-semibold">
+                        {language === 'hi' ? 'विनिर्माण / पैकिंग तिथि' : 'Date marking'}
                       </span>
-                      <span className="text-xs font-semibold text-foreground mt-0.5 block">
+                      <span className="text-xs font-semibold text-foreground mt-0.5 block font-mono">
                         {aiAnalysis.dateMarking || (language === 'hi' ? 'अनुपस्थित' : 'Not detected')}
                       </span>
                     </div>
 
                     <div className="rounded-xl border border-border/70 bg-card/90 p-2.5 sm:col-span-2">
-                      <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground block">
-                        {language === 'hi' ? 'निर्माता / पैकर विवरण' : 'Packer / Manufacturer Details'}
+                      <span className="text-xs text-muted-foreground block font-semibold">
+                        {language === 'hi' ? 'निर्माता / पैकर विवरण' : 'Packer / manufacturer details'}
                       </span>
                       <span className="text-xs text-foreground/90 mt-0.5 block truncate" title={aiAnalysis.manufacturerPacker || ''}>
                         {aiAnalysis.manufacturerPacker || (language === 'hi' ? 'अनुपस्थित' : 'Not detected')}

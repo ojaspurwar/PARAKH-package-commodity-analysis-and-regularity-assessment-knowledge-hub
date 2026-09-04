@@ -327,7 +327,7 @@ export function BarcodeScanner({
     <div className="relative overflow-hidden rounded-2xl border border-border bg-card" data-testid="card-barcode-scanner">
       <div className="flex items-center justify-between border-b border-border px-5 py-4">
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-[.16em] text-secondary">Package barcode</p>
+          <p className="text-xs font-semibold text-[var(--indigo-600)]">Package barcode</p>
           <h3 className="mt-1 text-base font-semibold">Point the camera at the barcode</h3>
         </div>
         <button
@@ -377,14 +377,14 @@ export function BarcodeScanner({
           {state.phase === 'scanning' && (
             <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-slate-950/80 to-transparent px-4 pb-3 pt-8 text-white">
               <span className="inline-flex items-center gap-1.5 text-[11px] font-medium"><ScanBarcode size={13} /> Detecting…</span>
-              <span className="rounded-full bg-white/15 px-2.5 py-0.5 font-mono text-[10px]">EAN · UPC · Code 128 · QR</span>
+              <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-[10px]">EAN, UPC, Code 128, QR</span>
             </div>
           )}
 
           {state.phase === 'detected' && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-emerald-950/80 px-6 text-center text-white" data-testid="state-scanner-detected">
               <span className="text-2xl">✓</span>
-              <p className="font-mono text-sm font-semibold tracking-wider">{state.barcode.rawValue}</p>
+              <p className="font-mono text-sm font-semibold tabular-nums">{state.barcode.rawValue}</p>
               <p className="text-[11px] text-white/70">{state.barcode.format.toUpperCase()}</p>
             </div>
           )}

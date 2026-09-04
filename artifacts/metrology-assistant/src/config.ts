@@ -4,5 +4,5 @@ export const appConfig = {
   shortDescriptor: 'Legal Metrology enforcement workspace',
   version: '0.9.4',
   defaultOfficer: 'A. Mehta',
-  defaultLocation: 'Jaipur • Ward 14',
+  defaultLocation: 'Jaipur, Ward 14',
 };

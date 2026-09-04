@@ -154,7 +154,7 @@ export function AppShell({ children }: AppShellProps) {
             </a>
             <span className="hidden sm:inline-flex items-center gap-1.5 opacity-90 font-medium">
               <span className="inline-block size-1.5 rounded-full bg-[var(--green-ac)]" />
-              {language === 'hi' ? 'भारत सरकार · विधिक मापविज्ञान प्रभाग' : 'Government of India · Legal Metrology Division'}
+              {language === 'hi' ? 'भारत सरकार | विधिक मापविज्ञान प्रभाग' : 'Government of India | Legal Metrology Division'}
             </span>
           </div>
 
@@ -429,7 +429,7 @@ export function AppShell({ children }: AppShellProps) {
             {/* Officer Details in Drawer */}
             <div className="p-4 bg-[var(--bg-sunken)] border-b border-[var(--border)]">
               <div className="text-xs font-semibold text-[var(--text)]">{user.name}</div>
-              <div className="text-[11px] text-[var(--text-muted)] font-mono">{user.badgeId} · {user.jurisdiction}</div>
+              <div className="text-[11px] text-[var(--text-muted)]"><span className="font-mono">{user.badgeId}</span> | {user.jurisdiction}</div>
               <div className="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-[var(--indigo-100)] text-[var(--indigo-700)]">
                 {user.roleTitle}
               </div>
@@ -645,8 +645,8 @@ export function AppShell({ children }: AppShellProps) {
               <div>
                 <p className="font-medium text-[var(--text)] leading-tight">
                   {language === 'hi'
-                    ? 'भारत सरकार · उपभोक्ता मामले, खाद्य और सार्वजनिक वितरण मंत्रालय'
-                    : 'Government of India · Ministry of Consumer Affairs, Food & Public Distribution'}
+                    ? 'भारत सरकार | उपभोक्ता मामले, खाद्य और सार्वजनिक वितरण मंत्रालय'
+                    : 'Government of India | Ministry of Consumer Affairs, Food & Public Distribution'}
                 </p>
                 <p className="text-[11px] text-[var(--text-muted)] mt-0.5">
                   {language === 'hi'
@@ -660,7 +660,7 @@ export function AppShell({ children }: AppShellProps) {
               <a href="#accessibility" className="text-[var(--link)] hover:text-[var(--link-hover)]">
                 {language === 'hi' ? 'अभिगम्यता विवरण' : 'Accessibility statement'}
               </a>
-              <span className="opacity-30">•</span>
+              <span className="opacity-30">|</span>
               <span className="font-mono text-[11px] tabular-nums">
                 {language === 'hi' ? 'अंतिम अद्यतन: 04 सितम्बर 2026' : 'Page last updated: 04 September 2026'}
               </span>
