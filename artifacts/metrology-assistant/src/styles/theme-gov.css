@@ -3,25 +3,44 @@
    colours in AGENTS.md section 5 are untouched. */
 
 :root {
-  /* ---- Navy chrome, two tones for depth ---- */
-  --gov-banner:  #F5F5F5;  /* top identification strip, dark text on light */
-  --navy-950:    #062135;  /* utility strip + footer — the darker tone      */
-  --navy-900:    #0A314D;  /* masthead band + nav + slab headers            */
-  --navy-800:    #0F4067;  /* hover / active fill                          */
-  --navy-700:    #1A4480;  /* links, accents                               */
-  --navy-600:    #205493;  /* primary button                                */
-  --navy-500:    #005EA2;  /* links, focus ring                             */
-  --navy-100:    #E1E9F2;
-  --navy-050:    #F0F4F9;
+  /* ---- Brand ---- */
+  --brand-700:   #3D2A93;  /* pressed / dark bar                              */
+  --brand-600:   #5138B8;  /* primary band header, primary button (signature) */
+  --brand-100:   #E7E2FA;  /* brand tint background                           */
+  --brand-050:   #F3F0FD;
 
-  /* Aliases so existing markup keeps working without a rename */
-  --indigo-700: var(--navy-800);
-  --indigo-600: var(--navy-700);
-  --indigo-100: var(--navy-100);
-  --indigo-050: var(--navy-050);
+  /* Compatibility aliases */
+  --indigo-700:  var(--brand-700);
+  --indigo-600:  var(--brand-600);
+  --indigo-100:  var(--brand-100);
+  --indigo-050:  var(--brand-050);
 
-  --link:       var(--navy-500);
-  --link-hover: #1A4480;
+  /* ---- Surface ---- */
+  --bg-page:     #FAFAFA;  /* base page                                       */
+  --bg-band:     #FFFFFF;  /* alternating band                                */
+  --bg-panel:    #FFFFFF;  /* panel surface                                   */
+  --bg-sunken:   #F1F1F4;  /* footer / sunken band                            */
+  --border:      #E2E2E7;  /* hairline                                        */
+
+  /* ---- Text ---- */
+  --text:        #1E1F24;
+  --text-muted:  #55565E;
+  --text-invert: #FFFFFF;
+  --link:        #253E81;
+  --link-hover:  #1447E6;
+
+  /* ---- Status ---- */
+  --success:     #2E7D0E;
+  --success-cta: #32BB49;
+  --warning:     #B26A00;
+  --danger:      #C62430;
+  --info:        #176F73;
+
+  /* ---- Header chrome ---- */
+  --gov-banner:  #F5F5F5;
+  --navy-950:    #052963;  /* Row 2 utility strip                             */
+  --navy-900:    #0A314D;
+  --saffron-nav-active: #FBAC1B;
 
   /* ---- Tiranga (Flag Code of India values) ---- */
   --tiranga-saffron: #FF9933;
@@ -29,7 +48,8 @@
   --tiranga-green:   #138808;
   --tiranga-navy:    #000080;
 
-  --sh-2: 0 8px 24px rgba(6, 33, 53, .14);
+  --sh-1: 0 1px 2px rgba(30, 31, 36, .06);
+  --sh-2: 0 8px 24px rgba(61, 42, 147, .10);
 }
 
 /* ==========================================================================
@@ -405,7 +425,7 @@
   border: none;
 }
 
-.slab, .portal-slab { background: var(--navy-900); }
+.slab, .portal-slab { background: var(--brand-600); }
 
 .site-footer      { background: var(--navy-950); color: #C9DAEC; }
 .site-footer h3   { color: #fff; font-size: var(--fs-h3); }

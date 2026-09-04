@@ -69,20 +69,23 @@
   --radius-lg: 14px;
   --radius-xl: 18px;
 
-  /* Institutional & Navy Chrome (theme-gov) */
-  --color-gov-banner: #F5F5F5;
-  --color-navy-950: #062135;
-  --color-navy-900: #0A314D;
-  --color-navy-800: #0F4067;
-  --color-navy-700: #1A4480;
-  --color-navy-600: #205493;
-  --color-navy-500: #005EA2;
-  --color-navy-100: #E1E9F2;
-  --color-navy-050: #F0F4F9;
+  /* Brand */
+  --color-brand-700: #3D2A93;
+  --color-brand-600: #5138B8;
+  --color-brand-100: #E7E2FA;
+  --color-brand-050: #F3F0FD;
+
+  /* Backward Compatibility Aliases */
   --color-indigo-700: #3D2A93;
   --color-indigo-600: #5138B8;
   --color-indigo-100: #E7E2FA;
   --color-indigo-050: #F3F0FD;
+
+  /* Header & Navy Chrome */
+  --color-gov-banner: #F5F5F5;
+  --color-navy-950: #052963;
+  --color-navy-900: #0A314D;
+  --color-saffron-active: #FBAC1B;
 
   /* Tiranga (Flag Code of India) */
   --color-tiranga-saffron: #FF9933;
@@ -92,13 +95,24 @@
 
   /* Surfaces & Text */
   --color-bg-page: #FAFAFA;
+  --color-bg-band: #FFFFFF;
   --color-bg-panel: #FFFFFF;
   --color-bg-sunken: #F1F1F4;
+  --color-border: #E2E2E7;
   --color-border-parakh: #E2E2E7;
+  --color-text: #1E1F24;
   --color-text-parakh: #1E1F24;
   --color-text-muted: #55565E;
+  --color-text-invert: #FFFFFF;
   --color-link: #253E81;
   --color-link-hover: #1447E6;
+
+  /* Status */
+  --color-success: #2E7D0E;
+  --color-success-cta: #32BB49;
+  --color-warning: #B26A00;
+  --color-danger: #C62430;
+  --color-info: #176F73;
 
   /* Six Category Triplets: {tint, border, action} */
   --color-rose-t: #FADFE4;
