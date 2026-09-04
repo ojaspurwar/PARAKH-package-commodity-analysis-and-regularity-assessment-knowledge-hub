@@ -60,6 +60,14 @@
   --violet-t: #EFE6FE;  --violet-br: #7C4DD1;  --violet-ac: #4B2FA0; /* repository  */
   --pink-t:   #F8DFF5;  --pink-br:   #C462AD;  --pink-ac:   #80376C; /* statutory   */
 
+  /* Aliases for component consistency */
+  --rose-tint: var(--rose-t);     --rose-border: var(--rose-br);     --rose-action: var(--rose-ac);
+  --green-tint: var(--green-t);   --green-border: var(--green-br);   --green-action: var(--green-ac);
+  --amber-tint: var(--amber-t);   --amber-border: var(--amber-br);   --amber-action: var(--amber-ac);
+  --cyan-tint: var(--cyan-t);     --cyan-border: var(--cyan-br);     --cyan-action: var(--cyan-ac);
+  --violet-tint: var(--violet-t); --violet-border: var(--violet-br); --violet-action: var(--violet-ac);
+  --pink-tint: var(--pink-t);     --pink-border: var(--pink-br);     --pink-action: var(--pink-ac);
+
   /* ---- Radius ---- */
   --r-sm:  6px;
   --r-md: 10px;

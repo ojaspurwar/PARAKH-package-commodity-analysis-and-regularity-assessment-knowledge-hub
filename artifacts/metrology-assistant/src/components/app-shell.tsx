@@ -105,7 +105,7 @@ export function AppShell({ children }: AppShellProps) {
     { href: '/products', label: language === 'hi' ? 'उत्पाद रिपोजिटरी' : 'Products repository', icon: Boxes },
     { href: '/ecommerce', label: language === 'hi' ? 'ऑनलाइन उत्पाद' : 'Online products', icon: ExternalLink },
     { href: '/docs', label: language === 'hi' ? 'वैधानिक दस्तावेज' : 'Statutory documents', icon: BookOpen },
-    { href: '/styleguide', label: language === 'hi' ? 'रिपोर्ट्स' : 'Reports', icon: FileSpreadsheet },
+    { href: '/reports', label: language === 'hi' ? 'रिपोर्ट्स' : 'Reports', icon: FileSpreadsheet },
   ];
 
   return (
@@ -252,11 +252,18 @@ export function AppShell({ children }: AppShellProps) {
           {/* Left: A single <img> of DoCA lockup (height 88px) */}
           <div className="flex items-center shrink-0">
             <Link href="/" className="block focus:outline-none focus:ring-2 focus:ring-[#005EA2] rounded" aria-label="PARAKH Portal Home">
-              <img
-                src="/assets/doca-lockup.png"
-                alt="Department of Consumer Affairs, Government of India"
-                className="masthead-doca-img"
-              />
+              <picture>
+                <source srcSet="/assets/doca-lockup.webp" type="image/webp" />
+                <img
+                  src="/assets/doca-lockup.png"
+                  alt="Department of Consumer Affairs, Government of India"
+                  width="280"
+                  height="88"
+                  loading="eager"
+                  decoding="async"
+                  className="masthead-doca-img"
+                />
+              </picture>
             </Link>
           </div>
 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   AlertTriangle,
@@ -35,11 +35,12 @@ import { getGetScanQueryKey, getGetScansQueryKey, useCreateScan, useGetScans, us
 import type { ComplianceCheck, Scan, ScanInput } from '@workspace/api-client-react';
 import { appConfig } from '@/config';
 import { EmptyState, ErrorState, ScanRow, SkeletonRows, StatusPill } from '@/components/scan-ui';
-import { BarcodeScanner } from '@/components/barcode-scanner';
-import { LiveCameraCapture } from '@/components/live-camera-capture';
 import { ScanTable } from '@/components/scan-table';
-import { preparePhoto, runImageOcr, type OcrResult } from '@/lib/ocr';
+import type { OcrResult } from '@/lib/ocr';
 import { prepareEnhancedPhoto } from '@/lib/image-enhancer';
+
+const BarcodeScanner = lazy(() => import('@/components/barcode-scanner').then((m) => ({ default: m.BarcodeScanner })));
+const LiveCameraCapture = lazy(() => import('@/components/live-camera-capture').then((m) => ({ default: m.LiveCameraCapture })));
 import { buildCategorySpecificChecks } from '@/lib/date-compliance';
 import { useAuth } from '@/hooks/use-auth';
 import { useI18n } from '@/lib/i18n';
@@ -231,6 +232,7 @@ export default function HomePage() {
       await triggerAiVision(prepared.dataUrl);
 
       // Also gather physical bounding boxes via Tesseract in background for font/placement millimeter checks
+      const { runImageOcr } = await import('@/lib/ocr');
       runImageOcr(prepared.dataUrl, prepared, (progress) => {
         if (progress.progress >= 0) setOcrProgress(progress.progress);
       }).then((result) => {
@@ -275,6 +277,7 @@ export default function HomePage() {
     await triggerAiVision(captured.dataUrl);
 
     // Also gather physical bounding boxes via Tesseract in background
+    const { runImageOcr } = await import('@/lib/ocr');
     runImageOcr(captured.dataUrl, captured, (progress) => {
       if (progress.progress >= 0) setOcrProgress(progress.progress);
     }).then((result) => {
@@ -339,6 +342,12 @@ export default function HomePage() {
         setErrorNotice('');
         setNotice('Evidence captured. Review the checks before submitting.');
         queryClient.invalidateQueries({ queryKey: getGetScansQueryKey() });
+        setTimeout(() => {
+          const el = document.getElementById('completed-scan-review');
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }, 150);
       },
       onError: () => {
         setNotice('');
@@ -403,6 +412,10 @@ export default function HomePage() {
         <img
           src="/hero-pattern.svg"
           alt=""
+          width="1600"
+          height="400"
+          loading="eager"
+          decoding="async"
           className="landing-hero__media"
           aria-hidden="true"
         />
@@ -741,9 +754,13 @@ export default function HomePage() {
             </div>
 
           {liveCameraScanning ? (
-            <LiveCameraCapture onCapture={handleLiveCapture} onCancel={() => setLiveCameraScanning(false)} />
+            <Suspense fallback={<div className="h-64 rounded-[var(--r-md)] bg-[var(--bg-sunken)] animate-pulse flex items-center justify-center text-xs text-[var(--text-muted)]">Loading camera scanner...</div>}>
+              <LiveCameraCapture onCapture={handleLiveCapture} onCancel={() => setLiveCameraScanning(false)} />
+            </Suspense>
           ) : barcodeScanning ? (
-            <BarcodeScanner onDetected={handleBarcode} onCancel={() => setBarcodeScanning(false)} />
+            <Suspense fallback={<div className="h-64 rounded-[var(--r-md)] bg-[var(--bg-sunken)] animate-pulse flex items-center justify-center text-xs text-[var(--text-muted)]">Loading barcode scanner...</div>}>
+              <BarcodeScanner onDetected={handleBarcode} onCancel={() => setBarcodeScanning(false)} />
+            </Suspense>
           ) : !started ? (
             <div
               className="rounded-[var(--r-md)] border-[1.5px] border-cyan-br bg-cyan-t p-5 md:p-6 space-y-5"
@@ -808,6 +825,7 @@ export default function HomePage() {
                   type="button"
                   onClick={() => setStarted(true)}
                   className="font-semibold text-[var(--link)] hover:text-[var(--link-hover)] underline"
+                  data-testid="button-start-manual-inspection"
                 >
                   {language === 'hi' ? 'मैन्युअल डेटा प्रविष्टि' : 'Manual inspection form'}
                 </button>
@@ -1406,7 +1424,11 @@ function ReviewCard({
   const baseUrl = import.meta.env.BASE_URL.replace(/\/$/, '');
 
   return (
-    <div className="mt-6 space-y-4 rounded-[var(--r-md)] border border-[var(--border)] bg-white p-5" data-testid="card-review-scan">
+    <div
+      id="completed-scan-review"
+      className="mt-6 space-y-4 rounded-[var(--r-md)] border border-[var(--border)] bg-white p-5 scroll-mt-24"
+      data-testid="card-review-scan"
+    >
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border)] pb-3">
         <div>
           <span className="text-xs font-semibold text-[var(--indigo-600)] block">{t.reviewBannerTitle}</span>
