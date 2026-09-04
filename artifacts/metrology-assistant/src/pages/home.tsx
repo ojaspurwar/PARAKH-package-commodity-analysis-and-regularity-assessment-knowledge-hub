@@ -33,6 +33,7 @@ import { appConfig } from '@/config';
 import { EmptyState, ErrorState, ScanRow, SkeletonRows, StatusPill } from '@/components/scan-ui';
 import { BarcodeScanner } from '@/components/barcode-scanner';
 import { LiveCameraCapture } from '@/components/live-camera-capture';
+import { ScanTable } from '@/components/scan-table';
 import { preparePhoto, runImageOcr, type OcrResult } from '@/lib/ocr';
 import { prepareEnhancedPhoto } from '@/lib/image-enhancer';
 import { buildCategorySpecificChecks } from '@/lib/date-compliance';
@@ -451,46 +452,72 @@ export default function HomePage() {
           ) : barcodeScanning ? (
             <BarcodeScanner onDetected={handleBarcode} onCancel={() => setBarcodeScanning(false)} />
           ) : !started ? (
-            <div className="field-grid relative overflow-hidden rounded-2xl border border-border bg-card px-6 py-10 md:px-10">
-              <div className="relative max-w-lg">
-                <div className="flex items-center gap-2">
-                  <span className="grid size-12 place-items-center rounded-2xl bg-secondary/15 text-secondary"><Camera size={23} /></span>
-                  <span className="grid size-10 place-items-center rounded-xl bg-accent/30 text-foreground"><Sparkles size={18} /></span>
+            <div
+              className="rounded-[var(--r-md)] border-[1.5px] border-cyan-br bg-cyan-t p-5 md:p-6 space-y-5"
+              data-testid="box-field-scanner-priority"
+            >
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="flex items-start gap-3.5">
+                  <div className="grid size-14 shrink-0 place-items-center rounded-full bg-white border-[1.5px] border-cyan-br text-cyan-act">
+                    <Camera size={28} />
+                  </div>
+                  <div>
+                    <span className="rounded-[var(--r-sm)] bg-white border border-cyan-br text-cyan-act px-2 py-0.5 text-xs font-semibold">
+                      {language === 'hi' ? 'फील्ड निरीक्षण प्राथमिकता डेस्क' : 'Field Inspection Priority Desk'}
+                    </span>
+                    <h3 className="mt-1.5 text-base font-semibold text-[var(--text)]">
+                      {language === 'hi' ? 'लाइव कैमरा एवं एआई विज़न पैकेज मूल्यांकन' : 'Live Camera & AI Vision Package Assessment'}
+                    </h3>
+                    <p className="mt-1 text-xs text-[var(--text-muted)] max-w-xl leading-5">
+                      {language === 'hi'
+                        ? 'पैकेज लेबल को फ्रेम में केंद्रित करें। प्रणाली नियम 6 अनिवार्य घोषणाओं (MRP, USP, Net Qty) एवं नियम 7 फ़ॉन्ट ऊंचाई का स्वतः सत्यापन करेगी।'
+                        : 'Capture retail commodity packaging. The rule engine validates Rule 6 mandatory declarations (MRP, USP, Net Quantity, Packer) and measures Rule 7 numeral height to statutory standards.'}
+                    </p>
+                  </div>
                 </div>
-                <h3 className="mt-5 text-xl font-semibold">
-                  {language === 'hi' ? 'लाइव कैमरा से उत्पाद स्कैन करें' : 'Scan Packaged Products with Live Camera & AI'}
-                </h3>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  {language === 'hi'
-                    ? 'लाइव कैमरे से सीधे पैकेट की फोटो लें — एआई (Gemini 2.5) तुरंत विधिक मापविज्ञान नियमों (MRP, Net Qty) की जांच करेगा और सामग्री, स्वास्थ्य लाभ एवं जोखिम की विस्तृत रिपोर्ट तैयार करेगा।'
-                    : 'Point your camera directly at the commodity label — AI analyzes Legal Metrology compliance (MRP, Net Qty) and instantly generates an in-depth Ingredients, Benefits & Health Harms Report.'}
-                </p>
-                <div className="mt-6 flex flex-wrap items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => { setLiveCameraScanning(true); setBarcodeScanning(false); setStarted(false); }}
-                    className="inline-flex items-center gap-2 rounded-xl bg-secondary px-5 py-3 text-sm font-semibold text-secondary-foreground shadow-lg shadow-secondary/20 hover:opacity-95 transition-all hover:scale-[1.02] active:scale-95"
-                    data-testid="button-begin-live-camera"
-                  >
-                    <Camera size={18} />
-                    <span>{language === 'hi' ? 'लाइव कैमरा खोलें' : 'Open Live Camera'}</span>
-                    <Sparkles size={15} className="text-accent" />
-                  </button>
+              </div>
 
-                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-xs font-semibold text-foreground/80 hover:bg-muted transition-colors" data-testid="label-quick-ai-scan">
-                    <ImagePlus size={15} />
-                    {language === 'hi' ? 'फ़ाइल से चुनें' : 'Choose from files'}
-                    <input type="file" accept="image/*" className="hidden" onChange={handlePhoto} data-testid="input-quick-ai-scan" />
-                  </label>
+              {/* Three primary actions, 46px tall, --r-sm, white 600-weight label */}
+              <div className="grid gap-2 sm:grid-cols-3 pt-2 border-t border-cyan-br/30">
+                <button
+                  type="button"
+                  onClick={() => { setLiveCameraScanning(true); setBarcodeScanning(false); setStarted(false); }}
+                  className="inline-flex items-center justify-center gap-2 h-[46px] rounded-[var(--r-sm)] bg-cyan-act px-4 text-xs font-semibold text-white shadow-xs hover:opacity-90 active:scale-[0.985] transition-all"
+                  data-testid="button-begin-live-camera"
+                >
+                  <Camera size={16} />
+                  <span>{language === 'hi' ? 'लाइव कैमरा खोलें' : 'Open live camera'}</span>
+                </button>
 
-                  <button
-                    type="button"
-                    onClick={() => setStarted(true)}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-border px-3.5 py-2.5 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                  >
-                    {language === 'hi' ? 'मैन्युअल फ़ॉर्म' : 'Manual Entry'}
-                  </button>
-                </div>
+                <label
+                  className="inline-flex cursor-pointer items-center justify-center gap-2 h-[46px] rounded-[var(--r-sm)] bg-cyan-act px-4 text-xs font-semibold text-white shadow-xs hover:opacity-90 active:scale-[0.985] transition-all"
+                  data-testid="label-quick-ai-scan"
+                >
+                  <ImagePlus size={16} />
+                  <span>{language === 'hi' ? 'फोटो अपलोड करें' : 'Upload package photo'}</span>
+                  <input type="file" accept="image/*" className="hidden" onChange={handlePhoto} data-testid="input-quick-ai-scan" />
+                </label>
+
+                <button
+                  type="button"
+                  onClick={() => { setBarcodeScanning(true); setLiveCameraScanning(false); setStarted(false); }}
+                  className="inline-flex items-center justify-center gap-2 h-[46px] rounded-[var(--r-sm)] bg-cyan-act px-4 text-xs font-semibold text-white shadow-xs hover:opacity-90 active:scale-[0.985] transition-all"
+                  data-testid="button-begin-barcode"
+                >
+                  <ScanBarcode size={16} />
+                  <span>{language === 'hi' ? 'बारकोड / EAN स्कैन करें' : 'Scan barcode or EAN'}</span>
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between text-xs text-[var(--text-muted)] pt-1">
+                <span>{language === 'hi' ? 'अथवा भौतिक पैकेज विवरण सीधे दर्ज करें:' : 'Or enter physical packaging declarations directly:'}</span>
+                <button
+                  type="button"
+                  onClick={() => setStarted(true)}
+                  className="font-semibold text-[var(--link)] hover:text-[var(--link-hover)] underline"
+                >
+                  {language === 'hi' ? 'मैन्युअल डेटा प्रविष्टि' : 'Manual inspection form'}
+                </button>
               </div>
             </div>
           ) : (
@@ -1052,13 +1079,12 @@ export default function HomePage() {
           ) : scanQuery.isError ? (
             <ErrorState onRetry={() => scanQuery.refetch()} />
           ) : (scanQuery.data ?? []).filter((s) => categoryFilter === 'all' || s.category === categoryFilter).length ? (
-            <div className="space-y-1 rounded-2xl border border-border bg-card p-2">
-              {(scanQuery.data ?? [])
-                .filter((s) => categoryFilter === 'all' || s.category === categoryFilter)
-                .map((scan) => (
-                  <ScanRow key={scan.id} scan={scan} compact onDelete={handleDeleteScan} />
-                ))}
-            </div>
+            <ScanTable
+              scans={(scanQuery.data ?? []).filter((s) => categoryFilter === 'all' || s.category === categoryFilter)}
+              onDelete={handleDeleteScan}
+              showCategory={true}
+              showLocation={true}
+            />
           ) : (
             <EmptyState title={t.noScansYet} body={t.noScansSub} />
           )}

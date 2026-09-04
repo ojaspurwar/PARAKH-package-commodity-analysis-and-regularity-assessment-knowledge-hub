@@ -1,4 +1,4 @@
-import { ArrowUpRight, Check, CircleAlert, Clock3, MapPin, PackageSearch, Trash2, WifiOff } from 'lucide-react';
+import { ArrowUpRight, Check, CircleAlert, CircleDot, Clock3, MapPin, PackageSearch, Trash2, WifiOff, X } from 'lucide-react';
 import { Link } from 'wouter';
 import type { Scan } from '@workspace/api-client-react';
 import { useI18n } from '@/lib/i18n';
@@ -6,9 +6,14 @@ import { useI18n } from '@/lib/i18n';
 export function StatusPill({ status, submitted }: { status: Scan['status']; submitted?: boolean }) {
   const { t } = useI18n();
   const styles = {
-    compliant: 'bg-secondary/10 text-secondary',
-    violation: 'bg-destructive/10 text-destructive',
-    pending: 'bg-accent/25 text-foreground',
+    compliant: 'bg-green-t border-[1.5px] border-green-br text-green-act',
+    violation: 'bg-rose-t border-[1.5px] border-rose-br text-rose-act',
+    pending: 'bg-amber-t border-[1.5px] border-amber-br text-amber-act',
+  };
+  const icons = {
+    compliant: <Check size={11} className="shrink-0" />,
+    violation: <X size={11} className="shrink-0" />,
+    pending: <CircleDot size={11} className="shrink-0" />,
   };
   const labels = {
     compliant: t.compliant,
@@ -16,10 +21,13 @@ export function StatusPill({ status, submitted }: { status: Scan['status']; subm
     pending: t.pendingReview,
   };
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ${styles[status]}`} data-testid={`status-scan-${status}`}>
-      <span className={`size-1.5 rounded-full ${status === 'compliant' ? 'bg-secondary' : status === 'violation' ? 'bg-destructive' : 'bg-foreground/50'}`} />
-      {labels[status]}
-      {submitted && <Check size={12} />}
+    <span
+      className={`inline-flex items-center gap-1 rounded-[var(--r-sm)] px-2 py-0.5 text-xs font-semibold ${styles[status] || styles.pending}`}
+      data-testid={`status-scan-${status}`}
+    >
+      {icons[status] || icons.pending}
+      <span>{labels[status] || labels.pending}</span>
+      {submitted && <span className="text-[10px] opacity-75 font-mono ml-0.5">✓</span>}
     </span>
   );
 }
