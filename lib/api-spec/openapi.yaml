@@ -10,6 +10,10 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: dashboard
+    description: Supervisor dashboard operations
+  - name: scans
+    description: Label scan operations
 paths:
   /healthz:
     get:
@@ -24,6 +28,131 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get dashboard summary
+      description: Returns the current enforcement metrics for the supervisor dashboard
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+  /scans:
+    get:
+      operationId: getScans
+      tags: [scans]
+      summary: List recent scans
+      description: Returns recent physical and online product label scans
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [all, compliant, violation, pending]
+            default: all
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Recent scans
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Scan"
+    post:
+      operationId: createScan
+      tags: [scans]
+      summary: Create a new scan
+      description: Creates a scan result from a field capture
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScanInput"
+      responses:
+        "201":
+          description: Scan created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Scan"
+  /scans/{id}:
+    get:
+      operationId: getScan
+      tags: [scans]
+      summary: Get scan detail
+      description: Returns the full evidence and compliance detail for a scan
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Scan detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Scan"
+        "404":
+          description: Scan not found
+    post:
+      operationId: submitScan
+      tags: [scans]
+      summary: Submit a scan to the database
+      description: Marks a locally reviewed scan as submitted
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScanSubmission"
+      responses:
+        "200":
+          description: Scan submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Scan"
+        "404":
+          description: Scan not found
+  /web-scans:
+    post:
+      operationId: createWebScan
+      tags: [scans]
+      summary: Scan an e-commerce product URL
+      description: Creates a scan result from an Amazon or Flipkart product URL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebScanInput"
+      responses:
+        "201":
+          description: Web scan created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Scan"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +162,106 @@ components:
           type: string
       required:
         - status
+    ComplianceCheck:
+      type: object
+      properties:
+        key:
+          type: string
+        label:
+          type: string
+        value:
+          type: string
+        status:
+          type: string
+          enum: [passed, failed, review]
+        note:
+          type: string
+      required: [key, label, value, status, note]
+    Scan:
+      type: object
+      properties:
+        id:
+          type: number
+        reference:
+          type: string
+        productName:
+          type: string
+        category:
+          type: string
+        officerName:
+          type: string
+        source:
+          type: string
+          enum: [field, ecommerce]
+        location:
+          type: string
+        status:
+          type: string
+          enum: [compliant, violation, pending]
+        submitted:
+          type: boolean
+        capturedAt:
+          type: string
+          format: date-time
+        imageUrl:
+          type: ["string", "null"]
+        ocrText:
+          type: string
+        checks:
+          type: array
+          items:
+            $ref: "#/components/schemas/ComplianceCheck"
+      required: [id, reference, productName, category, officerName, source, location, status, submitted, capturedAt, imageUrl, ocrText, checks]
+    ScanInput:
+      type: object
+      properties:
+        productName:
+          type: string
+        category:
+          type: string
+        officerName:
+          type: string
+        location:
+          type: string
+        status:
+          type: string
+          enum: [compliant, violation, pending]
+        imageUrl:
+          type: ["string", "null"]
+        ocrText:
+          type: string
+        checks:
+          type: array
+          items:
+            $ref: "#/components/schemas/ComplianceCheck"
+      required: [productName, category, officerName, location, status, imageUrl, ocrText, checks]
+    ScanSubmission:
+      type: object
+      properties:
+        submitted:
+          type: boolean
+          default: true
+    WebScanInput:
+      type: object
+      properties:
+        url:
+          type: string
+      required: [url]
+    DashboardSummary:
+      type: object
+      properties:
+        totalScansToday:
+          type: number
+        complianceRate:
+          type: number
+        topViolationType:
+          type: string
+        queuedOffline:
+          type: number
+        activeOfficers:
+          type: number
+        lastSyncAt:
+          type: string
+          format: date-time
+      required: [totalScansToday, complianceRate, topViolationType, queuedOffline, activeOfficers, lastSyncAt]
 

@@ -1,0 +1,1 @@
+- [API codegen and Zod compatibility](api-codegen-zod-v3.md) — check generated validator syntax against the workspace Zod major version before wiring new hooks.
