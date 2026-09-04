@@ -6,9 +6,9 @@
   /* ---- Navy chrome, two tones for depth ---- */
   --gov-banner:  #F5F5F5;  /* top identification strip, dark text on light */
   --navy-950:    #062135;  /* utility strip + footer — the darker tone      */
-  --navy-900:    #0A314D;  /* masthead band + nav — the lighter tone        */
+  --navy-900:    #0A314D;  /* masthead band + nav + slab headers            */
   --navy-800:    #0F4067;  /* hover / active fill                          */
-  --navy-700:    #1A4480;  /* slab headers                                  */
+  --navy-700:    #1A4480;  /* links, accents                               */
   --navy-600:    #205493;  /* primary button                                */
   --navy-500:    #005EA2;  /* links, focus ring                             */
   --navy-100:    #E1E9F2;
@@ -72,7 +72,13 @@
 .masthead__hi     { font-family: var(--font-hi); font-size: 20px; font-weight: 600; }
 .masthead__en     { font-size: 15px; color: #C9DAEC; }
 
-.nav-bar        { display: flex; align-items: center; gap: var(--s-2); }
+.nav-bar        { align-items: center; gap: var(--s-2); }
+@media (min-width: 1280px) {
+  .nav-bar { display: flex !important; }
+}
+@media (max-width: 1279px) {
+  .nav-bar { display: none !important; }
+}
 .nav-bar a      { color: #DCE6F2; padding: 10px var(--s-4); border-radius: var(--r-sm); }
 .nav-bar a:hover{ background: var(--navy-800); color: #fff; }
 .nav-bar a[aria-current="page"] {

@@ -24,6 +24,10 @@ import {
   Trash2,
   Wand2,
   Zap,
+  ArrowUpRight,
+  Boxes,
+  BookOpen,
+  UserCheck,
 } from 'lucide-react';
 import { Link } from 'wouter';
 import { VerdictPanel } from '@/components/verdict-panel';
@@ -391,14 +395,303 @@ export default function HomePage() {
     .toUpperCase();
 
   return (
-    <div className="portal-container py-6 space-y-6">
-      {/* Slab Header naming function per AGENTS.md §7 */}
-      <div className="portal-slab">
-        {language === 'hi' ? 'फील्ड स्कैनर एवं भौतिक लेबल मूल्यांकन' : 'Field Scanner & Physical Label Assessment'}
+    <>
+      {/* ============================================================ */}
+      {/* 1. LANDING HERO (One per landing page ONLY, never on workspace) */}
+      {/* ============================================================ */}
+      <div className="landing-hero band select-none">
+        <img
+          src="/hero-pattern.svg"
+          alt=""
+          className="landing-hero__media"
+          aria-hidden="true"
+        />
+        <div className="landing-hero__scrim" aria-hidden="true" />
+        <div className="portal-container">
+          <div className="landing-hero__body space-y-4 py-16">
+            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-white leading-tight">
+              {language === 'hi'
+                ? 'विधिक मापविज्ञान प्रवर्तन पोर्टल'
+                : 'Legal Metrology Enforcement Portal'}
+            </h1>
+            <p className="text-base sm:text-lg text-[#C9DAEC] leading-relaxed">
+              {language === 'hi'
+                ? 'विधिक मापविज्ञान (पैकेज्ड कमोडिटीज) नियम, 2011 के नियम 6 एवं नियम 7 के तहत अनिवार्य घोषणाओं का त्वरित डिजिटल मूल्यांकन एवं सत्यापन।'
+                : 'Statutory label compliance assessment and verification under Rule 6 & 7 of the Legal Metrology (Packaged Commodities) Rules, 2011.'}
+            </p>
+            <div className="pt-2">
+              <a
+                href="#field-scanner"
+                className="inline-flex items-center justify-center px-5 py-2.5 rounded-[var(--r-sm)] border-2 border-white text-white text-sm font-semibold hover:bg-white/10 active:scale-[0.985] transition-all"
+              >
+                {language === 'hi' ? 'फील्ड स्कैनर डेस्क प्रारंभ करें' : 'Launch field scanner'}
+              </a>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Flush Panel */}
-      <div className="portal-panel space-y-6">
+      {/* ============================================================ */}
+      {/* 2. ECI BANDS BELOW HERO on --bg-page (#FAFAFA)               */}
+      {/* 56px top padding so pastels are not crowded against the hero */}
+      {/* ============================================================ */}
+      <div className="band bg-[var(--bg-page)] pt-14 pb-12">
+        <div className="portal-container space-y-8">
+          {/* First Band: Statutory Services & Surveillance */}
+          <div>
+            <div className="portal-slab">
+              {language === 'hi' ? 'वैधानिक घोषणाएं एवं प्रवर्तन सेवाएं' : 'Statutory Declarations & Enforcement Services'}
+            </div>
+
+            <div className="portal-panel space-y-6">
+              {/* Priority Block (reference/01) */}
+              <div className="rounded-[var(--r-md)] border-[1.5px] border-[var(--rose-br)] bg-[var(--rose-t)] p-5 space-y-4">
+                <div className="flex items-start gap-4">
+                  <div className="w-14 h-14 rounded-full bg-white border-[1.5px] border-[var(--rose-br)] flex items-center justify-center text-[var(--rose-ac)] shrink-0">
+                    <ShieldAlert size={28} />
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="text-base font-semibold text-[var(--text)]">
+                      {language === 'hi' ? 'विशेष गहन बाजार निगरानी अभियान — 2026' : 'Special Intensive Market Surveillance Drive — 2026'}
+                    </h3>
+                    <p className="text-sm text-[var(--text-muted)]">
+                      {language === 'hi'
+                        ? 'खुदरा पैकेज्ड वस्तुओं पर नियम 6 अनिवार्य घोषणाओं तथा नियम 7 मुख्य प्रदर्शन पैनल (PDP) मानकों का त्वरित प्रवर्तन सत्यापन।'
+                        : 'Immediate field verification and statutory enforcement across retail packaged commodities under Rule 6 and Rule 7.'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Three stacked primary actions, 46px tall, white 600 label, 8px gaps */}
+                <div className="space-y-2 pt-2">
+                  <a
+                    href="#field-scanner"
+                    className="w-full h-[46px] rounded-[var(--r-sm)] bg-[var(--green-ac)] text-white font-semibold text-sm flex items-center justify-center hover:opacity-95 active:scale-[0.985] transition-all"
+                  >
+                    {language === 'hi' ? 'पैकेज निरीक्षण स्कैन प्रारंभ करें' : 'Start Package Inspection Scan'}
+                  </a>
+                  <Link
+                    href="/products"
+                    className="w-full h-[46px] rounded-[var(--r-sm)] bg-[var(--cyan-ac)] text-white font-semibold text-sm flex items-center justify-center hover:opacity-95 active:scale-[0.985] transition-all"
+                  >
+                    {language === 'hi' ? 'पंजीकृत कमोडिटी डेटाबेस में खोजें' : 'Search Packaged Commodity Database'}
+                  </Link>
+                  <Link
+                    href="/docs"
+                    className="w-full h-[46px] rounded-[var(--r-sm)] bg-[var(--violet-ac)] text-white font-semibold text-sm flex items-center justify-center hover:opacity-95 active:scale-[0.985] transition-all"
+                  >
+                    {language === 'hi' ? 'वैधानिक विनिर्देश एवं जब्ती ज्ञापन' : 'Submit Statutory Seizure Memorandum'}
+                  </Link>
+                </div>
+              </div>
+
+              {/* Two-up Category Card Grid (reference/02 & 03) */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Card 1: Pink - Packer Registration */}
+                <div className="portal-card portal-card--pink">
+                  <div className="portal-icon-well border-[1.5px] border-[var(--pink-br)] flex items-center justify-center text-[var(--pink-ac)]">
+                    <UserCheck size={26} />
+                  </div>
+                  <h3 className="text-base font-semibold text-[var(--text)]">
+                    {language === 'hi' ? 'पैकर एवं निर्माता पंजीकरण' : 'Packer & Manufacturer Registration'}
+                  </h3>
+                  <p className="text-sm text-[var(--text-muted)]">
+                    {language === 'hi'
+                      ? 'विधिक मापविज्ञान नियम 27 के अंतर्गत विनिर्माता, पैकर अथवा आयातक का आधिकारिक वैधानिक पंजीकरण।'
+                      : 'Register mandatory packer, manufacturer, or importer credentials under Rule 27 of Legal Metrology Rules.'}
+                  </p>
+                  <div className="mt-auto pt-3 flex flex-wrap items-center gap-3">
+                    <Link
+                      href="/products"
+                      className="inline-flex items-center gap-1.5 h-8 px-3.5 rounded-[var(--r-sm)] bg-[var(--pink-ac)] text-white text-xs font-medium hover:opacity-90 active:scale-[0.985] transition-all"
+                    >
+                      <span>{language === 'hi' ? 'पंजीकरण देखें' : 'Register unit'}</span>
+                      <ArrowUpRight size={13} className="shrink-0" />
+                    </Link>
+                    <Link href="/docs" className="inline-flex items-center gap-1 text-xs font-medium text-[var(--link)] hover:text-[var(--link-hover)]">
+                      <ArrowUpRight size={12} />
+                      <span>{language === 'hi' ? 'दिशानिर्देश' : 'Guidelines'}</span>
+                    </Link>
+                  </div>
+                </div>
+
+                {/* Card 2: Cyan - Optical Label Inspection */}
+                <div className="portal-card portal-card--cyan">
+                  <div className="portal-icon-well border-[1.5px] border-[var(--cyan-br)] flex items-center justify-center text-[var(--cyan-ac)]">
+                    <Camera size={26} />
+                  </div>
+                  <h3 className="text-base font-semibold text-[var(--text)]">
+                    {language === 'hi' ? 'ऑप्टिकल लेबल निरीक्षण डेस्क' : 'Optical Label Inspection Desk'}
+                  </h3>
+                  <p className="text-sm text-[var(--text-muted)]">
+                    {language === 'hi'
+                      ? 'फील्ड कैमरे या बारकोड स्कैनर से स्वचालित ओसीआर निष्कर्षण एवं नियम 6 अनिवार्य घोषणा सत्यापन।'
+                      : 'Automated OCR extraction and Rule 6 mandatory declaration check using field camera or barcode scanner.'}
+                  </p>
+                  <div className="mt-auto pt-3 flex flex-wrap items-center gap-3">
+                    <a
+                      href="#field-scanner"
+                      className="inline-flex items-center gap-1.5 h-8 px-3.5 rounded-[var(--r-sm)] bg-[var(--cyan-ac)] text-white text-xs font-medium hover:opacity-90 active:scale-[0.985] transition-all"
+                    >
+                      <span>{language === 'hi' ? 'स्कैनर खोलें' : 'Open scanner'}</span>
+                      <ArrowUpRight size={13} className="shrink-0" />
+                    </a>
+                    <Link href="/docs#rule7" className="inline-flex items-center gap-1 text-xs font-medium text-[var(--link)] hover:text-[var(--link-hover)]">
+                      <ArrowUpRight size={12} />
+                      <span>{language === 'hi' ? 'नियम 7 मानक' : 'Rule 7 standards'}</span>
+                    </Link>
+                  </div>
+                </div>
+
+                {/* Card 3: Rose - Packaging Non-Compliance Seizure */}
+                <div className="portal-card portal-card--rose">
+                  <div className="portal-icon-well border-[1.5px] border-[var(--rose-br)] flex items-center justify-center text-[var(--rose-ac)]">
+                    <ShieldAlert size={26} />
+                  </div>
+                  <h3 className="text-base font-semibold text-[var(--text)]">
+                    {language === 'hi' ? 'पैकेजिंग गैर-अनुपालन एवं जब्ती' : 'Packaging Non-Compliance Seizure'}
+                  </h3>
+                  <p className="text-sm text-[var(--text-muted)]">
+                    {language === 'hi'
+                      ? 'अधिनियम की धारा 18 के तहत अपूर्ण घोषणाओं या भ्रामक पैकेजिंग के लिए जब्ती ज्ञापन जारी करें।'
+                      : 'Issue Section 18 seizure memo or confiscation order for substandard net weight or missing MRP.'}
+                  </p>
+                  <div className="mt-auto pt-3 flex flex-wrap items-center gap-3">
+                    <Link
+                      href="/dashboard"
+                      className="inline-flex items-center gap-1.5 h-8 px-3.5 rounded-[var(--r-sm)] bg-[var(--rose-ac)] text-white text-xs font-medium hover:opacity-90 active:scale-[0.985] transition-all"
+                    >
+                      <span>{language === 'hi' ? 'ज्ञापन जारी करें' : 'Issue memo'}</span>
+                      <ArrowUpRight size={13} className="shrink-0" />
+                    </Link>
+                    <Link href="/docs" className="inline-flex items-center gap-1 text-xs font-medium text-[var(--link)] hover:text-[var(--link-hover)]">
+                      <ArrowUpRight size={12} />
+                      <span>{language === 'hi' ? 'कानूनी प्रक्रिया' : 'Statutory procedure'}</span>
+                    </Link>
+                  </div>
+                </div>
+
+                {/* Card 4: Green - Packaged Commodity Verification */}
+                <div className="portal-card portal-card--green">
+                  <div className="portal-icon-well border-[1.5px] border-[var(--green-br)] flex items-center justify-center text-[var(--green-ac)]">
+                    <Check size={26} />
+                  </div>
+                  <h3 className="text-base font-semibold text-[var(--text)]">
+                    {language === 'hi' ? 'सत्यापित कमोडिटी प्रमाणीकरण' : 'Packaged Commodity Verification'}
+                  </h3>
+                  <p className="text-sm text-[var(--text-muted)]">
+                    {language === 'hi'
+                      ? 'शुद्ध मात्रा, एमआरपी, इकाई बिक्री मूल्य (USP) एवं मुख्य प्रदर्शन पैनल के फ़ॉन्ट अनुपातों का सत्यापन।'
+                      : 'Verify net quantity, MRP, unit sale price (USP), and principal display panel font proportions.'}
+                  </p>
+                  <div className="mt-auto pt-3 flex flex-wrap items-center gap-3">
+                    <Link
+                      href="/products"
+                      className="inline-flex items-center gap-1.5 h-8 px-3.5 rounded-[var(--r-sm)] bg-[var(--green-ac)] text-white text-xs font-medium hover:opacity-90 active:scale-[0.985] transition-all"
+                    >
+                      <span>{language === 'hi' ? 'सत्यापन रजिस्टर' : 'Verify package'}</span>
+                      <ArrowUpRight size={13} className="shrink-0" />
+                    </Link>
+                    <Link href="/docs#rule6" className="inline-flex items-center gap-1 text-xs font-medium text-[var(--link)] hover:text-[var(--link-hover)]">
+                      <ArrowUpRight size={12} />
+                      <span>{language === 'hi' ? 'अनिवार्य घोषणाएं' : 'Mandatory rules'}</span>
+                    </Link>
+                  </div>
+                </div>
+
+                {/* Card 5: Amber - Pending Adjudication */}
+                <div className="portal-card portal-card--amber">
+                  <div className="portal-icon-well border-[1.5px] border-[var(--amber-br)] flex items-center justify-center text-[var(--amber-ac)]">
+                    <Boxes size={26} />
+                  </div>
+                  <h3 className="text-base font-semibold text-[var(--text)]">
+                    {language === 'hi' ? 'पर्यवेक्षक समीक्षा एवं लंबित न्यायनिर्णयन' : 'Supervisor Review & Pending Adjudication'}
+                  </h3>
+                  <p className="text-sm text-[var(--text-muted)]">
+                    {language === 'hi'
+                      ? 'अपूर्ण लेबल अथवा प्रयोगशाला परीक्षण के लिए चिह्नित मामलों की वरिष्ठ अधिकारी द्वारा समीक्षा।'
+                      : 'Review flagged packages requiring manual adjudication, laboratory tare verification, or legal notice.'}
+                  </p>
+                  <div className="mt-auto pt-3 flex flex-wrap items-center gap-3">
+                    <Link
+                      href="/dashboard"
+                      className="inline-flex items-center gap-1.5 h-8 px-3.5 rounded-[var(--r-sm)] bg-[var(--amber-ac)] text-white text-xs font-medium hover:opacity-90 active:scale-[0.985] transition-all"
+                    >
+                      <span>{language === 'hi' ? 'समीक्षा कतार' : 'Open queue'}</span>
+                      <ArrowUpRight size={13} className="shrink-0" />
+                    </Link>
+                    <Link href="/ecommerce" className="inline-flex items-center gap-1 text-xs font-medium text-[var(--link)] hover:text-[var(--link-hover)]">
+                      <ArrowUpRight size={12} />
+                      <span>{language === 'hi' ? 'ऑनलाइन उत्पाद' : 'Online products'}</span>
+                    </Link>
+                  </div>
+                </div>
+
+                {/* Card 6: Violet - National Commodity Register */}
+                <div className="portal-card portal-card--violet">
+                  <div className="portal-icon-well border-[1.5px] border-[var(--violet-br)] flex items-center justify-center text-[var(--violet-ac)]">
+                    <BookOpen size={26} />
+                  </div>
+                  <h3 className="text-base font-semibold text-[var(--text)]">
+                    {language === 'hi' ? 'राष्ट्रीय कमोडिटी रजिस्टर एवं अभिलेख' : 'National Commodity Register & Records'}
+                  </h3>
+                  <p className="text-sm text-[var(--text-muted)]">
+                    {language === 'hi'
+                      ? 'विधिक मापविज्ञान अधिनियम के तहत पंजीकृत विनिर्माताओं व आयातकों का ऐतिहासिक प्रवर्तन रिकॉर्ड।'
+                      : 'Search registered manufacturing records, authorized importers, and historical enforcement actions.'}
+                  </p>
+                  <div className="mt-auto pt-3 flex flex-wrap items-center gap-3">
+                    <Link
+                      href="/products"
+                      className="inline-flex items-center gap-1.5 h-8 px-3.5 rounded-[var(--r-sm)] bg-[var(--violet-ac)] text-white text-xs font-medium hover:opacity-90 active:scale-[0.985] transition-all"
+                    >
+                      <span>{language === 'hi' ? 'अभिलेख देखें' : 'Browse register'}</span>
+                      <ArrowUpRight size={13} className="shrink-0" />
+                    </Link>
+                    <Link href="/styleguide" className="inline-flex items-center gap-1 text-xs font-medium text-[var(--link)] hover:text-[var(--link-hover)]">
+                      <ArrowUpRight size={12} />
+                      <span>{language === 'hi' ? 'रिपोर्ट्स' : 'Reports'}</span>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+
+              {/* Wide Banner (reference/03) */}
+              <div className="relative rounded-[var(--r-md)] border-[1.5px] border-[var(--green-br)] bg-[var(--green-t)] px-5 py-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="absolute top-2 right-2 sm:top-2.5 sm:right-3 rounded-[var(--r-sm)] bg-[var(--rose-ac)] text-white px-2 py-0.5 text-[10px] font-bold">
+                  New
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <span className="text-[var(--green-ac)]">
+                    <BookOpen size={20} />
+                  </span>
+                  <span className="text-sm font-semibold text-[var(--text)] pr-12 sm:pr-0">
+                    {language === 'hi'
+                      ? 'विधिक मापविज्ञान (पैकेज्ड कमोडिटीज) संशोधन नियम — राष्ट्रीय राजपत्र अधिसूचना'
+                      : 'Legal Metrology (Packaged Commodities) Amendment Rules — National Gazette Compendium'}
+                  </span>
+                </div>
+
+                <Link
+                  href="/docs"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--green-ac)] hover:underline mr-8 sm:mr-14"
+                >
+                  <span>{language === 'hi' ? 'दस्तावेज देखें (PDF, 2.4 MB)' : 'Download compendium (PDF, 2.4 MB)'}</span>
+                  <ArrowUpRight size={13} />
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          {/* Second Band: Field Scanner Desk */}
+          <div>
+            <div id="field-scanner" className="portal-slab scroll-mt-6">
+              {language === 'hi' ? 'फील्ड स्कैनर एवं भौतिक लेबल मूल्यांकन' : 'Field Scanner & Physical Label Assessment'}
+            </div>
+
+            <div className="portal-panel space-y-6">
+
         {/* Notice Banners */}
         {notice && (
           <div className="rounded-[var(--r-sm)] border border-[var(--green-br)] bg-[var(--green-t)] px-4 py-3 text-xs font-medium text-[var(--green-ac)] flex items-center justify-between">
@@ -1090,8 +1383,11 @@ export default function HomePage() {
           )}
         </section>
       </div>
-    </div>
-  </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
 

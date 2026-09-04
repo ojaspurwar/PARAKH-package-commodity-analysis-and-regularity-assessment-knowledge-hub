@@ -5,6 +5,11 @@
   width: 100%;
 }
 
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
 /* Wide inner container with clamp gutters (edge-to-edge at 100vw, no white side gutters) */
 .portal-container {
   width: min(100% - 2 * var(--gutter), var(--container)) !important;

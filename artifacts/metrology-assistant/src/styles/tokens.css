@@ -104,17 +104,20 @@ h3 { font-size: var(--fs-h3); }
   color: #fff;
   font-size: var(--fs-slab);
   font-weight: 600;
-  height: 54px;
+  min-height: 54px;
   display: flex;
   align-items: center;
   padding-inline: var(--s-6);
+  padding-block: var(--s-2);
   border-radius: var(--r-lg) var(--r-lg) 0 0;
+  word-break: break-word;
 }
 .portal-panel {
   background: var(--bg-panel);
   border-radius: 0 0 var(--r-lg) var(--r-lg);
   box-shadow: var(--sh-1);
   padding: var(--s-4);
+  overflow-x: hidden;
 }
 
 /* Category card: tint + border, never a shadow. */
