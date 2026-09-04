@@ -29,32 +29,29 @@ export default function EcommercePage() {
   ];
 
   return (
-    <div className="space-y-8">
-      <section className="appear relative overflow-hidden rounded-3xl border border-border bg-card px-6 py-8 md:px-9 md:py-10">
-        <div className="absolute right-[-40px] top-[-120px] size-[300px] rounded-full border border-secondary/10" />
-        <div className="relative max-w-3xl">
-          <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[.2em] text-secondary">
-            <span className="size-1.5 rounded-full bg-secondary" />
-            {language === 'hi' ? 'ऑनलाइन मार्केटप्लेस डेस्क' : 'Online marketplace desk'}
-          </div>
-          <h1 className="mt-5 text-3xl font-semibold tracking-[-.05em] md:text-5xl">
-            {language === 'hi' ? <>शेल्फ को लाएं<br /><span className="text-secondary">अपने डेस्क पर।</span></> : <>Bring the shelf<br /><span className="text-secondary">to your desk.</span></>}
-          </h1>
-          <p className="mt-4 max-w-xl text-sm leading-6 text-muted-foreground">
-            {language === 'hi' ? 'Amazon या Flipkart उत्पाद लिंक दर्ज करें। PARAKH घोषित लेबल जानकारी निकालकर उसी साक्ष्य प्रारूप में प्रस्तुत करता है जो फील्ड में प्रयुक्त होता है।' : 'Submit an Amazon or Flipkart product link. PARAKH extracts the declared label information and returns the same reviewable evidence structure used in the field.'}
-          </p>
-        </div>
-      </section>
-      <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_minmax(330px,.65fr)]">
-        <section className="appear delay-1 rounded-2xl border border-border bg-card p-6 md:p-8">
-          <div className="flex items-start gap-4">
-            <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-secondary/10 text-secondary"><Search size={21} /></span>
-            <div>
-              <p className="font-mono text-[10px] uppercase tracking-[.18em] text-muted-foreground">01 / source</p>
-              <h2 className="mt-1 text-xl font-semibold tracking-[-.03em]">{language === 'hi' ? 'उत्पाद URL का निरीक्षण करें' : 'Inspect a product URL'}</h2>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">{language === 'hi' ? 'समर्थित मार्केटप्लेस से किसी सार्वजनिक उत्पाद पृष्ठ का उपयोग करें।' : 'Use a public product page from a supported marketplace.'}</p>
+    <div className="portal-container py-6 space-y-6">
+      {/* Slab Header naming function per AGENTS.md §7 */}
+      <div className="portal-slab">
+        {language === 'hi' ? 'ऑनलाइन उत्पाद एवं ई-कॉमर्स अनुपालन डेस्क' : 'Online Products & E-Commerce Compliance Desk'}
+      </div>
+
+      {/* Flush Panel */}
+      <div className="portal-panel space-y-6">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(330px,.65fr)]">
+          <section className="rounded-[var(--r-md)] border border-[var(--border)] bg-white p-5 md:p-6">
+            <div className="flex items-start gap-4">
+              <div className="portal-icon-well border-[var(--cyan-br)] text-[var(--cyan-ac)]">
+                <Search size={22} />
+              </div>
+              <div>
+                <h2 className="text-base font-semibold text-[var(--text)]">
+                  {language === 'hi' ? 'ऑनलाइन उत्पाद URL का निरीक्षण करें' : 'Inspect an online product URL'}
+                </h2>
+                <p className="mt-1 text-xs text-[var(--text-muted)]">
+                  {language === 'hi' ? 'Amazon या Flipkart से सार्वजनिक उत्पाद लिंक दर्ज करें। PARAKH अनिवार्य घोषणाएं निकालेगा।' : 'Enter a public product link from Amazon or Flipkart. Declarations are extracted under Rule 6.'}
+                </p>
+              </div>
             </div>
-          </div>
           <form onSubmit={handleSubmit} className="mt-8" data-testid="form-web-scan">
             <label className="field-label" htmlFor="product-url">{language === 'hi' ? 'Amazon / Flipkart उत्पाद URL' : 'Amazon / Flipkart URL'}</label>
             <div className="mt-2 flex flex-col gap-2 sm:flex-row">
@@ -91,26 +88,38 @@ export default function EcommercePage() {
         </section>
       </div>
       {result && (
-        <section className="appear rounded-2xl border border-secondary/25 bg-card p-5 md:p-7" data-testid="card-web-scan-result">
-          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-5">
+        <section className="rounded-[var(--r-md)] border border-[var(--border)] bg-white p-5 md:p-6" data-testid="card-web-scan-result">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--border)] pb-4">
             <div>
-              <p className="font-mono text-[10px] uppercase tracking-[.18em] text-secondary">{language === 'hi' ? 'स्कैन परिणाम / समीक्षा हेतु तैयार' : 'Returned scan / ready for review'}</p>
-              <h2 className="mt-1 text-xl font-semibold">{result.productName}</h2>
-              <p className="mt-1 text-xs text-muted-foreground">{result.reference} · {result.location}</p>
+              <span className="text-xs font-semibold text-[var(--cyan-ac)] block">
+                {language === 'hi' ? 'स्कैन परिणाम / समीक्षा हेतु तैयार' : 'Returned scan · Ready for review'}
+              </span>
+              <h2 className="mt-1 text-lg font-semibold text-[var(--text)]">{result.productName}</h2>
+              <div className="mt-1 flex items-center gap-3 text-xs text-[var(--text-muted)] font-mono">
+                <span>Ref: {result.reference}</span>
+                <span>Jurisdiction: {result.location}</span>
+              </div>
             </div>
             <StatusPill status={result.status} submitted={result.submitted} />
           </div>
           <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <p className="max-w-xl text-sm leading-6 text-muted-foreground">{result.ocrText || (language === 'hi' ? 'उत्पाद साक्ष्य तैयार है। प्रत्येक अनुपालन जांच की समीक्षा हेतु पूर्ण रिकॉर्ड खोलें।' : 'Product evidence is ready. Open the full record to inspect each compliance check.')}</p>
-            <Link href={`/scans/${result.id}`} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground" data-testid="link-open-web-result">
-              {language === 'hi' ? 'साक्ष्य खोलें' : 'Open evidence'} <ArrowRight size={15} />
+            <p className="max-w-xl text-sm leading-6 text-[var(--text-muted)]">
+              {result.ocrText || (language === 'hi' ? 'उत्पाद साक्ष्य तैयार है। प्रत्येक अनुपालन जांच की समीक्षा हेतु पूर्ण रिकॉर्ड खोलें।' : 'Product evidence is ready. Open the full record to inspect each compliance check.')}
+            </p>
+            <Link
+              href={`/scans/${result.id}`}
+              className="inline-flex shrink-0 items-center justify-center gap-1.5 h-9 px-4 rounded-[var(--r-sm)] bg-[var(--indigo-600)] text-sm font-medium text-white transition-transform active:scale-[0.985]"
+              data-testid="link-open-web-result"
+            >
+              <span>{language === 'hi' ? 'साक्ष्य खोलें' : 'Open evidence'}</span>
             </Link>
           </div>
-          <div className="mt-4 rounded-xl bg-muted/45 p-2">
+          <div className="mt-4 rounded-[var(--r-sm)] bg-[var(--bg-sunken)] p-2">
             <ScanRow scan={result} compact />
           </div>
         </section>
       )}
+      </div>
     </div>
   );
 }

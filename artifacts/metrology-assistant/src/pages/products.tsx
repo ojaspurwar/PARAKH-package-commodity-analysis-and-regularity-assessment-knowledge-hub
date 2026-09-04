@@ -76,22 +76,45 @@ export default function ProductsPage() {
   const violations = products.reduce((sum, p) => sum + p.rows.filter((scan) => scan.status === 'violation').length, 0);
 
   return (
-    <div className="space-y-8">
-      <section className="appear flex flex-col justify-between gap-5 md:flex-row md:items-end">
-        <div>
-          <p className="font-mono text-[10px] uppercase tracking-[.2em] text-secondary">{t.complianceRepo}</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-[-.045em] md:text-4xl">{t.everyProductOneHistory}</h1>
-          <p className="mt-3 max-w-xl text-sm leading-6 text-muted-foreground">{t.everyProductSub}</p>
-        </div>
-        <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-xs text-muted-foreground"><span className="size-2 rounded-full bg-secondary" /> {scans.data?.length ?? 0} {t.recordsCount} <span className="mx-1 text-border">/</span> {products.length} {t.productsCount} <span className="mx-1 text-border">/</span> <span className="text-destructive">{violations} {t.violationsCount}</span></div>
-      </section>
-
-      <div className="appear delay-1 mb-1 max-w-md">
-        <label className="relative block">
-          <Search size={15} className="pointer-events-none absolute left-3 top-3 text-muted-foreground" />
-          <input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t.searchProductsPlaceholder} className="field-input pl-9" data-testid="input-search-products" />
-        </label>
+    <div className="portal-container py-6 space-y-6">
+      {/* Slab Header naming function per AGENTS.md §7 */}
+      <div className="portal-slab">
+        {language === 'hi' ? 'उत्पाद रिपोजिटरी एवं अनुपालन इतिहास' : 'Products Repository & Compliance History'}
       </div>
+
+      {/* Flush Panel */}
+      <div className="portal-panel space-y-6">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--border)] pb-4">
+          <div>
+            <h2 className="text-base font-semibold text-[var(--text)]">{t.everyProductOneHistory}</h2>
+            <p className="text-xs text-[var(--text-muted)] mt-0.5">{t.everyProductSub}</p>
+          </div>
+          <div className="flex items-center gap-2 text-xs font-mono">
+            <span className="px-2.5 py-1 rounded-[var(--r-sm)] bg-[var(--bg-sunken)] border border-[var(--border)]">
+              {scans.data?.length ?? 0} {t.recordsCount}
+            </span>
+            <span className="px-2.5 py-1 rounded-[var(--r-sm)] bg-[var(--bg-sunken)] border border-[var(--border)]">
+              {products.length} {t.productsCount}
+            </span>
+            <span className="px-2.5 py-1 rounded-[var(--r-sm)] bg-[var(--rose-t)] border border-[var(--rose-br)] text-[var(--rose-ac)] font-semibold">
+              {violations} {t.violationsCount}
+            </span>
+          </div>
+        </div>
+
+        <div className="max-w-md">
+          <label className="relative block">
+            <Search size={15} className="pointer-events-none absolute left-3 top-3 text-[var(--text-muted)]" />
+            <input
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={t.searchProductsPlaceholder}
+              className="w-full h-10 pl-9 pr-3 rounded-[var(--r-sm)] border border-[var(--border)] bg-white text-xs focus:outline-none focus:ring-2 focus:ring-[var(--indigo-600)]"
+              data-testid="input-search-products"
+            />
+          </label>
+        </div>
 
       {scans.isPending ? <SkeletonRows count={5} /> : scans.isError ? <ErrorState onRetry={() => scans.refetch()} /> : products.length ? (
         <div className="grid gap-4 lg:grid-cols-2" data-testid="grid-products">
@@ -161,9 +184,10 @@ export default function ProductsPage() {
         <EmptyState title={t.emptyRepoTitle} body={t.emptyRepoSub} />
       )}
 
-      <div className="appear delay-2 flex items-center gap-3 rounded-2xl border border-border bg-card px-5 py-4 text-sm text-muted-foreground">
-        <Boxes size={18} className="shrink-0 text-secondary" />
-        <p>{t.productHistoryBuiltAutomatically}</p>
+        <div className="flex items-center gap-3 rounded-[var(--r-sm)] border border-[var(--border)] bg-[var(--bg-sunken)] px-4 py-3 text-xs text-[var(--text-muted)]">
+          <Boxes size={16} className="shrink-0 text-[var(--indigo-600)]" />
+          <p>{t.productHistoryBuiltAutomatically}</p>
+        </div>
       </div>
     </div>
   );

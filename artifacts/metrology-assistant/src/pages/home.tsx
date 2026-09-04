@@ -389,50 +389,61 @@ export default function HomePage() {
     .toUpperCase();
 
   return (
-    <div className="space-y-8">
-      <section className="appear relative overflow-hidden rounded-3xl bg-primary px-6 py-7 text-primary-foreground shadow-xl shadow-primary/10 md:px-9 md:py-9">
-        <div className="absolute right-[-80px] top-[-110px] size-[300px] rounded-full border border-primary-foreground/10" />
-        <div className="absolute right-[-24px] top-[-54px] size-[190px] rounded-full border border-primary-foreground/10" />
-        <div className="relative flex flex-col justify-between gap-7 lg:flex-row lg:items-end">
-          <div className="max-w-2xl">
-            <div className="flex flex-wrap items-center gap-3">
-              <span className="inline-flex items-center gap-2 rounded-full bg-primary-foreground/10 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[.16em] text-primary-foreground/75"><span className="size-1.5 rounded-full bg-accent" />{t.fieldDeskBadge}</span>
-              <span className="font-mono text-[10px] uppercase tracking-[.16em] text-primary-foreground/45">{cityLabel} • {dateStamp}</span>
-            </div>
-            <h1 className="mt-5 max-w-xl text-3xl font-semibold tracking-[-.045em] md:text-5xl">{t.heroTitle}<br /><span className="text-accent">{t.heroAccent}</span></h1>
-            <p className="mt-4 max-w-lg text-sm leading-6 text-primary-foreground/65">{t.heroSub}</p>
-          </div>
-          <div className="flex shrink-0 items-center gap-2 self-start rounded-xl border border-primary-foreground/15 bg-primary-foreground/10 p-1 lg:self-end">
-            <button type="button" onClick={() => setLanguage('en')} className={`rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${language === 'en' ? 'bg-accent text-accent-foreground' : 'text-primary-foreground/70 hover:text-primary-foreground'}`} data-testid="button-language-en">English</button>
-            <button type="button" onClick={() => setLanguage('hi')} className={`rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${language === 'hi' ? 'bg-accent text-accent-foreground' : 'text-primary-foreground/70 hover:text-primary-foreground'}`} data-testid="button-language-hi">हिन्दी</button>
-          </div>
-        </div>
-        <div className="relative mt-8 flex flex-wrap items-center gap-x-7 gap-y-3 border-t border-primary-foreground/10 pt-5 text-xs text-primary-foreground/55">
-          <span className="inline-flex items-center gap-2"><ShieldCheck size={14} className="text-accent" /> {t.evidenceWorkflow}</span>
-          <span className="inline-flex items-center gap-2"><Camera size={14} className="text-accent" /> {t.intermittentNetwork}</span>
-          <Link href="/dashboard" className="inline-flex items-center gap-2 font-semibold text-accent hover:underline" data-testid="link-open-dashboard">{t.openSupervisorView} <ArrowRight size={14} /></Link>
-        </div>
-      </section>
+    <div className="portal-container py-6 space-y-6">
+      {/* Slab Header naming function per AGENTS.md §7 */}
+      <div className="portal-slab">
+        {language === 'hi' ? 'फील्ड स्कैनर एवं भौतिक लेबल मूल्यांकन' : 'Field Scanner & Physical Label Assessment'}
+      </div>
 
-      <div className="grid gap-7 xl:grid-cols-[minmax(0,1.5fr)_minmax(350px,1fr)]">
-        <section className="appear delay-1 min-w-0">
-          <div className="mb-4 flex items-end justify-between gap-4">
-            <div><p className="font-mono text-[10px] uppercase tracking-[.18em] text-muted-foreground">{t.captureDesk}</p><h2 className="mt-1 text-xl font-semibold tracking-[-.03em]">{t.startNewInspection}</h2></div>
-            <div className="flex items-center gap-2">
-              {!started && !barcodeScanning && !liveCameraScanning && (
-                <>
-                  <button type="button" onClick={() => { setBarcodeScanning(true); setLiveCameraScanning(false); setStarted(false); }} className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3.5 py-2.5 text-xs font-semibold shadow-sm transition-transform hover:-translate-y-0.5" data-testid="button-scan-barcode">
-                    <ScanBarcode size={15} /> {t.scanBarcode}
-                  </button>
-                  <button type="button" onClick={() => { setLiveCameraScanning(true); setBarcodeScanning(false); setStarted(false); }} className="inline-flex items-center gap-2 rounded-xl bg-secondary px-4 py-2.5 text-xs font-semibold text-secondary-foreground shadow-sm shadow-secondary/20 transition-transform hover:-translate-y-0.5" data-testid="button-live-camera-scanner">
-                    <Camera size={15} />
-                    <span>{language === 'hi' ? 'लाइव कैमरा स्कैनर' : 'Live Camera Scanner'}</span>
-                    <Sparkles size={13} className="text-accent" />
-                  </button>
-                </>
-              )}
-            </div>
+      {/* Flush Panel */}
+      <div className="portal-panel space-y-6">
+        {/* Notice Banners */}
+        {notice && (
+          <div className="rounded-[var(--r-sm)] border border-[var(--green-br)] bg-[var(--green-t)] px-4 py-3 text-xs font-medium text-[var(--green-ac)] flex items-center justify-between">
+            <span>{notice}</span>
+            <button type="button" onClick={() => setNotice('')} className="font-bold ml-2">×</button>
           </div>
+        )}
+        {errorNotice && (
+          <div className="rounded-[var(--r-sm)] border border-[var(--rose-br)] bg-[var(--rose-t)] px-4 py-3 text-xs font-medium text-[var(--rose-ac)] flex items-center justify-between">
+            <span>{errorNotice}</span>
+            <button type="button" onClick={() => setErrorNotice('')} className="font-bold ml-2">×</button>
+          </div>
+        )}
+
+        <div className="grid gap-7 xl:grid-cols-[minmax(0,1.5fr)_minmax(350px,1fr)]">
+          <section className="min-w-0">
+            <div className="mb-4 flex items-center justify-between gap-4 border-b border-[var(--border)] pb-3">
+              <div>
+                <h2 className="text-base font-semibold text-[var(--text)]">{t.startNewInspection}</h2>
+                <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                  {language === 'hi' ? 'पैकेज की तस्वीरें लें या बारकोड स्कैन करके घोषणाओं की पुष्टि करें।' : 'Capture package images or scan barcodes to verify mandatory declarations.'}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                {!started && !barcodeScanning && !liveCameraScanning && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => { setBarcodeScanning(true); setLiveCameraScanning(false); setStarted(false); }}
+                      className="inline-flex items-center gap-1.5 h-8 px-3 rounded-[var(--r-sm)] border border-[var(--border)] bg-white text-xs font-medium hover:bg-[var(--bg-sunken)] transition-colors"
+                      data-testid="button-scan-barcode"
+                    >
+                      <ScanBarcode size={14} /> {t.scanBarcode}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setLiveCameraScanning(true); setBarcodeScanning(false); setStarted(false); }}
+                      className="inline-flex items-center gap-1.5 h-8 px-3.5 rounded-[var(--r-sm)] bg-[var(--cyan-ac)] text-white text-xs font-medium transition-transform active:scale-[0.985]"
+                      data-testid="button-live-camera-scanner"
+                    >
+                      <Camera size={14} />
+                      <span>{language === 'hi' ? 'लाइव कैमरा स्कैनर' : 'Live camera scanner'}</span>
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
 
           {liveCameraScanning ? (
             <LiveCameraCapture onCapture={handleLiveCapture} onCancel={() => setLiveCameraScanning(false)} />
@@ -480,11 +491,16 @@ export default function HomePage() {
                   </button>
                 </div>
               </div>
-              <div className="absolute bottom-6 right-8 hidden font-mono text-[10px] uppercase leading-5 tracking-[.14em] text-muted-foreground/55 md:block">/01<br />camera<br /><span className="text-secondary">● live ai</span></div>
             </div>
           ) : (
             <form onSubmit={handleCreate} className="rounded-2xl border border-border bg-card p-5 md:p-6" data-testid="form-new-scan">
-              <div className="mb-5 flex items-center justify-between border-b border-border pb-4"><div><p className="font-mono text-[10px] uppercase tracking-[.16em] text-secondary">{t.captureModeActive}</p><p className="mt-1 text-sm text-muted-foreground">{t.enterWhatLabelTells}</p></div><button type="button" onClick={() => setStarted(false)} className="text-xs font-semibold text-muted-foreground hover:text-foreground" data-testid="button-cancel-capture">{t.cancel}</button></div>
+              <div className="mb-5 flex items-center justify-between border-b border-border pb-4">
+                <div>
+                  <h3 className="text-sm font-semibold text-[var(--text)]">{t.captureModeActive}</h3>
+                  <p className="mt-0.5 text-xs text-muted-foreground">{t.enterWhatLabelTells}</p>
+                </div>
+                <button type="button" onClick={() => setStarted(false)} className="text-xs font-semibold text-muted-foreground hover:text-foreground" data-testid="button-cancel-capture">{t.cancel}</button>
+              </div>
 
               {/* 1. Category-specific Intelligence Card */}
               {/* CASE A: Food Items -> Full Nutritional Ingredients, Health Benefits & Harms */}
@@ -991,8 +1007,13 @@ export default function HomePage() {
           )}
         </section>
 
-        <section className="appear delay-2 min-w-0">
-          <div className="mb-4 flex items-end justify-between gap-4"><div><p className="font-mono text-[10px] uppercase tracking-[.18em] text-muted-foreground">{language === 'hi' ? 'स्थानीय रजिस्टर' : 'Local register'}</p><h2 className="mt-1 text-xl font-semibold tracking-[-.03em]">{t.recentScans}</h2></div><span className="font-mono text-[11px] text-muted-foreground">{scanQuery.data?.length ?? 0} {language === 'hi' ? 'रिकॉर्ड्स' : 'records'}</span></div>
+        <section className="min-w-0">
+          <div className="mb-4 flex items-center justify-between gap-4 border-b border-[var(--border)] pb-3">
+            <div>
+              <h2 className="text-base font-semibold text-[var(--text)]">{t.recentScans}</h2>
+            </div>
+            <span className="font-mono text-xs text-muted-foreground">{scanQuery.data?.length ?? 0} {language === 'hi' ? 'रिकॉर्ड्स' : 'records'}</span>
+          </div>
 
           {/* Category Filter Pills */}
           <div className="mb-3 flex flex-wrap gap-1.5 overflow-x-auto pb-1">
@@ -1043,6 +1064,7 @@ export default function HomePage() {
         </section>
       </div>
     </div>
+  </div>
   );
 }
 
@@ -1059,10 +1081,12 @@ function ReviewCard({
 }) {
   const { language, t } = useI18n();
   return (
-    <div className="mt-6 overflow-hidden rounded-2xl border border-secondary/25 bg-card" data-testid="card-review-scan">
-      <div className="scanline h-1" />
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
-        <div><p className="font-mono text-[10px] uppercase tracking-[.15em] text-secondary">{t.reviewBannerTitle}</p><h3 className="mt-1 text-base font-semibold">{scan.productName}</h3></div>
+    <div className="mt-6 overflow-hidden rounded-[var(--r-md)] border border-[var(--border)] bg-white" data-testid="card-review-scan">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border)] px-5 py-4">
+        <div>
+          <span className="text-xs font-medium text-[var(--text-muted)] block">{t.reviewBannerTitle}</span>
+          <h3 className="mt-0.5 text-base font-semibold text-[var(--text)]">{scan.productName}</h3>
+        </div>
         <StatusPill status={scan.status} submitted={scan.submitted} />
       </div>
       <div className="grid gap-4 px-5 py-5 md:grid-cols-[1fr_auto]">

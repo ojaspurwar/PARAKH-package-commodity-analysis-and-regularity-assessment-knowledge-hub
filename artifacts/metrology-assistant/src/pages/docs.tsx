@@ -12,24 +12,29 @@ export default function DocsPage() {
   };
 
   return (
-    <div className="space-y-8">
-      <section className="appear flex flex-col justify-between gap-5 md:flex-row md:items-end">
-        <div>
-          <p className="font-mono text-[10px] uppercase tracking-[.2em] text-secondary">
-            {language === 'hi' ? 'विधिक एवं तकनीकी ज्ञान केंद्र' : 'Statutory & Technical Knowledge Hub'}
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-[-.045em] md:text-4xl">
-            {language === 'hi' ? 'दस्तावेज़ीकरण एवं प्रणाली वास्तुकला' : 'Documentation & Architecture'}
-          </h1>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
-            {language === 'hi' ? 'विधिक मापविज्ञान (पैकेज्ड वस्तुएं) नियम, 2011 का पूर्ण विधिक संहिताकरण, सॉफ्टवेयर आर्किटेक्चर आरेख और फील्ड परिनियोजन रूपरेखा।' : 'Complete statutory codification of the Legal Metrology (Packaged Commodities) Rules, 2011, combined with system architecture diagrams and the field deployment framework.'}
-          </p>
+    <div className="portal-container py-6 space-y-6">
+      {/* Slab Header naming function per AGENTS.md §7 */}
+      <div className="portal-slab">
+        {language === 'hi' ? 'वैधानिक दस्तावेज एवं विधिक मापविज्ञान संहिताकरण' : 'Statutory Documents & Legal Metrology Codification'}
+      </div>
+
+      {/* Flush Panel */}
+      <div className="portal-panel space-y-6">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--border)] pb-4">
+          <div>
+            <h2 className="text-base font-semibold text-[var(--text)]">
+              {language === 'hi' ? 'विधिक मापविज्ञान नियम एवं तकनीकी रूपरेखा' : 'Legal Metrology Rules & Technical Framework'}
+            </h2>
+            <p className="text-xs text-[var(--text-muted)] mt-0.5">
+              {language === 'hi'
+                ? 'पैकेज्ड कमोडिटीज नियम, 2011 (अध्याय I - VII), प्रणाली वास्तुकला एवं प्रवर्तन मानक संचालन प्रक्रिया (SOP)।'
+                : 'Packaged Commodities Rules, 2011 (Chapters I – VII), system architecture, and standard operating procedures.'}
+            </p>
+          </div>
+          <span className="font-mono text-xs px-2.5 py-1 rounded-[var(--r-sm)] bg-[var(--bg-sunken)] border border-[var(--border)]">
+            Chapters I – VII (Rules 1–34)
+          </span>
         </div>
-        <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-xs text-muted-foreground">
-          <span className="size-2 rounded-full bg-secondary" />
-          <span>{language === 'hi' ? 'संहिताबद्ध नियम: अध्याय I – VII (नियम 1–34)' : 'Rules Codified: Chapters I – VII (Rules 1–34)'}</span>
-        </div>
-      </section>
 
       {/* Tab Navigation */}
       <div className="flex flex-wrap gap-2 border-b border-border pb-3">
@@ -400,6 +405,7 @@ export default function DocsPage() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

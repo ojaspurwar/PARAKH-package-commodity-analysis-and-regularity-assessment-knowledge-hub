@@ -87,17 +87,48 @@ export default function ScanDetailPage() {
   };
 
   return (
-    <div className="space-y-7">
-      <div className="appear flex flex-wrap items-center justify-between gap-4">
-        <Link href="/" className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground" data-testid="link-back-scans"><ArrowLeft size={16} /> {t.backToScans}</Link>
-        <span className="font-mono text-[11px] uppercase tracking-[.16em] text-muted-foreground">{t.evidenceRecord} / {scan.reference}</span>
+    <div className="portal-container py-6 space-y-6">
+      {/* Back button and breadcrumb */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--link)] hover:text-[var(--link-hover)]"
+          data-testid="link-back-scans"
+        >
+          <ArrowLeft size={14} /> {t.backToScans}
+        </Link>
+        <span className="font-mono text-xs text-[var(--text-muted)]">
+          {t.evidenceRecord}: <span className="font-semibold text-[var(--text)]">{scan.reference}</span>
+        </span>
       </div>
-      <section className="appear delay-1 overflow-hidden rounded-3xl border border-border bg-card">
-        <div className="flex flex-col justify-between gap-6 border-b border-border bg-primary px-6 py-7 text-primary-foreground md:flex-row md:items-end md:px-8">
-          <div><div className="flex flex-wrap items-center gap-3"><span className="rounded-full bg-primary-foreground/10 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[.15em] text-primary-foreground/65">{scan.source === 'ecommerce' ? (language === 'hi' ? 'ऑनलाइन उत्पाद' : 'Online product') : (language === 'hi' ? 'फ़ील्ड कैप्चर' : 'Field capture')}</span><span className="font-mono text-[10px] text-primary-foreground/45">{scan.reference}</span></div><h1 className="mt-4 max-w-2xl text-3xl font-semibold tracking-[-.05em] md:text-4xl">{scan.productName}</h1><div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-primary-foreground/60"><span>{scan.category}</span><span className="inline-flex items-center gap-1"><MapPin size={13} />{scan.location}</span><span>{language === 'hi' ? `निरीक्षक: ${scan.officerName}` : `Captured by ${scan.officerName}`}</span></div></div>
+
+      {/* Slab Header naming function per AGENTS.md §7 */}
+      <div className="portal-slab">
+        {language === 'hi' ? 'कमोडिटी निरीक्षण साक्ष्य एवं सत्यापन विवरण' : 'Commodity Inspection Evidence & Verification Detail'}
+      </div>
+
+      {/* Flush Panel */}
+      <div className="portal-panel space-y-6">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--border)] pb-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-xs px-2 py-0.5 rounded-[var(--r-sm)] bg-[var(--indigo-100)] text-[var(--indigo-700)] font-semibold">
+                {scan.source === 'ecommerce' ? (language === 'hi' ? 'ऑनलाइन उत्पाद' : 'Online product') : (language === 'hi' ? 'फील्ड कैप्चर' : 'Field capture')}
+              </span>
+              <span className="font-mono text-xs text-[var(--text-muted)]">{scan.reference}</span>
+            </div>
+            <h1 className="mt-2 text-xl font-semibold text-[var(--text)]">{scan.productName}</h1>
+            <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[var(--text-muted)]">
+              <span>{scan.category}</span>
+              <span className="inline-flex items-center gap-1"><MapPin size={12} /> {scan.location}</span>
+              <span>{language === 'hi' ? `निरीक्षक: ${scan.officerName}` : `Captured by ${scan.officerName}`}</span>
+            </div>
+          </div>
           <StatusPill status={scan.status} submitted={scan.submitted} />
         </div>
-        <div className="grid divide-y divide-border md:grid-cols-[1.1fr_1fr] md:divide-x md:divide-y-0">
+
+        <section className="overflow-hidden rounded-[var(--r-md)] border border-[var(--border)] bg-white">
+          <div className="grid divide-y divide-[var(--border)] md:grid-cols-[1.1fr_1fr] md:divide-x md:divide-y-0">
           <div className="min-h-[330px] bg-muted/20 p-4 md:p-6">
             {scan.imageUrl ? (
               <AnnotatedPhoto
@@ -306,5 +337,6 @@ export default function ScanDetailPage() {
         </section>
       </div>
     </div>
+  </div>
   );
 }
