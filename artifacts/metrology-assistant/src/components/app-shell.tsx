@@ -26,7 +26,6 @@ import {
   Info,
   ArrowUpRight,
 } from 'lucide-react';
-import { useHealthCheck } from '@workspace/api-client-react';
 import { appConfig } from '@/config';
 import { useAuth, PROFILES, type UserRole } from '@/hooks/use-auth';
 import { useI18n } from '@/lib/i18n';
@@ -79,7 +78,6 @@ export function AppShell({ children }: AppShellProps) {
 
   const roleMenuRef = useRef<HTMLDivElement>(null);
 
-  const { data: health, isPending: healthPending } = useHealthCheck();
   const { user, role, switchRole } = useAuth();
   const { language, setLanguage, t } = useI18n();
 
@@ -131,12 +129,6 @@ export function AppShell({ children }: AppShellProps) {
     { href: '/styleguide', label: language === 'hi' ? 'रिपोर्ट्स' : 'Reports', icon: FileSpreadsheet },
   ];
 
-  const healthText = healthPending
-    ? (language === 'hi' ? 'जाँच जारी...' : 'Checking...')
-    : health?.status === 'ok'
-    ? (language === 'hi' ? 'सिस्टम सक्रिय' : 'System active')
-    : (language === 'hi' ? 'कनेक्टेड' : 'Connected');
-
   return (
     <div className="min-h-screen flex flex-col bg-[var(--bg-page)] text-[var(--text)] font-sans antialiased">
       {/* ============================================================ */}
@@ -152,8 +144,7 @@ export function AppShell({ children }: AppShellProps) {
             >
               {language === 'hi' ? 'मुख्य सामग्री पर जाएं' : 'Skip to main content'}
             </a>
-            <span className="hidden sm:inline-flex items-center gap-1.5 opacity-90 font-medium">
-              <span className="inline-block size-1.5 rounded-full bg-[var(--green-ac)]" />
+            <span className="hidden sm:inline-flex items-center opacity-90 font-medium">
               {language === 'hi' ? 'भारत सरकार | विधिक मापविज्ञान प्रभाग' : 'Government of India | Legal Metrology Division'}
             </span>
           </div>
@@ -270,12 +261,6 @@ export function AppShell({ children }: AppShellProps) {
 
           {/* Right: Officer Identity & District / Role Popover */}
           <div className="flex items-center gap-3">
-            {/* Health pill */}
-            <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-[var(--r-sm)] border border-[var(--border)] bg-[var(--bg-sunken)] text-xs">
-              <span className={`size-2 rounded-full ${healthPending ? 'bg-[var(--amber-ac)] animate-pulse' : 'bg-[var(--green-ac)]'}`} />
-              <span className="text-[var(--text-muted)] font-mono text-[11px]">{healthText}</span>
-            </div>
-
             {/* Officer Profile & Switch Role dropdown */}
             <div className="relative" ref={roleMenuRef}>
               <button
@@ -617,11 +602,10 @@ export function AppShell({ children }: AppShellProps) {
                 </li>
                 <li className="pt-1">
                   <span className="block text-[var(--text)] font-medium">
-                    {language === 'hi' ? 'सिस्टम स्थिति' : 'System status'}:
+                    {language === 'hi' ? 'संस्करण' : 'Portal version'}:
                   </span>
-                  <span className="font-mono text-[11px] inline-flex items-center gap-1">
-                    <span className="size-1.5 rounded-full bg-[var(--green-ac)]" />
-                    {healthText} (v{appConfig.version})
+                  <span className="font-mono text-[11px]">
+                    v{appConfig.version}
                   </span>
                 </li>
                 <li className="pt-1">
