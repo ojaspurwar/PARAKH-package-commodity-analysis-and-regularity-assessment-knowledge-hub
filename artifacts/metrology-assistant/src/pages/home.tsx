@@ -421,13 +421,13 @@ export default function HomePage() {
         />
         <div className="landing-hero__scrim" aria-hidden="true" />
         <div className="portal-container">
-          <div className="landing-hero__body space-y-4 py-16">
-            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-white leading-tight">
+          <div className="landing-hero__body space-y-4 py-8 sm:py-16">
+            <h1 className="text-2xl sm:text-4xl font-bold tracking-tight text-white leading-tight">
               {language === 'hi'
                 ? 'विधिक मापविज्ञान प्रवर्तन पोर्टल'
                 : 'Legal Metrology Enforcement Portal'}
             </h1>
-            <p className="text-base sm:text-lg text-[#C9DAEC] leading-relaxed">
+            <p className="text-sm sm:text-lg text-[#C9DAEC] leading-relaxed">
               {language === 'hi'
                 ? 'विधिक मापविज्ञान (पैकेज्ड कमोडिटीज) नियम, 2011 के नियम 6 एवं नियम 7 के तहत अनिवार्य घोषणाओं का त्वरित डिजिटल मूल्यांकन एवं सत्यापन।'
                 : 'Statutory label compliance assessment and verification under Rule 6 & 7 of the Legal Metrology (Packaged Commodities) Rules, 2011.'}
@@ -435,7 +435,7 @@ export default function HomePage() {
             <div className="pt-2">
               <a
                 href="#field-scanner"
-                className="inline-flex items-center justify-center px-5 py-2.5 rounded-[var(--r-sm)] border-2 border-white text-white text-sm font-semibold hover:bg-white/10 active:scale-[0.985] transition-all"
+                className="inline-flex items-center justify-center px-5 py-2.5 rounded-[var(--r-sm)] border-2 border-white text-white text-sm font-semibold hover:bg-white/10 active:scale-[0.985] transition-all w-full sm:w-auto"
               >
                 {language === 'hi' ? 'फील्ड स्कैनर डेस्क प्रारंभ करें' : 'Launch field scanner'}
               </a>
@@ -446,9 +446,8 @@ export default function HomePage() {
 
       {/* ============================================================ */}
       {/* 2. ECI BANDS BELOW HERO on --bg-page (#FAFAFA)               */}
-      {/* 56px top padding so pastels are not crowded against the hero */}
       {/* ============================================================ */}
-      <div className="band bg-[var(--bg-page)] pt-14 pb-12">
+      <div className="band bg-[var(--bg-page)] pt-6 sm:pt-14 pb-12">
         <div className="portal-container space-y-8">
           {/* First Band: Statutory Services & Surveillance */}
           <div>
@@ -721,14 +720,14 @@ export default function HomePage() {
 
         <div className="grid gap-7 xl:grid-cols-[minmax(0,1.5fr)_minmax(350px,1fr)]">
           <section className="min-w-0">
-            <div className="mb-4 flex items-center justify-between gap-4 border-b border-[var(--border)] pb-3">
+            <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[var(--border)] pb-3">
               <div>
                 <h2 className="text-base font-semibold text-[var(--text)]">{t.startNewInspection}</h2>
                 <p className="text-xs text-[var(--text-muted)] mt-0.5">
                   {language === 'hi' ? 'पैकेज की तस्वीरें लें या बारकोड स्कैन करके घोषणाओं की पुष्टि करें।' : 'Capture package images or scan barcodes to verify mandatory declarations.'}
                 </p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 {!started && !barcodeScanning && !liveCameraScanning && (
                   <>
                     <button

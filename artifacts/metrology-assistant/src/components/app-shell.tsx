@@ -119,7 +119,7 @@ export function AppShell({ children }: AppShellProps) {
       {/* ============================================================ */}
       <div className="header-row-1 select-none">
         <div className="header-row-1__inner">
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 overflow-hidden">
             {/* Indian flag icon 20×14 */}
             <svg className="gov-banner__flag rounded-[2px]" viewBox="0 0 20 14" width="20" height="14" aria-hidden="true">
               <rect width="20" height="4.67" fill="#FF9933" />
@@ -127,13 +127,13 @@ export function AppShell({ children }: AppShellProps) {
               <rect y="9.34" width="20" height="4.66" fill="#138808" />
               <circle cx="10" cy="7" r="1.9" fill="#000080" />
             </svg>
-            <span className="font-medium text-[#2C3038]">
+            <span className="font-medium text-[#2C3038] truncate text-xs sm:text-sm">
               {language === 'hi'
                 ? 'भारत सरकार का आधिकारिक विधिक मापविज्ञान पोर्टल'
                 : 'An official portal of the Government of India'}
             </span>
           </div>
-          <span className="hidden sm:inline text-[13px] text-[#55565E] font-medium">
+          <span className="hidden sm:inline text-[13px] text-[#55565E] font-medium shrink-0">
             {language === 'hi'
               ? 'उपभोक्ता मामले, खाद्य और सार्वजनिक वितरण मंत्रालय'
               : 'Ministry of Consumer Affairs, Food & Public Distribution'}
@@ -163,9 +163,9 @@ export function AppShell({ children }: AppShellProps) {
           </div>
 
           {/* Right: Accessibility Controls & Language Toggle */}
-          <div className="flex items-center gap-3 text-[14px]">
+          <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-[14px]">
             {/* A− A A+ font size controls */}
-            <div className="flex items-center gap-1 font-medium" title="Font size control">
+            <div className="flex items-center gap-0.5 sm:gap-1 font-medium" title="Font size control">
               <button
                 type="button"
                 onClick={() => handleTextSizeChange('sm')}
@@ -199,30 +199,30 @@ export function AppShell({ children }: AppShellProps) {
             </div>
 
             {/* 1px divider */}
-            <span className="inline-block w-[1px] h-4 bg-white/28" aria-hidden="true" />
+            <span className="inline-block w-[1px] h-3.5 sm:h-4 bg-white/28" aria-hidden="true" />
 
             {/* Contrast toggle */}
             <button
               type="button"
               onClick={handleToggleContrast}
-              className={`px-2 py-0.5 rounded-[var(--r-sm)] font-medium transition-colors inline-flex items-center gap-1.5 ${
+              className={`px-1.5 sm:px-2 py-0.5 rounded-[var(--r-sm)] font-medium transition-colors inline-flex items-center gap-1 ${
                 highContrast ? 'bg-white text-[#052963] font-bold' : 'text-[#C9DAEC] hover:text-white'
               }`}
               title="Toggle High Contrast"
             >
-              <Sun size={14} />
-              <span className="hidden xs:inline">{highContrast ? 'Normal' : 'Contrast'}</span>
+              <Sun size={13} className="shrink-0" />
+              <span className="hidden sm:inline">{highContrast ? 'Normal' : 'Contrast'}</span>
             </button>
 
             {/* 1px divider */}
-            <span className="inline-block w-[1px] h-4 bg-white/28" aria-hidden="true" />
+            <span className="inline-block w-[1px] h-3.5 sm:h-4 bg-white/28" aria-hidden="true" />
 
             {/* Language Switcher: English / हिन्दी */}
             <div className="flex items-center gap-1 font-medium">
               <button
                 type="button"
                 onClick={() => setLanguage('en')}
-                className={`px-1.5 sm:px-2 py-0.5 rounded transition-colors text-xs ${
+                className={`px-1.5 sm:px-2 py-0.5 rounded transition-colors text-[11px] sm:text-xs ${
                   language === 'en' ? 'bg-white text-[#052963] font-bold' : 'text-[#C9DAEC] hover:text-white'
                 }`}
               >
@@ -232,7 +232,7 @@ export function AppShell({ children }: AppShellProps) {
               <button
                 type="button"
                 onClick={() => setLanguage('hi')}
-                className={`px-1.5 sm:px-2 py-0.5 rounded transition-colors text-xs font-medium ${
+                className={`px-1.5 sm:px-2 py-0.5 rounded transition-colors text-[11px] sm:text-xs font-medium ${
                   language === 'hi' ? 'bg-white text-[#052963] font-bold' : 'text-[#C9DAEC] hover:text-white'
                 }`}
                 style={{ fontFamily: 'var(--font-hi)' }}
@@ -249,8 +249,31 @@ export function AppShell({ children }: AppShellProps) {
       {/* ============================================================ */}
       <div className="header-row-3">
         <div className="header-row-3__grid">
-          {/* Left: A single <img> of DoCA lockup (height 88px) */}
-          <div className="flex items-center shrink-0">
+          {/* Mobile-only top bar: DoCA Emblem on left, PARAKH mark on right */}
+          <div className="masthead-mobile-top-bar flex sm:hidden items-center justify-between w-full">
+            <Link href="/" className="block focus:outline-none focus:ring-2 focus:ring-[#005EA2] rounded" aria-label="PARAKH Portal Home">
+              <picture>
+                <source srcSet="/assets/doca-lockup.webp" type="image/webp" />
+                <img
+                  src="/assets/doca-lockup.png"
+                  alt="Department of Consumer Affairs, Government of India"
+                  width="200"
+                  height="44"
+                  loading="eager"
+                  decoding="async"
+                  className="masthead-doca-img"
+                />
+              </picture>
+            </Link>
+            <img
+              src="/assets/parakh.svg"
+              alt="PARAKH"
+              className="masthead-parakh-svg"
+            />
+          </div>
+
+          {/* Desktop Left: A single <img> of DoCA lockup (height 88px) */}
+          <div className="hidden sm:flex items-center shrink-0">
             <Link href="/" className="block focus:outline-none focus:ring-2 focus:ring-[#005EA2] rounded" aria-label="PARAKH Portal Home">
               <picture>
                 <source srcSet="/assets/doca-lockup.webp" type="image/webp" />
@@ -280,7 +303,7 @@ export function AppShell({ children }: AppShellProps) {
             </span>
           </div>
 
-          {/* Right: PARAKH mark + Officer chip */}
+          {/* Right: PARAKH mark + Officer chip (hidden on mobile, shown on desktop) */}
           <div className="masthead-right-block">
             <img
               src="/assets/parakh.svg"
@@ -379,6 +402,20 @@ export function AppShell({ children }: AppShellProps) {
             })}
           </ul>
 
+          {/* Mobile active section indicator (< 860px) */}
+          <div className="flex md:hidden items-center gap-2 text-sm font-semibold text-[#1E1F24] min-w-0">
+            {(() => {
+              const currentItem = navItems.find((i) => i.href === '/' ? location === '/' : location.startsWith(i.href)) || navItems[0];
+              const Icon = currentItem.icon;
+              return (
+                <>
+                  <Icon size={18} className="text-[#052963] shrink-0" />
+                  <span className="truncate">{currentItem.label}</span>
+                </>
+              );
+            })()}
+          </div>
+
           {/* Mobile hamburger button (< 860px) */}
           <button
             type="button"
@@ -421,10 +458,33 @@ export function AppShell({ children }: AppShellProps) {
             </div>
 
             <div className="p-4 bg-[var(--bg-sunken)] border-b border-[var(--border)]">
-              <div className="text-xs font-semibold text-[var(--text)]">{user.name}</div>
-              <div className="text-[11px] text-[var(--text-muted)]"><span className="font-mono">{user.badgeId}</span> | {user.jurisdiction}</div>
-              <div className="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-[var(--navy-100)] text-[var(--navy-900)]">
-                {user.roleTitle}
+              <div className="flex items-center justify-between mb-1">
+                <div className="text-xs font-semibold text-[var(--text)]">{user.name}</div>
+                <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-white border border-[var(--border)] text-[var(--navy-900)]">
+                  {user.badgeId}
+                </span>
+              </div>
+              <div className="text-[11px] text-[var(--text-muted)]">{user.jurisdiction}</div>
+              <div className="mt-2 pt-2 border-t border-[var(--border)]">
+                <span className="block text-[10px] text-[var(--text-muted)] font-medium mb-1">
+                  {language === 'hi' ? 'भूमिका बदलें' : 'Active role'}:
+                </span>
+                <div className="grid grid-cols-3 gap-1">
+                  {(['officer', 'supervisor', 'auditor'] as UserRole[]).map((r) => (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => switchRole(r)}
+                      className={`px-2 py-1 rounded text-[10px] font-semibold transition-colors capitalize ${
+                        role === r
+                          ? 'bg-[#052963] text-white'
+                          : 'bg-white border border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--bg-sunken)]'
+                      }`}
+                    >
+                      {r}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 

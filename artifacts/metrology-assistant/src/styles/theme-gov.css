@@ -77,11 +77,20 @@
   align-items: center;
   justify-content: space-between;
   white-space: nowrap;
+  overflow: hidden;
 }
 .gov-banner__flag {
   width: 20px;
   height: 14px;
   flex: none;
+}
+
+@media (max-width: 640px) {
+  .header-row-1 {
+    height: 32px;
+    min-height: 32px;
+    font-size: 12px;
+  }
 }
 
 /* ==========================================================================
@@ -114,6 +123,14 @@
 }
 .header-row-2 a:hover {
   color: #FFFFFF;
+}
+
+@media (max-width: 640px) {
+  .header-row-2 {
+    height: 40px;
+    min-height: 40px;
+    font-size: 13px;
+  }
 }
 
 /* ==========================================================================
@@ -241,7 +258,7 @@
 }
 
 /* Row 3 Responsive */
-@media (max-width: 1024px) {
+@media (max-width: 1024px) and (min-width: 641px) {
   .header-row-3__grid {
     grid-template-columns: 1fr;
     justify-items: center;
@@ -255,39 +272,60 @@
     gap: 16px;
   }
 }
+
+/* Mobile Masthead Overhaul (< 640px) */
 @media (max-width: 640px) {
+  .header-row-3 {
+    min-height: auto;
+  }
+  .header-row-3__grid {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding-inline: 16px;
+    padding-block: 12px;
+    min-height: auto;
+  }
+  .masthead-mobile-top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
   .masthead-doca-img {
-    height: 64px;
+    height: 44px;
+    width: auto;
+    max-width: 180px;
   }
   .masthead-parakh-svg {
-    height: 44px;
+    height: 34px;
+    width: auto;
   }
   .masthead-center-block {
     white-space: normal;
     text-align: center;
     max-width: 100%;
+    width: 100%;
   }
   .masthead-title-hi {
-    font-size: 18px;
-    white-space: normal;
-  }
-  .masthead-title-en {
-    font-size: clamp(20px, 6vw, 24px);
+    font-size: 14px;
     white-space: normal;
     line-height: 1.25;
   }
+  .masthead-title-en {
+    font-size: 17px;
+    font-weight: 700;
+    white-space: normal;
+    line-height: 1.2;
+    margin-top: 2px;
+  }
   .masthead-title-brand {
-    font-size: 14px;
+    font-size: 12px;
+    margin-top: 2px;
   }
   .masthead-right-block {
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-    gap: 12px;
-  }
-  .masthead-officer-chip {
-    width: auto;
-    max-width: 100%;
+    display: none;
   }
 }
 
@@ -453,3 +491,43 @@
   background: linear-gradient(90deg, rgba(6,33,53,.92) 0%, rgba(6,33,53,.72) 55%, rgba(6,33,53,.45) 100%);
 }
 .landing-hero__body { position: relative; color: #fff; max-width: 34ch; }
+
+@media (max-width: 640px) {
+  .landing-hero {
+    min-height: 280px;
+  }
+  .landing-hero__body {
+    padding-block: 28px !important;
+    max-width: 100%;
+  }
+  .landing-hero h1 {
+    font-size: 22px !important;
+    line-height: 1.25 !important;
+  }
+  .landing-hero p {
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+  }
+  .portal-slab {
+    font-size: 16px !important;
+    min-height: 46px !important;
+    padding-inline: 16px !important;
+  }
+  .portal-panel {
+    padding: 14px !important;
+  }
+  .portal-card {
+    padding: 16px !important;
+  }
+  /* Prevent iOS automatic zoom on text inputs while keeping full readability */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Global viewport scroll guard */
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100vw;
+}

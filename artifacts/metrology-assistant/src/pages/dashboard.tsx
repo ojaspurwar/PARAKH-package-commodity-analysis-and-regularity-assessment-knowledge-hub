@@ -168,8 +168,8 @@ export default function DashboardPage() {
                     {metrics.violationsByType.slice(0, 6).map((violation) => {
                       const max = metrics.violationsByType[0].count || 1;
                       return (
-                        <div key={violation.label} className="flex items-center gap-3">
-                          <span className="w-40 shrink-0 truncate text-xs font-medium text-[var(--text)]" title={violation.label}>
+                        <div key={violation.label} className="flex items-center gap-2 sm:gap-3">
+                          <span className="w-28 xs:w-36 sm:w-40 shrink-0 truncate text-xs font-medium text-[var(--text)]" title={violation.label}>
                             {violation.label}
                           </span>
                           <div className="h-2 flex-1 overflow-hidden rounded-full bg-[var(--bg-sunken)]">

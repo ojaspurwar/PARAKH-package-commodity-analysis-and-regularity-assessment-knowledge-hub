@@ -151,183 +151,318 @@ export default function ProductsPage() {
           )}
         </div>
 
-        {/* Products Repository Data Table per AGENTS.md §7 */}
+        {/* Products Repository Data Table & Mobile Card List per AGENTS.md §7 */}
         {scans.isPending ? (
           <SkeletonRows count={5} />
         ) : scans.isError ? (
           <ErrorState onRetry={() => scans.refetch()} />
         ) : products.length ? (
-          <div className="w-full overflow-x-auto rounded-[var(--r-md)] border border-[var(--border)] bg-white" data-testid="table-products-container">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead className="bg-[var(--bg-sunken)] text-[var(--text-muted)] border-b border-[var(--border)] select-none">
-                <tr className="h-10">
-                  <th className="px-4 py-2 font-semibold">
-                    {language === 'hi' ? 'कमोडिटी का नाम' : 'Commodity & Barcode'}
-                  </th>
-                  <th className="px-4 py-2 font-semibold">
-                    {language === 'hi' ? 'श्रेणी' : 'Category'}
-                  </th>
-                  <th className="px-4 py-2 font-semibold text-right">
-                    {language === 'hi' ? 'कुल निरीक्षण' : 'Inspections'}
-                  </th>
-                  <th className="px-4 py-2 font-semibold text-right">
-                    {language === 'hi' ? 'नवीनतम निरीक्षण' : 'Latest Inspection'}
-                  </th>
-                  <th className="px-4 py-2 font-semibold text-center">
-                    {language === 'hi' ? 'अनुपालन स्थिति' : 'Compliance Status'}
-                  </th>
-                  <th className="px-4 py-2 font-semibold text-right">
-                    {language === 'hi' ? 'कार्रवाई' : 'Actions'}
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[var(--border)]">
-                {products.map((product) => {
-                  const hasViolations = product.rows.some((r) => r.status === 'violation');
-                  const isExpanded = expandedProduct === product.key;
-                  const latestDateStr = typeof product.latest.capturedAt === 'string'
-                    ? product.latest.capturedAt.replace('T', ' ').slice(0, 16)
-                    : new Date(product.latest.capturedAt).toISOString().replace('T', ' ').slice(0, 16);
+          <div className="w-full rounded-[var(--r-md)] border border-[var(--border)] bg-white overflow-hidden" data-testid="table-products-container">
+            {/* 1. Mobile Card List (< 768px): High-density, touch-friendly, zero horizontal scrolling */}
+            <div className="divide-y divide-[var(--border)] md:hidden">
+              {products.map((product) => {
+                const hasViolations = product.rows.some((r) => r.status === 'violation');
+                const isExpanded = expandedProduct === product.key;
+                const latestDateStr = typeof product.latest.capturedAt === 'string'
+                  ? product.latest.capturedAt.replace('T', ' ').slice(0, 16)
+                  : new Date(product.latest.capturedAt).toISOString().replace('T', ' ').slice(0, 16);
 
-                  return (
-                    <React.Fragment key={product.key}>
-                      <tr
-                        className={`h-10 transition-colors hover:bg-[var(--indigo-050)] ${
-                          hasViolations ? 'bg-rose-t/15' : ''
-                        }`}
-                        data-testid={`row-product-${product.key.replaceAll(' ', '-')}`}
-                      >
-                        {/* Commodity Name & Barcode */}
-                        <td className="px-4 py-2.5 max-w-sm">
-                          <div className="font-semibold text-[var(--text)] truncate">{product.name}</div>
-                          {product.barcode ? (
-                            <span className="font-mono text-[10px] text-[var(--text-muted)] tabular-nums block">
-                              EAN: {product.barcode}
-                            </span>
-                          ) : (
-                            <span className="font-mono text-[10px] text-[var(--text-muted)] block">
-                              Ref: {product.latest.reference}
-                            </span>
-                          )}
-                        </td>
-
-                        {/* Category */}
-                        <td className="px-4 py-2.5 whitespace-nowrap">
-                          <span className="rounded-[var(--r-sm)] bg-violet-t border border-violet-br/60 px-2 py-0.5 text-[11px] font-medium text-violet-act">
-                            {product.latest.category}
+                return (
+                  <div
+                    key={product.key}
+                    className={`p-4 space-y-3 transition-colors ${hasViolations ? 'bg-rose-t/10' : ''}`}
+                    data-testid={`mobile-product-card-${product.key.replaceAll(' ', '-')}`}
+                  >
+                    {/* Header: Category + Status */}
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="rounded-[var(--r-sm)] bg-violet-t border border-violet-br/60 px-2 py-0.5 text-[11px] font-medium text-violet-act">
+                        {product.latest.category}
+                      </span>
+                      <div className="inline-flex items-center gap-1.5">
+                        <StatusPill status={product.latest.status} submitted={product.latest.submitted} />
+                        {hasViolations && (
+                          <span
+                            className="rounded-[var(--r-sm)] border border-rose-br bg-rose-t px-1.5 py-0.5 text-[10px] font-bold text-rose-act"
+                            title="Repeat offender"
+                          >
+                            !
                           </span>
-                        </td>
+                        )}
+                      </div>
+                    </div>
 
-                        {/* Inspections Count in mono */}
-                        <td className="px-4 py-2.5 font-mono text-right tabular-nums whitespace-nowrap font-semibold">
-                          {product.rows.length}
-                        </td>
+                    {/* Commodity Title */}
+                    <div>
+                      <div className="text-sm font-semibold text-[var(--text)]">
+                        {product.name}
+                      </div>
+                      {product.barcode ? (
+                        <div className="font-mono text-[11px] text-[var(--text-muted)] tabular-nums mt-0.5">
+                          EAN: {product.barcode}
+                        </div>
+                      ) : (
+                        <div className="font-mono text-[11px] text-[var(--text-muted)] mt-0.5">
+                          Ref: {product.latest.reference}
+                        </div>
+                      )}
+                    </div>
 
-                        {/* Latest Inspection in mono */}
-                        <td className="px-4 py-2.5 font-mono text-right text-[11px] text-[var(--text-muted)] tabular-nums whitespace-nowrap">
-                          {latestDateStr}
-                        </td>
+                    {/* Inspection Counts & Latest Date */}
+                    <div className="flex items-center justify-between text-xs text-[var(--text-muted)] font-mono tabular-nums pt-1 border-t border-[var(--border)]">
+                      <span>
+                        {product.rows.length} {language === 'hi' ? 'निरीक्षण' : 'inspections'}
+                      </span>
+                      <span>{latestDateStr}</span>
+                    </div>
 
-                        {/* Status Badge */}
-                        <td className="px-4 py-2.5 text-center whitespace-nowrap">
-                          <div className="inline-flex items-center gap-1.5">
-                            <StatusPill status={product.latest.status} submitted={product.latest.submitted} />
-                            {hasViolations && (
-                              <span
-                                className="rounded-[var(--r-sm)] border border-rose-br bg-rose-t px-1.5 py-0.5 text-[10px] font-bold text-rose-act"
-                                title="Repeat offender: Package has failed statutory checks on previous occasions"
-                              >
-                                !
+                    {/* Actions Row */}
+                    <div className="flex items-center justify-between gap-2 pt-2 border-t border-[var(--border)]">
+                      <button
+                        type="button"
+                        onClick={() => setExpandedProduct(isExpanded ? null : product.key)}
+                        className="inline-flex items-center justify-center gap-1.5 h-8 px-3.5 rounded-[var(--r-sm)] bg-[var(--indigo-600)] text-white text-xs font-semibold hover:bg-[var(--indigo-700)] active:scale-[0.985] transition-all flex-1"
+                        data-testid={`button-toggle-history-mobile-${product.key.replaceAll(' ', '-')}`}
+                      >
+                        <span>{isExpanded ? (language === 'hi' ? 'इतिहास बंद करें' : 'Hide history') : (language === 'hi' ? 'इतिहास देखें' : 'View history')}</span>
+                        {isExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={(e) => handleDeleteProduct(e, product.name)}
+                        className="h-8 px-2.5 rounded-[var(--r-sm)] border border-[var(--rose-br)] bg-white text-[var(--rose-ac)] hover:bg-[var(--rose-t)] transition-colors"
+                        title={language === 'hi' ? 'सभी हटाएं' : 'Delete all records'}
+                        aria-label="Delete all records for this product"
+                        data-testid={`button-delete-product-mobile-${product.key.replaceAll(' ', '-')}`}
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+
+                    {/* Mobile History Accordion Drawer */}
+                    {isExpanded && (
+                      <div className="mt-3 rounded-[var(--r-sm)] border border-[var(--border)] bg-white overflow-hidden">
+                        <div className="bg-[var(--indigo-050)] px-3 py-2 border-b border-[var(--border)] text-xs font-semibold text-[var(--text)]">
+                          {language === 'hi' ? 'निरीक्षण इतिहास' : 'Evidence trail'} ({product.rows.length})
+                        </div>
+                        <div className="divide-y divide-[var(--border)]">
+                          {product.rows.map((scan) => (
+                            <div key={scan.id} className="p-2.5 space-y-2 text-xs">
+                              <div className="flex items-center justify-between gap-2">
+                                <Link
+                                  href={`/scans/${scan.id}`}
+                                  className="font-mono font-semibold text-[var(--link)] hover:underline tabular-nums"
+                                >
+                                  {scan.reference}
+                                </Link>
+                                <StatusPill status={scan.status} submitted={scan.submitted} />
+                              </div>
+                              <div className="flex items-center justify-between text-[11px] text-[var(--text-muted)] font-mono tabular-nums">
+                                <span>{scan.location}</span>
+                                <span>
+                                  {typeof scan.capturedAt === 'string' ? scan.capturedAt.replace('T', ' ').slice(0, 16) : new Date(scan.capturedAt).toISOString().replace('T', ' ').slice(0, 16)}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-end gap-2 pt-1 border-t border-[var(--border)]/60">
+                                <Link
+                                  href={`/scans/${scan.id}`}
+                                  className="inline-flex items-center gap-1 text-xs font-medium text-[var(--link)] hover:text-[var(--link-hover)]"
+                                >
+                                  <span>{language === 'hi' ? 'विवरण' : 'Details'}</span>
+                                  <ExternalLink size={12} />
+                                </Link>
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleDeleteScan(e, scan.id, product.name)}
+                                  className="text-[var(--text-muted)] hover:text-rose-act p-1"
+                                  title="Delete scan"
+                                >
+                                  <Trash2 size={12} />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* 2. Desktop Table View (>= 768px): Strict AGENTS.md §7 compliance */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead className="bg-[var(--bg-sunken)] text-[var(--text-muted)] border-b border-[var(--border)] select-none">
+                  <tr className="h-10">
+                    <th className="px-4 py-2 font-semibold">
+                      {language === 'hi' ? 'कमोडिटी का नाम' : 'Commodity & Barcode'}
+                    </th>
+                    <th className="px-4 py-2 font-semibold">
+                      {language === 'hi' ? 'श्रेणी' : 'Category'}
+                    </th>
+                    <th className="px-4 py-2 font-semibold text-right">
+                      {language === 'hi' ? 'कुल निरीक्षण' : 'Inspections'}
+                    </th>
+                    <th className="px-4 py-2 font-semibold text-right">
+                      {language === 'hi' ? 'नवीनतम निरीक्षण' : 'Latest Inspection'}
+                    </th>
+                    <th className="px-4 py-2 font-semibold text-center">
+                      {language === 'hi' ? 'अनुपालन स्थिति' : 'Compliance Status'}
+                    </th>
+                    <th className="px-4 py-2 font-semibold text-right">
+                      {language === 'hi' ? 'कार्रवाई' : 'Actions'}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[var(--border)]">
+                  {products.map((product) => {
+                    const hasViolations = product.rows.some((r) => r.status === 'violation');
+                    const isExpanded = expandedProduct === product.key;
+                    const latestDateStr = typeof product.latest.capturedAt === 'string'
+                      ? product.latest.capturedAt.replace('T', ' ').slice(0, 16)
+                      : new Date(product.latest.capturedAt).toISOString().replace('T', ' ').slice(0, 16);
+
+                    return (
+                      <React.Fragment key={product.key}>
+                        <tr
+                          className={`h-10 transition-colors hover:bg-[var(--indigo-050)] ${
+                            hasViolations ? 'bg-rose-t/15' : ''
+                          }`}
+                          data-testid={`row-product-${product.key.replaceAll(' ', '-')}`}
+                        >
+                          {/* Commodity Name & Barcode */}
+                          <td className="px-4 py-2.5 max-w-sm">
+                            <div className="font-semibold text-[var(--text)] truncate">{product.name}</div>
+                            {product.barcode ? (
+                              <span className="font-mono text-[10px] text-[var(--text-muted)] tabular-nums block">
+                                EAN: {product.barcode}
+                              </span>
+                            ) : (
+                              <span className="font-mono text-[10px] text-[var(--text-muted)] block">
+                                Ref: {product.latest.reference}
                               </span>
                             )}
-                          </div>
-                        </td>
+                          </td>
 
-                        {/* Actions */}
-                        <td className="px-4 py-2.5 text-right whitespace-nowrap">
-                          <div className="inline-flex items-center justify-end gap-2">
-                            <button
-                              type="button"
-                              onClick={() => setExpandedProduct(isExpanded ? null : product.key)}
-                              className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--link)] hover:text-[var(--link-hover)]"
-                              data-testid={`button-toggle-history-${product.key.replaceAll(' ', '-')}`}
-                            >
-                              <span>{isExpanded ? (language === 'hi' ? 'बंद करें' : 'Close') : (language === 'hi' ? 'इतिहास' : 'History')}</span>
-                              {isExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-                            </button>
+                          {/* Category */}
+                          <td className="px-4 py-2.5 whitespace-nowrap">
+                            <span className="rounded-[var(--r-sm)] bg-violet-t border border-violet-br/60 px-2 py-0.5 text-[11px] font-medium text-violet-act">
+                              {product.latest.category}
+                            </span>
+                          </td>
 
-                            <button
-                              type="button"
-                              onClick={(e) => handleDeleteProduct(e, product.name)}
-                              className="rounded p-1 text-[var(--text-muted)] hover:text-rose-act hover:bg-rose-t transition-colors"
-                              title={language === 'hi' ? 'सभी हटाएं' : 'Delete all records'}
-                              aria-label="Delete all records for this product"
-                              data-testid={`button-delete-product-${product.key.replaceAll(' ', '-')}`}
-                            >
-                              <Trash2 size={13} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
+                          {/* Inspections Count in mono */}
+                          <td className="px-4 py-2.5 font-mono text-right tabular-nums whitespace-nowrap font-semibold">
+                            {product.rows.length}
+                          </td>
 
-                      {/* Nested Inspections History Drawer */}
-                      {isExpanded && (
-                        <tr>
-                          <td colSpan={6} className="bg-[var(--bg-sunken)] p-4 border-b border-[var(--border)]">
-                            <div className="rounded-[var(--r-sm)] border border-[var(--border)] bg-white overflow-hidden">
-                              <div className="bg-[var(--indigo-050)] px-3 py-2 border-b border-[var(--border)] flex justify-between items-center text-xs font-semibold text-[var(--text)]">
-                                <span>{language === 'hi' ? 'निरीक्षण इतिहास रिकॉर्ड' : 'Inspection Evidence Trail'} ({product.rows.length})</span>
-                                <span className="font-mono text-[11px] text-[var(--text-muted)]">{product.name}</span>
-                              </div>
-                              <div className="divide-y divide-[var(--border)]">
-                                {product.rows.map((scan) => (
-                                  <div
-                                    key={scan.id}
-                                    className="flex items-center justify-between p-3 text-xs transition-colors hover:bg-[var(--indigo-050)]"
-                                  >
-                                    <div className="flex items-center gap-3">
-                                      <Link
-                                        href={`/scans/${scan.id}`}
-                                        className="font-mono font-semibold text-[var(--link)] hover:underline tabular-nums"
-                                      >
-                                        {scan.reference}
-                                      </Link>
-                                      <span className="text-[var(--text-muted)]">{scan.location}</span>
-                                      <span className="text-[var(--text-muted)] hidden sm:inline">Officer: {scan.officerName}</span>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                      <span className="font-mono text-[11px] text-[var(--text-muted)] tabular-nums">
-                                        {typeof scan.capturedAt === 'string' ? scan.capturedAt.replace('T', ' ').slice(0, 16) : new Date(scan.capturedAt).toISOString().replace('T', ' ').slice(0, 16)}
-                                      </span>
-                                      <StatusPill status={scan.status} submitted={scan.submitted} />
-                                      <Link
-                                        href={`/scans/${scan.id}`}
-                                        className="text-[var(--link)] hover:text-[var(--link-hover)]"
-                                        title="Open inspection record"
-                                      >
-                                        <ExternalLink size={13} />
-                                      </Link>
-                                      <button
-                                        type="button"
-                                        onClick={(e) => handleDeleteScan(e, scan.id, product.name)}
-                                        className="text-[var(--text-muted)] hover:text-rose-act"
-                                        title="Delete scan"
-                                      >
-                                        <Trash2 size={13} />
-                                      </button>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
+                          {/* Latest Inspection in mono */}
+                          <td className="px-4 py-2.5 font-mono text-right text-[11px] text-[var(--text-muted)] tabular-nums whitespace-nowrap">
+                            {latestDateStr}
+                          </td>
+
+                          {/* Status Badge */}
+                          <td className="px-4 py-2.5 text-center whitespace-nowrap">
+                            <div className="inline-flex items-center gap-1.5">
+                              <StatusPill status={product.latest.status} submitted={product.latest.submitted} />
+                              {hasViolations && (
+                                <span
+                                  className="rounded-[var(--r-sm)] border border-rose-br bg-rose-t px-1.5 py-0.5 text-[10px] font-bold text-rose-act"
+                                  title="Repeat offender: Package has failed statutory checks on previous occasions"
+                                >
+                                  !
+                                </span>
+                              )}
+                            </div>
+                          </td>
+
+                          {/* Actions */}
+                          <td className="px-4 py-2.5 text-right whitespace-nowrap">
+                            <div className="inline-flex items-center justify-end gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setExpandedProduct(isExpanded ? null : product.key)}
+                                className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--link)] hover:text-[var(--link-hover)]"
+                                data-testid={`button-toggle-history-${product.key.replaceAll(' ', '-')}`}
+                              >
+                                <span>{isExpanded ? (language === 'hi' ? 'बंद करें' : 'Close') : (language === 'hi' ? 'इतिहास' : 'History')}</span>
+                                {isExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={(e) => handleDeleteProduct(e, product.name)}
+                                className="rounded p-1 text-[var(--text-muted)] hover:text-rose-act hover:bg-rose-t transition-colors"
+                                title={language === 'hi' ? 'सभी हटाएं' : 'Delete all records'}
+                                aria-label="Delete all records for this product"
+                                data-testid={`button-delete-product-${product.key.replaceAll(' ', '-')}`}
+                              >
+                                <Trash2 size={13} />
+                              </button>
                             </div>
                           </td>
                         </tr>
-                      )}
-                    </React.Fragment>
-                  );
-                })}
-              </tbody>
-            </table>
+
+                        {/* Nested Inspections History Drawer */}
+                        {isExpanded && (
+                          <tr>
+                            <td colSpan={6} className="bg-[var(--bg-sunken)] p-4 border-b border-[var(--border)]">
+                              <div className="rounded-[var(--r-sm)] border border-[var(--border)] bg-white overflow-hidden">
+                                <div className="bg-[var(--indigo-050)] px-3 py-2 border-b border-[var(--border)] flex justify-between items-center text-xs font-semibold text-[var(--text)]">
+                                  <span>{language === 'hi' ? 'निरीक्षण इतिहास रिकॉर्ड' : 'Inspection Evidence Trail'} ({product.rows.length})</span>
+                                  <span className="font-mono text-[11px] text-[var(--text-muted)]">{product.name}</span>
+                                </div>
+                                <div className="divide-y divide-[var(--border)]">
+                                  {product.rows.map((scan) => (
+                                    <div
+                                      key={scan.id}
+                                      className="flex items-center justify-between p-3 text-xs transition-colors hover:bg-[var(--indigo-050)]"
+                                    >
+                                      <div className="flex items-center gap-3">
+                                        <Link
+                                          href={`/scans/${scan.id}`}
+                                          className="font-mono font-semibold text-[var(--link)] hover:underline tabular-nums"
+                                        >
+                                          {scan.reference}
+                                        </Link>
+                                        <span className="text-[var(--text-muted)]">{scan.location}</span>
+                                        <span className="text-[var(--text-muted)] hidden sm:inline">Officer: {scan.officerName}</span>
+                                      </div>
+                                      <div className="flex items-center gap-3">
+                                        <span className="font-mono text-[11px] text-[var(--text-muted)] tabular-nums">
+                                          {typeof scan.capturedAt === 'string' ? scan.capturedAt.replace('T', ' ').slice(0, 16) : new Date(scan.capturedAt).toISOString().replace('T', ' ').slice(0, 16)}
+                                        </span>
+                                        <StatusPill status={scan.status} submitted={scan.submitted} />
+                                        <Link
+                                          href={`/scans/${scan.id}`}
+                                          className="text-[var(--link)] hover:text-[var(--link-hover)]"
+                                          title="Open inspection record"
+                                        >
+                                          <ExternalLink size={13} />
+                                        </Link>
+                                        <button
+                                          type="button"
+                                          onClick={(e) => handleDeleteScan(e, scan.id, product.name)}
+                                          className="text-[var(--text-muted)] hover:text-rose-act"
+                                          title="Delete scan"
+                                        >
+                                          <Trash2 size={13} />
+                                        </button>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         ) : (
           <EmptyState title={t.noScansYet} body={t.noScansSub} />
