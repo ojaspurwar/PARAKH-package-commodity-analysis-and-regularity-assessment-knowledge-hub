@@ -58,5 +58,39 @@ Thumbs.db
 
 # Environment & credentials
 .env
-.env.*
+.env.local
+.env.production
 *.env
+
+# Keep .env.example tracked — it documents required variables
+!**/.env.example
+
+# Binary / media files that don't belong in git
+*.zip
+*.dll
+*.jpeg
+*.jpg
+*.gif
+*.mp4
+*.wav
+*.mp3
+*.webp
+
+# Root-level dev screenshots and build artifacts
+*.png
+!artifacts/**/public/**/*.png
+!reference/**/*.png
+
+# Replit-specific config files
+.replit
+.replitignore
+.replit-artifact/
+.agents/
+.conversation/
+
+# WhatsApp and other personal media
+WhatsApp Image*
+
+# Root-level dev artifacts (actual copies live in artifacts/metrology-assistant/src/styles/)
+theme-gov.css
+tokens.css

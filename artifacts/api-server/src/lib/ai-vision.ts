@@ -41,11 +41,15 @@ export interface AiVisionAnalysisResult {
   technicalSafetyReport: TechnicalSafetyReport | null;
 }
 
-const DEFAULT_KEY = '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';
+
 
 export async function analyzePackageWithAi(req: AiVisionAnalysisRequest): Promise<AiVisionAnalysisResult> {
-  const apiKey = process.env.OPENROUTER_API_KEY || DEFAULT_KEY;
+  const apiKey = process.env.OPENROUTER_API_KEY;
   const model = process.env.AI_VISION_MODEL || 'google/gemini-2.5-flash';
+
+  if (!apiKey) {
+    throw new Error('OPENROUTER_API_KEY environment variable is not set. Add it to your .env file.');
+  }
 
   if (!req.image && !req.text) {
     throw new Error('Either an image or label text must be provided for AI analysis.');

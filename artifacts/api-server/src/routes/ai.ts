@@ -5,7 +5,7 @@ import { logger } from '../lib/logger';
 const router: IRouter = Router();
 
 router.get('/ai/status', (_req: Request, res: Response) => {
-  const hasKey = Boolean(process.env.OPENROUTER_API_KEY || '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');
+  const hasKey = Boolean(process.env.OPENROUTER_API_KEY);
   res.json({
     available: hasKey,
     model: process.env.AI_VISION_MODEL || 'google/gemini-2.5-flash',
