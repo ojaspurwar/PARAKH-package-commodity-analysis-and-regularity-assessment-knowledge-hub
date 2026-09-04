@@ -6,7 +6,6 @@
 }
 
 /* Wide inner container with clamp gutters (edge-to-edge at 100vw, no white side gutters) */
-.container,
 .portal-container {
   width: min(100% - 2 * var(--gutter), var(--container)) !important;
   max-width: var(--container) !important;

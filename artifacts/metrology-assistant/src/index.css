@@ -58,14 +58,68 @@
   --color-sidebar-accent-border: var(--sidebar-accent-border);
   --color-sidebar-ring: hsl(var(--sidebar-ring));
 
-  --font-sans: var(--app-font-sans);
+  --font-sans: "Noto Sans", "Noto Sans Devanagari", sans-serif;
+  --font-hi: "Noto Sans Devanagari", "Noto Sans", sans-serif;
   --font-serif: var(--app-font-serif);
-  --font-mono: var(--app-font-mono);
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
 
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+
+  /* Institutional */
+  --color-indigo-700: #3D2A93;
+  --color-indigo-600: #5138B8;
+  --color-indigo-100: #E7E2FA;
+  --color-indigo-050: #F3F0FD;
+
+  /* Surfaces & Text */
+  --color-bg-page: #FAFAFA;
+  --color-bg-panel: #FFFFFF;
+  --color-bg-sunken: #F1F1F4;
+  --color-border-parakh: #E2E2E7;
+  --color-text-parakh: #1E1F24;
+  --color-text-muted: #55565E;
+  --color-link: #253E81;
+  --color-link-hover: #1447E6;
+
+  /* Six Category Triplets: {tint, border, action} */
+  --color-rose-t: #FADFE4;
+  --color-rose-br: #A03441;
+  --color-rose-ac: #C62430;
+
+  --color-green-t: #DFFEC5;
+  --color-green-br: #4CA320;
+  --color-green-ac: #2E7D0E;
+
+  --color-amber-t: #FBE0C4;
+  --color-amber-br: #C9750F;
+  --color-amber-ac: #8A4C05;
+
+  --color-cyan-t: #E5F7FB;
+  --color-cyan-br: #46AAC1;
+  --color-cyan-ac: #14618C;
+
+  --color-violet-t: #EFE6FE;
+  --color-violet-br: #7C4DD1;
+  --color-violet-ac: #4B2FA0;
+
+  --color-pink-t: #F8DFF5;
+  --color-pink-br: #C462AD;
+  --color-pink-ac: #80376C;
+
+  /* Spacing Scale */
+  --spacing-s1: 4px;
+  --spacing-s2: 8px;
+  --spacing-s3: 12px;
+  --spacing-s4: 16px;
+  --spacing-s5: 20px;
+  --spacing-s6: 24px;
+  --spacing-s7: 32px;
+  --spacing-s8: 40px;
+  --spacing-s9: 56px;
+  --spacing-s10: 72px;
 }
 
 /* LIGHT MODE */

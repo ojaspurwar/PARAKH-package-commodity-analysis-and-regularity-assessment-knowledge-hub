@@ -93,11 +93,11 @@ h3 { font-size: var(--fs-h3); }
 
 /* Full-bleed band + wide inner container.
    This is what replaces a narrow centred column with dead white gutters. */
-.band      { width: 100%; }
-.container { width: min(100% - 2 * var(--gutter), var(--container)); margin-inline: auto; }
+.band              { width: 100%; }
+.portal-container  { width: min(100% - 2 * var(--gutter), var(--container)); margin-inline: auto; }
 
 /* Slab header sitting flush on a white panel. */
-.slab {
+.slab, .portal-slab {
   background: var(--indigo-600);
   color: #fff;
   font-size: var(--fs-slab);
@@ -108,7 +108,7 @@ h3 { font-size: var(--fs-h3); }
   padding-inline: var(--s-6);
   border-radius: var(--r-lg) var(--r-lg) 0 0;
 }
-.panel {
+.portal-panel {
   background: var(--bg-panel);
   border-radius: 0 0 var(--r-lg) var(--r-lg);
   box-shadow: var(--sh-1);
@@ -116,7 +116,7 @@ h3 { font-size: var(--fs-h3); }
 }
 
 /* Category card: tint + border, never a shadow. */
-.card {
+.portal-card {
   border: 1.5px solid;
   border-radius: var(--r-md);
   padding: var(--s-5);
@@ -124,15 +124,15 @@ h3 { font-size: var(--fs-h3); }
   flex-direction: column;
   gap: var(--s-3);
 }
-.card--rose   { background: var(--rose-t);   border-color: var(--rose-br); }
-.card--green  { background: var(--green-t);  border-color: var(--green-br); }
-.card--amber  { background: var(--amber-t);  border-color: var(--amber-br); }
-.card--cyan   { background: var(--cyan-t);   border-color: var(--cyan-br); }
-.card--violet { background: var(--violet-t); border-color: var(--violet-br); }
-.card--pink   { background: var(--pink-t);   border-color: var(--pink-br); }
+.portal-card--rose   { background: var(--rose-t);   border-color: var(--rose-br); }
+.portal-card--green  { background: var(--green-t);  border-color: var(--green-br); }
+.portal-card--amber  { background: var(--amber-t);  border-color: var(--amber-br); }
+.portal-card--cyan   { background: var(--cyan-t);   border-color: var(--cyan-br); }
+.portal-card--violet { background: var(--violet-t); border-color: var(--violet-br); }
+.portal-card--pink   { background: var(--pink-t);   border-color: var(--pink-br); }
 
 /* 56px circular icon well, white fill with a category ring. */
-.icon-well {
+.icon-well, .portal-icon-well {
   width: 56px; height: 56px;
   border-radius: 50%;
   background: #fff;
@@ -142,16 +142,16 @@ h3 { font-size: var(--fs-h3); }
 }
 
 /* Equal-height cards, two-up. */
-.card-grid {
+.card-grid, .portal-card-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--s-4);
   align-items: stretch;
 }
-@media (max-width: 860px) { .card-grid { grid-template-columns: 1fr; } }
+@media (max-width: 860px) { .card-grid, .portal-card-grid { grid-template-columns: 1fr; } }
 
 /* Status badge: colour + glyph + word, never colour alone. */
-.badge {
+.portal-badge {
   display: inline-flex; align-items: center; gap: var(--s-2);
   padding: 2px var(--s-2);
   border: 1.5px solid; border-radius: var(--r-sm);
@@ -165,8 +165,8 @@ h3 { font-size: var(--fs-h3); }
   font-size: var(--fs-sm);
 }
 
-.prose          { max-width: 68ch; }
-.prose--statute { max-width: 78ch; line-height: 1.75; }
+.portal-prose          { max-width: 68ch; }
+.portal-prose--statute { max-width: 78ch; line-height: 1.75; }
 
 :where(a, button, input, select, textarea, [tabindex]):focus-visible {
   outline: 2px solid var(--indigo-600);

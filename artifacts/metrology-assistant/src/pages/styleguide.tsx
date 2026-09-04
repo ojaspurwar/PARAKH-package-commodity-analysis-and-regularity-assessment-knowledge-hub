@@ -28,7 +28,7 @@ export default function StyleguidePage() {
   const [selectValue, setSelectValue] = useState('packaged_food');
 
   return (
-    <div className="space-y-12 pb-24" style={{ fontFamily: 'var(--font-sans)', color: 'var(--text)' }}>
+    <div className="portal-container py-8 space-y-12 pb-24" style={{ fontFamily: 'var(--font-sans)', color: 'var(--text)' }}>
       {/* Page Header */}
       <div className="border-b border-[var(--border)] pb-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
