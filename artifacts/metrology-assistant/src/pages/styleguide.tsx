@@ -22,10 +22,12 @@ import {
   Zap,
 } from 'lucide-react';
 import { Link } from 'wouter';
+import { VerdictPanel } from '@/components/verdict-panel';
 
 export default function StyleguidePage() {
   const [inputValue, setInputValue] = useState('LM-861635');
   const [selectValue, setSelectValue] = useState('packaged_food');
+  const [verdictTab, setVerdictTab] = useState<'violation' | 'compliant'>('violation');
 
   return (
     <div className="portal-container py-8 space-y-12 pb-24" style={{ fontFamily: 'var(--font-sans)', color: 'var(--text)' }}>
@@ -786,6 +788,191 @@ export default function StyleguidePage() {
               </p>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* SECTION 9: Verdict Panel — The Most Important Component (§7, §8) */}
+      <section className="space-y-4">
+        <div className="border-b border-[var(--border)] pb-2 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h2 className="font-semibold" style={{ fontSize: 'var(--fs-h2)', letterSpacing: 'var(--ls-heading)' }}>
+              9. The Verdict Panel — Most Important Component (§7, §8)
+            </h2>
+            <p className="text-xs text-[var(--text-muted)] mt-1">
+              5-part verdict: status band with signature 420ms wipe, Rule 6 checklist with 45ms rise on failed rows, Rule 7 custom proportional scale bar visual, outlined PDP evidence, and outcome-named actions.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setVerdictTab('violation')}
+              className={`px-3 py-1.5 rounded-[var(--r-sm)] text-xs font-semibold border transition-colors ${
+                verdictTab === 'violation'
+                  ? 'bg-rose-t border-rose-br text-rose-act'
+                  : 'bg-white border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--bg-sunken)]'
+              }`}
+            >
+              Violation Verdict
+            </button>
+            <button
+              type="button"
+              onClick={() => setVerdictTab('compliant')}
+              className={`px-3 py-1.5 rounded-[var(--r-sm)] text-xs font-semibold border transition-colors ${
+                verdictTab === 'compliant'
+                  ? 'bg-green-t border-green-br text-green-act'
+                  : 'bg-white border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--bg-sunken)]'
+              }`}
+            >
+              Compliant Verdict
+            </button>
+          </div>
+        </div>
+
+        <div className="rounded-[var(--r-md)] border border-[var(--border)] bg-white p-6">
+          {verdictTab === 'violation' ? (
+            <VerdictPanel
+              key="verdict-violation"
+              reference="LM-861635"
+              productName="Shakti Gold Turmeric Powder (500g)"
+              category="Packaged food"
+              status="violation"
+              location="Central Market, Sector 18, Noida"
+              officerName="Ojas Purwar (Inspector ID: UP-LM-4402)"
+              capturedAt="2026-09-04T16:45:00.000Z"
+              evidenceHash="e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              checks={[
+                {
+                  key: 'mrp',
+                  label: 'MRP declaration',
+                  value: 'Not detected',
+                  status: 'failed',
+                  note: 'Rule 6(1)(e) VIOLATION: Maximum Retail Price (MRP) missing from package',
+                },
+                {
+                  key: 'qty',
+                  label: 'Net quantity & SI units',
+                  value: '500 gms',
+                  status: 'failed',
+                  note: "Rule 12 & 13 VIOLATION: Prohibited non-standard unit symbol 'gms' detected. Must use SI metric 'g'.",
+                },
+                {
+                  key: 'font',
+                  label: 'Declaration numeral & letter height',
+                  value: '2.8 mm',
+                  status: 'failed',
+                  note: 'Rule 7(3) & Second Schedule Table I: Numeral height 2.8 mm is below the mandatory 4.0 mm threshold for 500 g packages.',
+                },
+                {
+                  key: 'usp',
+                  label: 'Unit sale price',
+                  value: '₹ 0.50 / g',
+                  status: 'passed',
+                  note: 'Rule 6(11) compliant: Unit sale price declared in terms of metric unit.',
+                },
+                {
+                  key: 'date',
+                  label: 'Date of manufacture / packing',
+                  value: '08/2026',
+                  status: 'passed',
+                  note: 'Rule 6(1)(d) compliant: Month and year of packing clearly stamped.',
+                },
+                {
+                  key: 'packer',
+                  label: 'Packer / manufacturer details',
+                  value: 'Hindustan Foods Ltd, Plot 42, GIDC, Vapi, Gujarat 396195',
+                  status: 'passed',
+                  note: 'Rule 6(1)(a) verified: Complete name and address with postal PIN code declared.',
+                },
+                {
+                  key: 'origin',
+                  label: 'Country of origin',
+                  value: 'India',
+                  status: 'passed',
+                  note: 'Rule 6(1)(aa) & Rule 10 compliant: Domestic commodity verified.',
+                },
+                {
+                  key: 'contact',
+                  label: 'Consumer care details',
+                  value: 'care@hindustanfoods.in / 1800-209-1234',
+                  status: 'passed',
+                  note: 'Rule 6(1)(da) verified: Consumer grievance helpline registered.',
+                },
+              ]}
+              triggerSignatureAnimation={true}
+            />
+          ) : (
+            <VerdictPanel
+              key="verdict-compliant"
+              reference="LM-861636"
+              productName="Organic Pure Mustard Oil (1 L)"
+              category="Packaged food"
+              status="compliant"
+              location="Khan Market, New Delhi"
+              officerName="Ojas Purwar (Inspector ID: DL-LM-1029)"
+              capturedAt="2026-09-04T17:15:00.000Z"
+              evidenceHash="a1b2c3d4e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef0"
+              checks={[
+                {
+                  key: 'mrp',
+                  label: 'MRP declaration',
+                  value: '₹ 220.00 (Incl. of all taxes)',
+                  status: 'passed',
+                  note: "Rule 6(1)(e) & Rule 2(m) verified: Maximum Retail Price with mandatory 'inclusive of all taxes' declaration.",
+                },
+                {
+                  key: 'qty',
+                  label: 'Net quantity & SI units',
+                  value: '1 L (1000 ml)',
+                  status: 'passed',
+                  note: 'Rule 12 compliant: Standard SI metric symbol declared.',
+                },
+                {
+                  key: 'font',
+                  label: 'Declaration numeral & letter height',
+                  value: '4.5 mm',
+                  status: 'passed',
+                  note: 'Rule 7(3) & Second Schedule Table I: Numeral height 4.5 mm satisfies the mandatory 4.0 mm threshold.',
+                },
+                {
+                  key: 'usp',
+                  label: 'Unit sale price',
+                  value: '₹ 22.00 / 100 ml',
+                  status: 'passed',
+                  note: 'Rule 6(11) compliant: Unit sale price declared.',
+                },
+                {
+                  key: 'date',
+                  label: 'Date of manufacture / packing',
+                  value: '08/2026',
+                  status: 'passed',
+                  note: 'Rule 6(1)(d) compliant: Month and year of packing clearly stamped.',
+                },
+                {
+                  key: 'packer',
+                  label: 'Packer / manufacturer details',
+                  value: 'National Agro Products, Industrial Area Phase II, Okhla, New Delhi 110020',
+                  status: 'passed',
+                  note: 'Rule 6(1)(a) verified: Complete name and address with postal PIN code.',
+                },
+                {
+                  key: 'origin',
+                  label: 'Country of origin',
+                  value: 'India',
+                  status: 'passed',
+                  note: 'Rule 6(1)(aa) & Rule 10 compliant: Domestic commodity verified.',
+                },
+                {
+                  key: 'contact',
+                  label: 'Consumer care details',
+                  value: 'feedback@nationalagro.in / 011-26384910',
+                  status: 'passed',
+                  note: 'Rule 6(1)(da) verified: Consumer grievance helpline registered.',
+                },
+              ]}
+              triggerSignatureAnimation={true}
+            />
+          )}
         </div>
       </section>
     </div>

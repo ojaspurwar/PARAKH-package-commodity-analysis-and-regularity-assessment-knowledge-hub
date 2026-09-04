@@ -26,6 +26,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { Link } from 'wouter';
+import { VerdictPanel } from '@/components/verdict-panel';
 import { getGetScanQueryKey, getGetScansQueryKey, useCreateScan, useGetScans, useSubmitScan } from '@workspace/api-client-react';
 import type { ComplianceCheck, Scan, ScanInput } from '@workspace/api-client-react';
 import { appConfig } from '@/config';
@@ -1080,49 +1081,43 @@ function ReviewCard({
   onDelete?: (scan: Scan) => void;
 }) {
   const { language, t } = useI18n();
+  const baseUrl = import.meta.env.BASE_URL.replace(/\/$/, '');
+
   return (
-    <div className="mt-6 overflow-hidden rounded-[var(--r-md)] border border-[var(--border)] bg-white" data-testid="card-review-scan">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border)] px-5 py-4">
+    <div className="mt-6 space-y-4 rounded-[var(--r-md)] border border-[var(--border)] bg-white p-5" data-testid="card-review-scan">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border)] pb-3">
         <div>
-          <span className="text-xs font-medium text-[var(--text-muted)] block">{t.reviewBannerTitle}</span>
-          <h3 className="mt-0.5 text-base font-semibold text-[var(--text)]">{scan.productName}</h3>
+          <span className="text-xs font-semibold text-[var(--indigo-600)] block">{t.reviewBannerTitle}</span>
+          <h3 className="text-base font-semibold text-[var(--text)]">{scan.productName}</h3>
         </div>
-        <StatusPill status={scan.status} submitted={scan.submitted} />
+        <Link
+          href={`/scans/${scan.id}`}
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--link)] hover:text-[var(--link-hover)]"
+          data-testid="link-review-detail"
+        >
+          {t.viewDetails} <ArrowRight size={14} />
+        </Link>
       </div>
-      <div className="grid gap-4 px-5 py-5 md:grid-cols-[1fr_auto]">
-        <div className="space-y-2">
-          {scan.checks.map((check) => (
-            <div key={check.key} className="flex items-start gap-3 rounded-lg bg-muted/50 px-3 py-2.5">
-              <span className={`mt-1 size-2 rounded-full shrink-0 ${check.status === 'passed' ? 'bg-secondary' : check.status === 'failed' ? 'bg-destructive' : 'bg-accent'}`} />
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-xs font-semibold">{check.label}</p>
-                  <span className="font-mono text-xs font-bold text-secondary">{check.value}</span>
-                </div>
-                <p className="mt-0.5 text-[11px] text-muted-foreground">{check.note}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-        <div className="flex flex-col justify-end gap-2">
-          <Link href={`/scans/${scan.id}`} className="inline-flex items-center justify-center gap-2 rounded-xl border border-border px-4 py-2.5 text-xs font-semibold hover:bg-muted" data-testid="link-review-detail">{t.viewDetails} <ArrowRight size={14} /></Link>
-          {!scan.submitted && (
-            <button type="button" onClick={onSubmit} disabled={submitting} className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-xs font-semibold text-primary-foreground disabled:opacity-60" data-testid="button-submit-scan">
-              {submitting ? <LoaderCircle size={14} className="animate-spin" /> : <Send size={14} />} {submitting ? t.submitting : t.submitToSupervisor}
-            </button>
-          )}
-          {onDelete && (
-            <button
-              type="button"
-              onClick={() => onDelete(scan)}
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-2.5 text-xs font-semibold text-destructive hover:bg-destructive/10 transition-colors"
-              data-testid="button-delete-review-scan"
-            >
-              <Trash2 size={14} /> {t.deleteRecord}
-            </button>
-          )}
-        </div>
-      </div>
+
+      <VerdictPanel
+        reference={scan.reference}
+        productName={scan.productName}
+        category={scan.category}
+        status={scan.status}
+        checks={scan.checks}
+        ocrText={scan.ocrText}
+        ocrDetails={scan.ocrDetails}
+        imageUrl={scan.imageUrl}
+        capturedAt={scan.capturedAt}
+        officerName={scan.officerName}
+        location={scan.location}
+        evidenceHash={scan.evidenceHash}
+        submitted={scan.submitted}
+        onRecordFinding={onSubmit}
+        isSubmitting={submitting}
+        exportUrl={`${baseUrl}/api/scans/${scan.id}/report`}
+        triggerSignatureAnimation={true}
+      />
     </div>
   );
 }

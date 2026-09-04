@@ -49,6 +49,36 @@ html.text-size-lg {
   font-size: 18px;
 }
 
+/* Signature animation for the verdict panel per AGENTS.md §8 */
+@keyframes verdictFillLeftRight {
+  0% {
+    clip-path: inset(0 100% 0 0);
+  }
+  100% {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+.verdict-status-fill {
+  animation: verdictFillLeftRight 420ms cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+}
+
+@keyframes failedRowRise {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.verdict-failed-row-animate {
+  animation: failedRowRise 240ms cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+  opacity: 0;
+}
+
 /* Reduced motion guarantee */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

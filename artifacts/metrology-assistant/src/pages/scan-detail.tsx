@@ -1,13 +1,12 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Check, Copy, Download, FileSpreadsheet, FileText, Gavel, LoaderCircle, MapPin, Send, ShieldAlert, ShieldCheck, Trash2 } from 'lucide-react';
+import { ArrowLeft, Check, Copy, Download, FileSpreadsheet, FileText, LoaderCircle, ShieldAlert, Trash2 } from 'lucide-react';
 import { Link, useLocation, useParams } from 'wouter';
 import { getGetScanQueryKey, getGetScansQueryKey, useGetScan, useSubmitScan } from '@workspace/api-client-react';
-import { CheckIcon, EmptyState, ErrorState, SkeletonRows, StatusPill, formatDateTime } from '@/components/scan-ui';
-import { AnnotatedPhoto } from '@/components/annotated-photo';
-import { FontReadabilityCard } from '@/components/font-readability-card';
+import { EmptyState, ErrorState, SkeletonRows, formatDateTime } from '@/components/scan-ui';
+import { VerdictPanel } from '@/components/verdict-panel';
 import { CategoryComplianceSection } from '@/components/category-compliance-section';
-import { getTranslatedCheckLabel, getTranslatedCheckStatus, useI18n } from '@/lib/i18n';
+import { getTranslatedCheckLabel, useI18n } from '@/lib/i18n';
 
 export default function ScanDetailPage() {
   const { language, t } = useI18n();
@@ -21,20 +20,38 @@ export default function ScanDetailPage() {
   const [copiedMemo, setCopiedMemo] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  if (!Number.isFinite(scanId)) return <EmptyState title={language === 'hi' ? 'साक्ष्य संदर्भ अमान्य' : 'Scan reference not recognised'} body={language === 'hi' ? 'इस लिंक में साक्ष्य आईडी मान्य नहीं है।' : 'The evidence ID in this link is not valid.'} />;
+  if (!Number.isFinite(scanId)) {
+    return (
+      <EmptyState
+        title={language === 'hi' ? 'साक्ष्य संदर्भ अमान्य' : 'Scan reference not recognised'}
+        body={language === 'hi' ? 'इस लिंक में साक्ष्य आईडी मान्य नहीं है।' : 'The evidence ID in this link is not valid.'}
+      />
+    );
+  }
   if (scanQuery.isPending) return <SkeletonRows count={2} />;
   if (scanQuery.isError || !scanQuery.data) return <ErrorState onRetry={() => scanQuery.refetch()} />;
 
   const scan = scanQuery.data;
   const baseUrl = import.meta.env.BASE_URL.replace(/\/$/, '');
 
-  const handleSubmit = () => {
-    submitScan.mutate({ id: scan.id, data: { submitted: true } }, {
-      onSuccess: (result) => {
-        queryClient.setQueryData(getGetScanQueryKey(scan.id), result);
-        queryClient.invalidateQueries({ queryKey: getGetScansQueryKey() });
-        setNotice(language === 'hi' ? 'रिकॉर्ड सफलतापूर्वक सबमिट किया गया। अब यह सुपरवाइज़र कतार में दिखाई देगा।' : 'Record submitted successfully. It is now visible to the supervisor queue.');
-      },
+  const handleSubmit = async () => {
+    return new Promise<void>((resolve, reject) => {
+      submitScan.mutate(
+        { id: scan.id, data: { submitted: true } },
+        {
+          onSuccess: (result) => {
+            queryClient.setQueryData(getGetScanQueryKey(scan.id), result);
+            queryClient.invalidateQueries({ queryKey: getGetScansQueryKey() });
+            setNotice(
+              language === 'hi'
+                ? 'रिकॉर्ड सफलतापूर्वक सबमिट किया गया। अब यह सुपरवाइज़र कतार में दिखाई देगा।'
+                : 'Finding recorded successfully. The evidence record is now entered into the supervisor queue.'
+            );
+            resolve();
+          },
+          onError: (err) => reject(err),
+        }
+      );
     });
   };
 
@@ -87,7 +104,7 @@ export default function ScanDetailPage() {
   };
 
   return (
-    <div className="portal-container py-6 space-y-6">
+    <div className="portal-container py-6 space-y-6" data-testid="page-scan-detail">
       {/* Back button and breadcrumb */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <Link
@@ -97,9 +114,10 @@ export default function ScanDetailPage() {
         >
           <ArrowLeft size={14} /> {t.backToScans}
         </Link>
-        <span className="font-mono text-xs text-[var(--text-muted)]">
-          {t.evidenceRecord}: <span className="font-semibold text-[var(--text)]">{scan.reference}</span>
-        </span>
+        <div className="flex items-center gap-2 font-mono text-xs text-[var(--text-muted)]">
+          <span>{t.evidenceRecord}:</span>
+          <span className="font-semibold text-[var(--text)]">{scan.reference}</span>
+        </div>
       </div>
 
       {/* Slab Header naming function per AGENTS.md §7 */}
@@ -109,234 +127,120 @@ export default function ScanDetailPage() {
 
       {/* Flush Panel */}
       <div className="portal-panel space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--border)] pb-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-xs px-2 py-0.5 rounded-[var(--r-sm)] bg-[var(--indigo-100)] text-[var(--indigo-700)] font-semibold">
-                {scan.source === 'ecommerce' ? (language === 'hi' ? 'ऑनलाइन उत्पाद' : 'Online product') : (language === 'hi' ? 'फील्ड कैप्चर' : 'Field capture')}
-              </span>
-              <span className="font-mono text-xs text-[var(--text-muted)]">{scan.reference}</span>
-            </div>
-            <h1 className="mt-2 text-xl font-semibold text-[var(--text)]">{scan.productName}</h1>
-            <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[var(--text-muted)]">
-              <span>{scan.category}</span>
-              <span className="inline-flex items-center gap-1"><MapPin size={12} /> {scan.location}</span>
-              <span>{language === 'hi' ? `निरीक्षक: ${scan.officerName}` : `Captured by ${scan.officerName}`}</span>
-            </div>
+        {/* Notice if submitted */}
+        {notice && (
+          <div className="rounded-[var(--r-md)] border-[1.5px] border-green-br bg-green-t p-3 text-xs font-medium text-green-act">
+            {notice}
           </div>
-          <StatusPill status={scan.status} submitted={scan.submitted} />
-        </div>
+        )}
 
-        <section className="overflow-hidden rounded-[var(--r-md)] border border-[var(--border)] bg-white">
-          <div className="grid divide-y divide-[var(--border)] md:grid-cols-[1.1fr_1fr] md:divide-x md:divide-y-0">
-          <div className="min-h-[330px] bg-muted/20 p-4 md:p-6">
-            {scan.imageUrl ? (
-              <AnnotatedPhoto
-                imageUrl={scan.imageUrl}
-                ocrDetails={scan.ocrDetails}
-                checks={scan.checks}
-                productName={scan.productName}
-              />
-            ) : (
-              <div className="field-grid flex min-h-[260px] flex-col items-center justify-center rounded-xl border border-dashed border-border text-center" data-testid="state-no-image">
-                <span className="grid size-12 place-items-center rounded-2xl bg-card text-muted-foreground">
-                  <FileText size={21} />
-                </span>
-                <p className="mt-4 text-sm font-semibold">{t.noImageAttached}</p>
-                <p className="mt-1 max-w-xs text-xs leading-5 text-muted-foreground">{t.noImageSub}</p>
-              </div>
-            )}
-          </div>
-          <div className="p-6 md:p-8">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-mono text-[10px] uppercase tracking-[.18em] text-secondary">{t.reviewTrail}</p>
-                <h2 className="mt-1 text-lg font-semibold">{t.complianceChecks}</h2>
-              </div>
-              <ShieldCheck size={21} className="text-secondary" />
+        {/* The 5-part Verdict Panel per AGENTS.md §7 */}
+        <VerdictPanel
+          reference={scan.reference}
+          productName={scan.productName}
+          category={scan.category}
+          status={scan.status}
+          checks={scan.checks}
+          ocrText={scan.ocrText}
+          ocrDetails={scan.ocrDetails}
+          imageUrl={scan.imageUrl}
+          capturedAt={scan.capturedAt}
+          officerName={scan.officerName}
+          location={scan.location}
+          evidenceHash={scan.evidenceHash}
+          submitted={scan.submitted}
+          onRecordFinding={handleSubmit}
+          isSubmitting={submitScan.isPending}
+          exportUrl={`${baseUrl}/api/scans/${scan.id}/report`}
+          triggerSignatureAnimation={true}
+        />
+
+        {/* Category-Specific Statutory Deep Dive (Food FSSAI / Electronics ISI) */}
+        <CategoryComplianceSection
+          category={scan.category}
+          productName={scan.productName}
+          ocrText={scan.ocrText}
+          checks={scan.checks}
+        />
+
+        {/* Machine OCR Transcription Text */}
+        {scan.ocrText && (
+          <div className="rounded-[var(--r-md)] border border-[var(--border)] bg-white p-5 space-y-2">
+            <div className="flex items-center justify-between border-b border-[var(--border)] pb-2">
+              <h4 className="text-xs font-semibold text-[var(--text)]">
+                {language === 'hi' ? 'ऑप्टिकल कैरेक्टर रिकॉग्निशन (OCR) ट्रांसक्रिप्शन' : 'Machine OCR Packaging Transcription'}
+              </h4>
+              <span className="font-mono text-[11px] text-[var(--text-muted)]">
+                {scan.ocrDetails ? `${scan.ocrDetails.words.length} words` : 'Raw text'}
+              </span>
             </div>
-            <div className="mt-5 space-y-2">
-              {scan.checks.map((check) => (
-                <div key={check.key} className="rounded-xl border border-border p-3.5" data-testid={`check-${check.key}`}>
-                  <div className="flex items-start gap-3">
-                    <span className="mt-0.5"><CheckIcon status={check.status} /></span>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-start justify-between gap-2">
-                        <p className="text-sm font-semibold">{getTranslatedCheckLabel(check.key, check.label, t)}</p>
-                        <span className="font-mono text-[10px] uppercase tracking-[.1em] text-muted-foreground">{getTranslatedCheckStatus(check.status, language)}</span>
-                      </div>
-                      <p className="mt-1 text-xs text-foreground/70">{check.value}</p>
-                      <p className="mt-2 text-[11px] leading-5 text-muted-foreground">{check.note}</p>
-                    </div>
-                  </div>
-                </div>
+            <div className="whitespace-pre-wrap rounded-[var(--r-sm)] bg-[var(--bg-sunken)] p-3 font-mono text-xs leading-6 text-[var(--text-muted)]" data-testid="text-ocr">
+              {scan.ocrText}
+            </div>
+          </div>
+        )}
+
+        {/* Statutory Notice & Enforcement Memo Block (for Court & Seizure Memos) */}
+        {failedChecks.length > 0 && (
+          <div className="rounded-[var(--r-md)] border-[1.5px] border-rose-br bg-rose-t p-5 space-y-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <ShieldAlert className="text-rose-act size-5" />
+                <h3 className="font-semibold text-rose-act text-sm">{t.enforcementNoticeTitle}</h3>
+              </div>
+              <button
+                type="button"
+                onClick={copyLegalMemo}
+                className="inline-flex items-center gap-1.5 rounded-[var(--r-sm)] border-[1.5px] border-rose-br bg-white px-3 py-1 text-xs font-semibold text-rose-act hover:bg-rose-t"
+              >
+                {copiedMemo ? <Check size={13} /> : <Copy size={13} />}
+                {copiedMemo ? t.copied : t.copyNoticeMemo}
+              </button>
+            </div>
+            <p className="text-xs text-[var(--text-muted)] leading-5">
+              {t.enforcementNoticeDesc}
+            </p>
+            <div className="space-y-1 border-t border-rose-br/30 pt-3">
+              {failedChecks.map((c) => (
+                <p key={c.key} className="text-xs text-[var(--text)]">
+                  • <strong className="font-semibold text-rose-act">{getTranslatedCheckLabel(c.key, c.label, t)}:</strong> {c.note}
+                </p>
               ))}
             </div>
           </div>
-        </div>
-      </section>
+        )}
 
-      {/* Category-Specific Statutory Requirements Section */}
-      <CategoryComplianceSection
-        category={scan.category}
-        productName={scan.productName}
-        ocrText={scan.ocrText}
-        checks={scan.checks}
-      />
-
-      {/* Font Size & Readability Analysis Card */}
-      <FontReadabilityCard
-        checks={scan.checks}
-        ocrDetails={scan.ocrDetails}
-        ocrText={scan.ocrText}
-      />
-
-      <div className="grid gap-7 lg:grid-cols-[1.2fr_.8fr]">
-        <div className="space-y-7">
-          <section className="appear delay-2 rounded-2xl border border-border bg-card p-6 md:p-7">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-mono text-[10px] uppercase tracking-[.18em] text-muted-foreground">{t.machineTranscription}</p>
-                <h2 className="mt-1 text-lg font-semibold">{t.labelTextCaptured}</h2>
-              </div>
-              {scan.ocrDetails ? (
-                <span className="rounded-full bg-muted px-2.5 py-1 font-mono text-[10px] text-muted-foreground" data-testid="text-ocr-meta">
-                  {scan.ocrDetails.engine} · {scan.ocrDetails.words.length} {language === 'hi' ? 'शब्द' : 'words'} · {scan.ocrDetails.imageWidth}×{scan.ocrDetails.imageHeight}
-                </span>
-              ) : (
-                <span className="rounded-full bg-muted px-2.5 py-1 font-mono text-[10px] text-muted-foreground">OCR</span>
-              )}
-            </div>
-            <div className="mt-5 whitespace-pre-wrap rounded-xl bg-muted/45 p-4 font-mono text-xs leading-6 text-foreground/75" data-testid="text-ocr">
-              {scan.ocrText || t.noOcrText}
-            </div>
-          </section>
-
-          {/* Statutory Notice & Enforcement Memo Block */}
-          {failedChecks.length > 0 && (
-            <section className="rounded-2xl border border-destructive/30 bg-destructive/5 p-6 md:p-7">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <ShieldAlert className="text-destructive size-5" />
-                  <h3 className="font-semibold text-destructive text-base">{t.enforcementNoticeTitle}</h3>
-                </div>
-                <button
-                  type="button"
-                  onClick={copyLegalMemo}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-destructive/30 bg-card px-2.5 py-1 text-xs font-semibold text-destructive hover:bg-destructive/10"
-                >
-                  {copiedMemo ? <Check size={13} /> : <Copy size={13} />}
-                  {copiedMemo ? t.copied : t.copyNoticeMemo}
-                </button>
-              </div>
-              <p className="mt-2 text-xs text-muted-foreground leading-5">
-                {t.enforcementNoticeDesc}
-              </p>
-              <div className="mt-3 space-y-1.5 border-t border-destructive/15 pt-3">
-                {failedChecks.map((c) => (
-                  <p key={c.key} className="text-xs text-foreground/85">
-                    • <strong className="font-medium text-destructive">{getTranslatedCheckLabel(c.key, c.label, t)}:</strong> {c.note}
-                  </p>
-                ))}
-              </div>
-            </section>
-          )}
-        </div>
-
-        <section className="appear delay-3 rounded-2xl border border-border bg-card p-6 md:p-7">
-          <p className="font-mono text-[10px] uppercase tracking-[.18em] text-muted-foreground">{t.recordControls}</p>
-          <h2 className="mt-1 text-lg font-semibold">{t.inspectionReports}</h2>
-
-          <div className="mt-5 flex items-center gap-3 rounded-xl bg-muted/45 p-4">
-            <span className={`grid size-9 place-items-center rounded-full ${scan.submitted ? 'bg-secondary/10 text-secondary' : 'bg-accent/30 text-foreground'}`}>
-              {scan.submitted ? <Check size={17} /> : <FileText size={17} />}
-            </span>
-            <div>
-              <p className="text-sm font-semibold">{scan.submitted ? t.submittedToRegister : t.awaitingSubmission}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{formatDateTime(scan.capturedAt)}</p>
-            </div>
-          </div>
-
-          {scan.evidenceHash && (
-            <div className="mt-4 rounded-xl bg-muted/45 p-4">
-              <p className="font-mono text-[10px] uppercase tracking-[.16em] text-muted-foreground">{t.evidenceHashLabel}</p>
-              <p className="mt-2 break-all font-mono text-[11px] leading-5 text-foreground/70" data-testid="text-evidence-hash">
-                {scan.evidenceHash}
-              </p>
-            </div>
-          )}
-
-          {notice && (
-            <p className="mt-4 rounded-xl bg-secondary/10 px-3 py-3 text-xs font-medium leading-5 text-secondary" data-testid="status-submit-notice">
-              {notice}
-            </p>
-          )}
-
-          {/* Court-Admissible PDF Report */}
-          <a
-            href={`${baseUrl}/api/scans/${scan.id}/report`}
-            target="_blank"
-            rel="noreferrer"
-            className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
-            data-testid="link-download-report"
-          >
-            <Download size={16} /> {t.downloadPdfReport}
-          </a>
-
-          {/* Editable Formats */}
-          <div className="mt-3 grid grid-cols-2 gap-2">
+        {/* Secondary Export & Administrative Actions */}
+        <div className="flex flex-wrap items-center justify-between gap-4 border-t border-[var(--border)] pt-5">
+          <div className="flex flex-wrap items-center gap-2">
             <a
               href={`${baseUrl}/api/scans/${scan.id}/export?format=csv`}
               download={`parakh-${scan.reference.toLowerCase()}.csv`}
-              className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-border px-3 py-2.5 text-xs font-semibold hover:bg-muted"
+              className="inline-flex items-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--border)] bg-white px-3 py-1.5 text-xs font-semibold text-[var(--link)] hover:bg-[var(--bg-sunken)]"
             >
-              <FileSpreadsheet size={15} /> {t.exportCsv}
+              <FileSpreadsheet size={14} /> {t.exportCsv}
             </a>
             <a
               href={`${baseUrl}/api/scans/${scan.id}/export?format=json`}
               download={`parakh-${scan.reference.toLowerCase()}.json`}
-              className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-border px-3 py-2.5 text-xs font-semibold hover:bg-muted"
+              className="inline-flex items-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--border)] bg-white px-3 py-1.5 text-xs font-semibold text-[var(--link)] hover:bg-[var(--bg-sunken)]"
             >
-              <FileText size={15} /> {t.exportJson}
+              <FileText size={14} /> {t.exportJson}
             </a>
           </div>
 
-          {!scan.submitted ? (
-            <button
-              type="button"
-              onClick={handleSubmit}
-              disabled={submitScan.isPending}
-              className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-card px-4 py-3 text-sm font-semibold hover:bg-muted disabled:opacity-60"
-              data-testid="button-submit-detail"
-            >
-              {submitScan.isPending ? <LoaderCircle size={16} className="animate-spin" /> : <Send size={16} />} {t.submitEvidenceToRegister}
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setLocation('/dashboard')}
-              className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-border px-4 py-3 text-sm font-semibold hover:bg-muted"
-              data-testid="button-view-dashboard"
-            >
-              {language === 'hi' ? 'सुपरवाइज़र डैशबोर्ड देखें' : 'View supervisor dashboard'} <ArrowLeft size={15} className="rotate-180" />
-            </button>
-          )}
-
-          <div className="mt-4 border-t border-border pt-4">
-            <button
-              type="button"
-              onClick={handleDelete}
-              disabled={isDeleting}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm font-semibold text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-60"
-              data-testid="button-delete-record"
-            >
-              {isDeleting ? <LoaderCircle size={16} className="animate-spin" /> : <Trash2 size={16} />}
-              {isDeleting ? t.deleting : t.deleteRecord}
-            </button>
-          </div>
-        </section>
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={isDeleting}
+            className="inline-flex items-center gap-1.5 rounded-[var(--r-sm)] border border-rose-br bg-white px-3 py-1.5 text-xs font-semibold text-rose-act hover:bg-rose-t disabled:opacity-60"
+            data-testid="button-delete-record"
+          >
+            {isDeleting ? <LoaderCircle size={14} className="animate-spin" /> : <Trash2 size={14} />}
+            {isDeleting ? t.deleting : t.deleteRecord}
+          </button>
+        </div>
       </div>
     </div>
-  </div>
   );
 }
