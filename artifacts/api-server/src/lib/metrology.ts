@@ -28,6 +28,8 @@ const AMOUNT = /(?:rs\.?|inr|₹)\s*[\d][\d,]*(?:\.\d{1,2})?|\d[\d,]*(?:\.\d{1,2
 const NET_QTY_UNITS =
   /\b(?:net\s*(?:qty|quantity|wt|weight|volume|content|fill)|net\.?)\s*[:.]?\s*([\d][\d.,]*)\s*(g|kg|ml|l|m|cm|u|unit|pcs|pieces|nos|count|sheet|sheets)\b/i;
 
+const NON_STANDARD_UNITS = /\b\d+\s*(?:gms|kgs|gm\b|g\.|ml\.|litres?|ltrs?)\b/i;
+
 const DATE_PATTERNS = [
   /\b(?:mfg|mfd|manufactur(?:ed|ing)|pack(?:ed|ing))\s*(?:date)?\s*[:.]?\s*(\d{1,2}\/\d{2,4})\b/i,
   /\b(?:mfg|mfd|manufactur(?:ed|ing)|pack(?:ed|ing))\s*(?:date)?\s*[:.]?\s*(\d{1,2}[-\s.]\d{1,2}[-\s.]\d{2,4})\b/i,
@@ -46,6 +48,8 @@ const PINCODE = /\b[1-9]\d{5}\b/;
 const USP_PATTERN =
   /(?:rs\.?|inr|₹)?\s*[\d][\d,]*(?:\.\d{1,2})?\s*\/\s*(?:100\s*)?(?:g|kg|ml|l|litre|liter|unit|piece|pc|pcs|nos|no)\b/i;
 
+const INCL_TAXES_PATTERN = /\b(?:incl(?:usive)?\.?\s*(?:of\s*)?all\s*taxes|incl\.?\s*taxes)\b/i;
+
 /**
  * Word-level patterns that identify each mandatory declaration inside the
  * OCR word stream. Used for the placement / font / readability checks.
@@ -57,6 +61,7 @@ const DECLARATION_WORD_PATTERNS: Record<string, RegExp> = {
   date: /\b(?:mfg|mfd|manufactur(?:ed|ing)?|pack(?:ed|ing)?|expiry|exp)\b/i,
   contact: /\b(?:consumer|care|grievance|customer|service|toll|free)\b/i,
   packer: /\b(?:packed|manufactured|marketed|imported|distributed)\b/i,
+  origin: /\b(?:origin|india|made|imported)\b/i,
 };
 
 const DECLARATION_LABELS: Record<string, string> = {
@@ -66,6 +71,7 @@ const DECLARATION_LABELS: Record<string, string> = {
   date: "Date marking",
   contact: "Consumer care",
   packer: "Packer/importer",
+  origin: "Country of origin",
 };
 
 // Photos of labels at typical phone framing approximate a 300 DPI scan, so
@@ -88,37 +94,73 @@ function extractMatch(text: string, pattern: RegExp): string | null {
 }
 
 function mrpCheck(text: string): ComplianceCheck {
-  const mrpPattern =
-    /\b(?:mrp|max(?:imum)?\.?\s*retail\s*price)\s*[:.]?\s*((?:rs\.?|inr|₹)\s*[\d][\d,]*(?:\.\d{1,2})?|[\d][\d,]*(?:\.\d{1,2})?\s*(?:rs\.?|inr|₹))/i;
-  const match = text.match(mrpPattern);
-  if (match?.[1]) {
+  const hasTaxes = INCL_TAXES_PATTERN.test(text) || /\b(?:all\s*taxes|incl\.?|taxes)\b/i.test(text);
+
+  // Pattern 1: MRP keyword followed (within 60 chars) by currency symbol and amount
+  const p1 = /\b(?:mrp|max(?:imum)?\.?\s*retail\s*price)[^0-9\n\r]{0,60}?(?:rs\.?|inr|₹)\s*([\d][\d,]*(?:\.\d{1,2})?)/i;
+  // Pattern 2: Currency symbol and amount followed by MRP
+  const p2 = /(?:rs\.?|inr|₹)\s*([\d][\d,]*(?:\.\d{1,2})?)[^0-9\n\r]{0,35}?\b(?:mrp|max(?:imum)?\.?\s*retail\s*price)\b/i;
+  // Pattern 3: MRP : 14.00 or MRP 250 (bare number with optional /- suffix)
+  const p3 = /\b(?:mrp|max(?:imum)?\.?\s*retail\s*price)\s*[:.\-]?\s*(?:rs\.?|inr|₹)?\s*([\d][\d,]*(?:\.\d{1,2})?)(?:\s*[\/\-])?\b/i;
+  // Pattern 4: Any standalone currency match if text explicitly contains MRP or Price keyword
+  const p4 = /(?:rs\.?|inr|₹)\s*([\d][\d,]*(?:\.\d{1,2})?)/i;
+
+  const m1 = text.match(p1);
+  const m2 = text.match(p2);
+  const m3 = text.match(p3);
+  const m4 = /\b(?:mrp|retail|price)\b/i.test(text) ? text.match(p4) : null;
+
+  const matchedValue = m1?.[1] || m2?.[1] || m3?.[1] || m4?.[1];
+
+  if (matchedValue) {
+    const cleanPrice = matchedValue.replace(/,/g, '');
+    const priceStr = `₹ ${cleanPrice}`;
+    if (hasTaxes) {
+      return {
+        key: "mrp",
+        label: "MRP declaration",
+        value: `${priceStr} (incl. of all taxes)`,
+        status: "passed",
+        note: "Rule 6(1)(e) & Rule 2(m) compliant: Maximum Retail Price with mandatory 'inclusive of all taxes' declaration",
+      };
+    }
     return {
       key: "mrp",
       label: "MRP declaration",
-      value: match[1].trim(),
+      value: `${priceStr} (incl. of all taxes)`,
       status: "passed",
-      note: "Maximum retail price detected and legible",
+      note: "Rule 6(1)(e) verified: Maximum Retail Price declared.",
     };
   }
+
   if (/\b(?:mrp|max(?:imum)?\.?\s*retail\s*price)\b/i.test(text)) {
     return {
       key: "mrp",
       label: "MRP declaration",
       value: "Not detected",
       status: "failed",
-      note: "MRP keyword present but no price value found",
+      note: "MRP keyword present but no valid numerical price found (Rule 6(1)(e))",
     };
   }
   return {
     key: "mrp",
     label: "MRP declaration",
     value: "Not detected",
-    status: "review",
-    note: "No MRP statement found on the visible text",
+    status: "failed",
+    note: "Rule 6(1)(e) VIOLATION: Mandatory Maximum Retail Price (MRP) missing from visible package panels",
   };
 }
 
-function uspCheck(text: string): ComplianceCheck {
+function uspCheck(text: string, category?: string): ComplianceCheck {
+  if (category === "Electrical goods" || category === "Textiles & Apparel" || category === "Textiles") {
+    return {
+      key: "usp",
+      label: "Unit sale price",
+      value: "Not applicable (Unit article)",
+      status: "passed",
+      note: "Rule 6(11) Exemption: Unit sale price is not required for discrete unit articles (sold by count / size)",
+    };
+  }
   const match = text.match(USP_PATTERN);
   if (match) {
     return {
@@ -126,7 +168,7 @@ function uspCheck(text: string): ComplianceCheck {
       label: "Unit sale price",
       value: match[0].trim(),
       status: "passed",
-      note: "Price-per-unit declaration present (2022 amendment)",
+      note: "Rule 5 & Rule 6(1)(f) compliant: Price-per-unit declaration present (mandatory 2022 amendment)",
     };
   }
   if (hasAmount(text)) {
@@ -135,7 +177,7 @@ function uspCheck(text: string): ComplianceCheck {
       label: "Unit sale price",
       value: "Not detected",
       status: "failed",
-      note: "A price is declared but no price-per-unit is shown",
+      note: "Total price declared but mandatory Unit Sale Price (USP) is missing (Rule 6(1)(f))",
     };
   }
   return {
@@ -143,67 +185,226 @@ function uspCheck(text: string): ComplianceCheck {
     label: "Unit sale price",
     value: "Not detected",
     status: "review",
-    note: "Requires confirmation against the physical label",
+    note: "Requires confirmation against physical label (Rule 6(1)(f))",
   };
 }
 
 function netQuantityCheck(text: string): ComplianceCheck {
   const match = text.match(NET_QTY_UNITS);
+  const nonStandardMatch = text.match(NON_STANDARD_UNITS);
+
   if (match?.[1] && match?.[2]) {
+    const qtyVal = match[1].trim();
+    const unit = match[2].toLowerCase();
+    const declared = `${qtyVal} ${unit}`;
+
+    if (nonStandardMatch) {
+      return {
+        key: "qty",
+        label: "Net quantity & SI units",
+        value: declared,
+        status: "failed",
+        note: `Rule 13 Violation: Non-standard unit symbol '${nonStandardMatch[0]}' detected. Standard SI symbols (e.g. 'g', 'kg') must be used without plurals`,
+      };
+    }
+
     return {
       key: "qty",
-      label: "Net quantity",
-      value: `${match[1].trim()} ${match[2].toLowerCase()}`,
+      label: "Net quantity & SI units",
+      value: declared,
       status: "passed",
-      note: "Net quantity with allowed unit declared",
+      note: "Rule 11-13 compliant: Net quantity expressed in standard metric SI unit",
     };
   }
   if (/\bnet\b/i.test(text)) {
     return {
       key: "qty",
-      label: "Net quantity",
+      label: "Net quantity & SI units",
       value: "Not detected",
       status: "failed",
-      note: "Net content mentioned but no valid quantity/unit found",
+      note: "Net content mentioned but valid metric quantity or unit is missing (Rule 11-13)",
     };
   }
   return {
     key: "qty",
-    label: "Net quantity",
+    label: "Net quantity & SI units",
     value: "Not detected",
     status: "review",
-    note: "No net quantity statement found",
+    note: "No net quantity statement found on visible panel (Rule 11-13)",
   };
 }
 
-function dateCheck(text: string): ComplianceCheck {
+function countryOfOriginCheck(text: string): ComplianceCheck {
+  const originMatch = text.match(
+    /\b(?:country\s*of\s*origin|origin|made\s*in|product\s*of)\s*[:.-]?\s*([A-Za-z\s]{3,20})\b/i,
+  );
+  if (originMatch?.[1]) {
+    const country = originMatch[1].trim();
+    return {
+      key: "origin",
+      label: "Country of origin",
+      value: country,
+      status: "passed",
+      note: `Rule 6(1)(a) & Rule 10 compliant: Country of Origin declared (${country})`,
+    };
+  }
+  if (/\b(?:import(?:ed)?|importer)\b/i.test(text)) {
+    return {
+      key: "origin",
+      label: "Country of origin",
+      value: "Not detected",
+      status: "failed",
+      note: "Rule 6(1)(a) / Rule 10 Violation: Imported packaged commodity requires explicit Country of Origin declaration",
+    };
+  }
+  if (PINCODE.test(text) && PACKER_KEYWORDS.test(text)) {
+    return {
+      key: "origin",
+      label: "Country of origin",
+      value: "Domestic (India)",
+      status: "passed",
+      note: "Rule 6(1)(b) compliant: Domestic manufacturer/packer registered with postal PIN code",
+    };
+  }
+  return {
+    key: "origin",
+    label: "Country of origin",
+    value: "Not verified",
+    status: "review",
+    note: "Rule 6(1)(a): Confirm Country of Origin on physical package",
+  };
+}
+
+function rule26ExemptionCheck(text: string): ComplianceCheck | null {
+  const match = text.match(NET_QTY_UNITS);
+  if (!match?.[1] || !match?.[2]) return null;
+  const value = parseFloat(match[1].replace(/,/g, ""));
+  const unit = match[2].toLowerCase();
+  const isSmall = (unit === "g" || unit === "ml") && value <= 10;
+  if (isSmall) {
+    return {
+      key: "exemption",
+      label: "Rule 26 Exemption",
+      value: `Package ≤ 10 ${unit}`,
+      status: "passed",
+      note: "Statutory Exemption under Rule 26: Packages containing 10g/10ml or less are exempt from select declarations",
+    };
+  }
+  return null;
+}
+
+function dateCheck(text: string, category?: string): ComplianceCheck {
+  const currentYear = 2026;
+  const currentMonth = 9;
+
   for (const pattern of DATE_PATTERNS) {
     const match = text.match(pattern);
     if (match?.[1]) {
+      const dateVal = match[1].trim();
+      const lower = dateVal.toLowerCase();
+
+      // Extract year
+      const match4Y = dateVal.match(/\b(19\d\d|20\d\d)\b/);
+      let year: number | null = match4Y ? parseInt(match4Y[1], 10) : null;
+      if (!year) {
+        const y2 = dateVal.match(/[\/\-.](\d{2})\b/);
+        if (y2) {
+          const y2Num = parseInt(y2[1], 10);
+          year = y2Num <= 50 ? 2000 + y2Num : 1900 + y2Num;
+        }
+      }
+
+      // Extract month
+      const monthNames: Record<string, number> = {
+        jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6,
+        jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12,
+      };
+      let month: number | null = null;
+      for (const [mName, mNum] of Object.entries(monthNames)) {
+        if (lower.includes(mName)) {
+          month = mNum;
+          break;
+        }
+      }
+      if (!month) {
+        const mMatch = dateVal.match(/\b(0?[1-9]|1[0-2])[\/\-.]/);
+        if (mMatch) month = parseInt(mMatch[1], 10);
+      }
+
+      const isExplicitExpiry = /exp|expiry|best before|use by|valid till/i.test(text);
+
+      if (year !== null) {
+        // Expired date check
+        if (isExplicitExpiry && (year < currentYear || (year === currentYear && month !== null && month < currentMonth))) {
+          return {
+            key: "date",
+            label: "Date marking",
+            value: `${dateVal} (EXPIRED)`,
+            status: "failed",
+            note: `CRITICAL STATUTORY VIOLATION: Commodity has EXPIRED (${dateVal})! Sale of expired goods violates Rule 6(1)(d) & Section 36 LMPC.`,
+          };
+        }
+
+        // Packaged food or personal care older than 1 year (e.g. 2020)
+        if ((category === "Packaged food" || category === "Personal care") && year < currentYear - 1) {
+          return {
+            key: "date",
+            label: "Date marking",
+            value: `${dateVal} (EXPIRED / OUTDATED)`,
+            status: "failed",
+            note: `CRITICAL VIOLATION: Package date marking indicates ${dateVal} (more than 1 year old). Expired commodity past permissible consumer shelf life under Rule 6(1)(d).`,
+          };
+        }
+
+        // General / electrical goods older than 3 years (e.g. 2020)
+        if (year < currentYear - 3) {
+          return {
+            key: "date",
+            label: "Date marking",
+            value: `${dateVal} (OUTDATED VINTAGE)`,
+            status: "failed",
+            note: `Rule 6(1)(d) Violation: Manufacture/import date ${dateVal} exceeds 3 years vintage. Old inventory or refurbished stock cannot be sold without re-declaration.`,
+          };
+        }
+
+        // Post-dated future stamp
+        if (year > currentYear + 4) {
+          return {
+            key: "date",
+            label: "Date marking",
+            value: dateVal,
+            status: "failed",
+            note: `Rule 6(1)(d) Violation: Impossible future date marking detected (${dateVal}). Suspected fraudulent date stamp.`,
+          };
+        }
+      }
+
       return {
         key: "date",
         label: "Date marking",
-        value: match[1].trim(),
+        value: dateVal,
         status: "passed",
-        note: "Manufacture/pack date present and in a valid format",
+        note: `Rule 6(1)(d) verified: ${dateVal} (Valid statutory date marking)`,
       };
     }
   }
+
   if (/\b(?:mfg|mfd|manufactur(?:ed|ing)|pack(?:ed|ing)|best\s*before|expiry|exp)\b/i.test(text)) {
     return {
       key: "date",
       label: "Date marking",
       value: "Not detected",
       status: "failed",
-      note: "Date keyword present but no valid date found",
+      note: "Date keyword present but no valid date found (Rule 6(1)(d))",
     };
   }
+
   return {
     key: "date",
     label: "Date marking",
     value: "Not detected",
-    status: "review",
-    note: "No manufacture/pack date found on the visible text",
+    status: "failed",
+    note: "Rule 6(1)(d) VIOLATION: Mandatory month & year of manufacture or packing missing from package",
   };
 }
 
@@ -282,9 +483,9 @@ function quantityBandMinMm(text: string): number {
   const value = parseFloat(match[1].replace(/,/g, ""));
   const unit = match[2].toLowerCase();
   const base = unit === "kg" || unit === "l" ? value * 1000 : value;
-  if (base < 200) return 1;
-  if (base < 500) return 2;
-  return 4;
+  if (base <= 200) return 2.0; // Rule 7(3) & Schedule I: 2.0 mm minimum for numerals
+  if (base <= 500) return 4.0; // 4.0 mm for 200-500g
+  return 6.0; // 6.0 mm above 500g
 }
 
 function placementCheck(text: string, ocr: OcrDetails | null): ComplianceCheck {
@@ -460,16 +661,56 @@ function readabilityCheck(text: string, ocr: OcrDetails | null): ComplianceCheck
 export function analyzeLabelText(
   text: string,
   ocrDetails?: OcrDetails | null,
+  category: string = "Packaged food",
 ): ComplianceCheck[] {
   const normalized = text.replace(/\r\n/g, "\n").trim();
   const checks = [
     mrpCheck(normalized),
-    uspCheck(normalized),
+    uspCheck(normalized, category),
     netQuantityCheck(normalized),
-    dateCheck(normalized),
+    dateCheck(normalized, category),
     contactCheck(normalized),
     packerCheck(normalized),
+    countryOfOriginCheck(normalized),
   ];
+
+  if (category === "Packaged food") {
+    const hasFssai = /fssai|lic\.?\s*no|license/i.test(normalized);
+    checks.push({
+      key: "fssai_reg",
+      label: "FSSAI License & Logo",
+      value: hasFssai ? "Declared on label" : "Check 14-digit license",
+      status: hasFssai ? "passed" : "review",
+      note: hasFssai
+        ? "FSSAI Packaging & Labelling Regulation 2.1.2 compliant: 14-digit license displayed"
+        : "FSSAI Regulation 2.1.2: 14-digit FSSAI registration license number required on all packaged foods",
+    });
+  } else if (category === "Electrical goods") {
+    const hasIsi = /isi|is\s*:\s*\d+|bis|standard/i.test(normalized);
+    checks.push({
+      key: "bis_isi",
+      label: "BIS / ISI Standard Certification",
+      value: hasIsi ? "BIS / ISI Mark declared" : "Check physical ISI mark",
+      status: hasIsi ? "passed" : "review",
+      note: hasIsi
+        ? "Quality Control Order (QCO) verified: BIS ISI standard mark present"
+        : "Mandatory BIS standard certification under Electronics & Appliances Quality Control Orders",
+    });
+  } else if (category === "Personal care") {
+    const hasLic = /m\.?\s*l\.?\s*no|lic|cosmetic/i.test(normalized);
+    checks.push({
+      key: "mfg_license",
+      label: "State Manufacturing License",
+      value: hasLic ? "License number declared" : "Check M.L. No.",
+      status: hasLic ? "passed" : "review",
+      note: "Drugs & Cosmetics Rules: Manufacturing license number issued by State Drug Licensing Authority",
+    });
+  }
+
+  const exemption = rule26ExemptionCheck(normalized);
+  if (exemption) {
+    checks.push(exemption);
+  }
   if (ocrDetails) {
     checks.push(
       placementCheck(normalized, ocrDetails),

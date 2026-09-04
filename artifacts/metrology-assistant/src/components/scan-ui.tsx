@@ -1,14 +1,20 @@
-import { ArrowUpRight, Check, CircleAlert, Clock3, MapPin, PackageSearch, WifiOff } from 'lucide-react';
+import { ArrowUpRight, Check, CircleAlert, Clock3, MapPin, PackageSearch, Trash2, WifiOff } from 'lucide-react';
 import { Link } from 'wouter';
 import type { Scan } from '@workspace/api-client-react';
+import { useI18n } from '@/lib/i18n';
 
 export function StatusPill({ status, submitted }: { status: Scan['status']; submitted?: boolean }) {
+  const { t } = useI18n();
   const styles = {
     compliant: 'bg-secondary/10 text-secondary',
     violation: 'bg-destructive/10 text-destructive',
     pending: 'bg-accent/25 text-foreground',
   };
-  const labels = { compliant: 'Compliant', violation: 'Violation', pending: 'Pending review' };
+  const labels = {
+    compliant: t.compliant,
+    violation: t.violation,
+    pending: t.pendingReview,
+  };
   return (
     <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ${styles[status]}`} data-testid={`status-scan-${status}`}>
       <span className={`size-1.5 rounded-full ${status === 'compliant' ? 'bg-secondary' : status === 'violation' ? 'bg-destructive' : 'bg-foreground/50'}`} />
@@ -18,7 +24,15 @@ export function StatusPill({ status, submitted }: { status: Scan['status']; subm
   );
 }
 
-export function ScanRow({ scan, compact = false }: { scan: Scan; compact?: boolean }) {
+export function ScanRow({
+  scan,
+  compact = false,
+  onDelete,
+}: {
+  scan: Scan;
+  compact?: boolean;
+  onDelete?: (e: React.MouseEvent, scan: Scan) => void;
+}) {
   return (
     <Link href={`/scans/${scan.id}`} className={`group flex items-center gap-3 rounded-xl border border-transparent px-3 py-3 transition-colors hover:border-border hover:bg-muted/45 ${compact ? '' : 'bg-card'}`} data-testid={`link-scan-${scan.id}`}>
       <span className={`grid size-10 shrink-0 place-items-center rounded-lg ${scan.source === 'ecommerce' ? 'bg-secondary/10 text-secondary' : 'bg-accent/25 text-foreground'}`}>
@@ -40,6 +54,22 @@ export function ScanRow({ scan, compact = false }: { scan: Scan; compact?: boole
         <span className="block font-mono text-[11px] text-muted-foreground">{formatTime(scan.capturedAt)}</span>
         <span className="mt-1 block"><StatusPill status={scan.status} submitted={scan.submitted} /></span>
       </span>
+      {onDelete && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onDelete(e, scan);
+          }}
+          className="rounded-lg p-2 text-muted-foreground/60 transition-colors hover:bg-destructive/10 hover:text-destructive active:scale-95"
+          title="Delete entry"
+          aria-label="Delete entry"
+          data-testid={`button-delete-scan-${scan.id}`}
+        >
+          <Trash2 size={16} />
+        </button>
+      )}
       <ArrowUpRight size={16} className="text-muted-foreground/50 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
     </Link>
   );

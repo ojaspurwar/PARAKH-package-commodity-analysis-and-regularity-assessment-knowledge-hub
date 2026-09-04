@@ -1,0 +1,61 @@
+/* base.css — Layout primitives and accessibility floor per AGENTS.md §6, §8, §10 */
+
+/* Full-bleed band */
+.band {
+  width: 100%;
+}
+
+/* Wide inner container with clamp gutters (edge-to-edge at 100vw, no white side gutters) */
+.container,
+.portal-container {
+  width: min(100% - 2 * var(--gutter), var(--container)) !important;
+  max-width: var(--container) !important;
+  margin-inline: auto !important;
+}
+
+/* 12-column grid with 16px gutter */
+.portal-grid-12 {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 16px;
+}
+
+/* Accessible focus rings across all interactive elements */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--indigo-600) !important;
+  outline-offset: 2px !important;
+  border-radius: var(--r-sm);
+}
+
+/* High contrast mode support */
+html.high-contrast {
+  --text: #000000;
+  --text-muted: #1a1a1a;
+  --border: #000000;
+  --bg-page: #ffffff;
+  --bg-panel: #ffffff;
+  --bg-sunken: #ebebeb;
+  --indigo-600: #251670;
+  --indigo-700: #1b0e56;
+}
+
+/* Font size adjustments */
+html.text-size-sm {
+  font-size: 14px;
+}
+html.text-size-base {
+  font-size: 16px;
+}
+html.text-size-lg {
+  font-size: 18px;
+}
+
+/* Reduced motion guarantee */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

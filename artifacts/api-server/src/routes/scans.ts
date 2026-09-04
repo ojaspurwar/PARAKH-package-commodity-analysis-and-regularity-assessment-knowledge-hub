@@ -183,11 +183,14 @@ router.post("/scans", async (req, res): Promise<void> => {
   const checks =
     parsed.data.checks && parsed.data.checks.length > 0
       ? parsed.data.checks
-      : analyzeLabelText(parsed.data.ocrText, parsed.data.ocrDetails ?? null);
-  // Derive the verdict from the checks unless the officer chose a specific
-  // assessment themselves.
-  const status =
-    parsed.data.status === "pending" ? statusFromChecks(checks) : parsed.data.status;
+      : analyzeLabelText(parsed.data.ocrText, parsed.data.ocrDetails ?? null, parsed.data.category);
+  // Strict statutory verdict: If ANY check failed (e.g. expired date, missing MRP), status MUST be "violation"
+  const hasFailures = checks.some((c) => c.status === "failed");
+  const status = hasFailures
+    ? "violation"
+    : parsed.data.status === "pending"
+      ? statusFromChecks(checks)
+      : parsed.data.status;
   const evidenceHash = computeEvidenceHash({
     reference,
     productName: parsed.data.productName,
@@ -263,6 +266,117 @@ router.get("/scans/:id/report", async (req, res): Promise<void> => {
   doc.end();
 });
 
+router.get("/scans/:id/export", async (req, res): Promise<void> => {
+  await ensureSeeded();
+  const params = GetScanParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+  const scan = await findScan(params.data.id);
+  if (!scan) {
+    res.status(404).json({ error: "Scan not found" });
+    return;
+  }
+  const evidenceHash =
+    scan.evidenceHash ??
+    computeEvidenceHash({
+      reference: scan.reference,
+      productName: scan.productName,
+      barcode: scan.barcode,
+      ocrText: scan.ocrText,
+      ocrDetails: scan.ocrDetails ?? null,
+      checks: scan.checks,
+      capturedAt: scan.capturedAt,
+    });
+
+  const format = (req.query.format as string)?.toLowerCase() || "json";
+
+  if (format === "csv") {
+    const escapeCsv = (val: string | null | undefined) => `"${(val ?? "").replace(/"/g, '""')}"`;
+    const rows = [
+      ["METROLOGY COMPLIANCE AUDIT REPORT", ""],
+      ["System", "PARAKH — Legal Metrology Assistant (SIH26034)"],
+      ["Inspection Reference", scan.reference],
+      ["Product Name", scan.productName],
+      ["Category", scan.category],
+      ["Inspecting Officer", scan.officerName],
+      ["Inspection Location", scan.location],
+      ["Record Source", scan.source === "ecommerce" ? "E-Commerce Audit" : "Field Inspection"],
+      ["Overall Assessment", scan.status.toUpperCase()],
+      ["Captured Timestamp (UTC)", scan.capturedAt.toISOString()],
+      ["Barcode / QR Code", scan.barcode ?? "N/A"],
+      ["Evidence Hash (SHA-256)", evidenceHash],
+      [],
+      ["STATUS", "DECLARATION KEY", "MANDATORY DECLARATION", "DETECTED VALUE", "STATUTORY COMPLIANCE NOTE"],
+      ...scan.checks.map((c) => [
+        c.status.toUpperCase(),
+        c.key,
+        c.label,
+        c.value,
+        c.note,
+      ]),
+      [],
+      ["LABEL TEXT TRANSCRIPTION (OCR EVIDENCE)", ""],
+      [scan.ocrText.replace(/\r?\n/g, " | "), ""],
+    ];
+    const csvContent = rows
+      .map((row) => row.map((cell) => escapeCsv(String(cell ?? ""))).join(","))
+      .join("\r\n");
+
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="parakh-${scan.reference.toLowerCase()}.csv"`,
+    );
+    res.send(csvContent);
+    return;
+  }
+
+  // Default: JSON export
+  const exportPayload = {
+    metadata: {
+      generator: "PARAKH — Legal Metrology Assistant (SIH26034)",
+      generatedAt: new Date().toISOString(),
+      statutoryAct: "Legal Metrology Act, 2009 & Legal Metrology (Packaged Commodities) Rules, 2011",
+      evidenceHash,
+    },
+    inspection: {
+      id: scan.id,
+      reference: scan.reference,
+      productName: scan.productName,
+      category: scan.category,
+      officerName: scan.officerName,
+      location: scan.location,
+      source: scan.source,
+      status: scan.status,
+      submitted: scan.submitted,
+      capturedAt: scan.capturedAt.toISOString(),
+      barcode: scan.barcode,
+      imageUrl: scan.imageUrl,
+      ocrDetails: scan.ocrDetails,
+      ocrText: scan.ocrText,
+    },
+    complianceChecks: scan.checks,
+    summary: {
+      totalChecks: scan.checks.length,
+      passedChecks: scan.checks.filter((c) => c.status === "passed").length,
+      failedChecks: scan.checks.filter((c) => c.status === "failed").length,
+      reviewNeeded: scan.checks.filter((c) => c.status === "review").length,
+      violations: scan.checks
+        .filter((c) => c.status === "failed")
+        .map((c) => ({ declaration: c.label, detected: c.value, statutoryNote: c.note })),
+    },
+  };
+
+  res.setHeader("Content-Type", "application/json; charset=utf-8");
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename="parakh-${scan.reference.toLowerCase()}.json"`,
+  );
+  res.send(JSON.stringify(exportPayload, null, 2));
+});
+
 router.post("/scans/:id", async (req, res): Promise<void> => {
   await ensureSeeded();
   const params = SubmitScanParams.safeParse(req.params);
@@ -285,6 +399,47 @@ router.post("/scans/:id", async (req, res): Promise<void> => {
     return;
   }
   res.json(SubmitScanResponse.parse(updated));
+});
+
+router.delete("/scans/:id", async (req, res): Promise<void> => {
+  await ensureSeeded();
+  const params = GetScanParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+  const [deleted] = await db
+    .delete(scansTable)
+    .where(eq(scansTable.id, params.data.id))
+    .returning();
+  if (!deleted) {
+    res.status(404).json({ error: "Scan not found" });
+    return;
+  }
+  res.json({
+    success: true,
+    message: `Scan ${deleted.reference} deleted successfully.`,
+    id: deleted.id,
+    productName: deleted.productName,
+  });
+});
+
+router.delete("/products/by-name", async (req, res): Promise<void> => {
+  await ensureSeeded();
+  const productName = String(req.query.name || "").trim();
+  if (!productName) {
+    res.status(400).json({ error: "Product name query parameter is required." });
+    return;
+  }
+  const deleted = await db
+    .delete(scansTable)
+    .where(eq(scansTable.productName, productName))
+    .returning();
+  res.json({
+    success: true,
+    message: `Deleted ${deleted.length} entries for "${productName}".`,
+    count: deleted.length,
+  });
 });
 
 router.post("/web-scans", async (req, res): Promise<void> => {

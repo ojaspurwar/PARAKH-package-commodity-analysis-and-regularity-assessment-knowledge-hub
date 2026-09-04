@@ -22,7 +22,33 @@ import selfsigned from "selfsigned";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const dbPath = path.join(root, ".data", "parakh.db");
-const httpsMode = process.argv.includes("--https") || process.env.HTTPS === "1";
+
+const DEFAULT_WEB_PORT = 41052;
+const DEFAULT_API_PORT = 35280;
+
+const envPath = path.join(root, ".env");
+if (fs.existsSync(envPath)) {
+  if (typeof process.loadEnvFile === "function") {
+    try { process.loadEnvFile(envPath); } catch {}
+  } else {
+    try {
+      const content = fs.readFileSync(envPath, "utf-8");
+      for (const line of content.split(/\r?\n/)) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith("#")) continue;
+        const idx = trimmed.indexOf("=");
+        if (idx > 0) {
+          const key = trimmed.slice(0, idx).trim();
+          const val = trimmed.slice(idx + 1).trim().replace(/^["']|["']$/g, "");
+          if (!process.env[key]) process.env[key] = val;
+        }
+      }
+    } catch {}
+  }
+}
+
+// Camera / getUserMedia requires HTTPS or localhost; default to HTTPS so mobile cameras always work seamlessly.
+const httpsMode = !process.argv.includes("--no-https") && process.env.HTTPS !== "0";
 
 const children = [];
 
@@ -133,8 +159,8 @@ function run(name, args, extraEnv) {
 }
 
 async function main() {
-  const apiPort = await pickPort(process.env.API_PORT);
-  const webPort = await pickPort(process.env.WEB_PORT);
+  const apiPort = await pickPort(process.env.API_PORT || DEFAULT_API_PORT);
+  const webPort = await pickPort(process.env.WEB_PORT || DEFAULT_WEB_PORT);
   const lan = lanAddress();
 
   let tls = null;

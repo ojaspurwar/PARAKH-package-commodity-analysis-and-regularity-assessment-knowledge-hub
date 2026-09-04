@@ -9,6 +9,10 @@ import DashboardPage from '@/pages/dashboard';
 import ScanDetailPage from '@/pages/scan-detail';
 import EcommercePage from '@/pages/ecommerce';
 import ProductsPage from '@/pages/products';
+import DocsPage from '@/pages/docs';
+import StyleguidePage from '@/pages/styleguide';
+import { AuthProvider } from '@/hooks/use-auth';
+import { LanguageProvider } from '@/lib/i18n';
 import NotFound from '@/pages/not-found';
 import {
   Route,
@@ -30,6 +34,8 @@ function Router() {
         <Route path="/scans/:id" component={ScanDetailPage} />
         <Route path="/ecommerce" component={EcommercePage} />
         <Route path="/products" component={ProductsPage} />
+        <Route path="/docs" component={DocsPage} />
+        <Route path="/styleguide" component={StyleguidePage} />
         <Route component={NotFound} />
       </Switch>
     </RoutedErrorBoundary>
@@ -44,14 +50,18 @@ function RoutedErrorBoundary({ children }: { children: ReactNode }) {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
-          <AppShell>
-            <Router />
-          </AppShell>
-        </WouterRouter>
-        <Toaster />
-      </TooltipProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <TooltipProvider>
+            <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+              <AppShell>
+                <Router />
+              </AppShell>
+            </WouterRouter>
+            <Toaster />
+          </TooltipProvider>
+        </AuthProvider>
+      </LanguageProvider>
     </QueryClientProvider>
   );
 }

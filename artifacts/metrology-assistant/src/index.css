@@ -1,5 +1,5 @@
-/* Fonts (DM Sans, IBM Plex Mono, Noto Sans Devanagari) are loaded via
-   <link> tags in index.html so they don't block the stylesheet. */
+@import './styles/tokens.css';
+@import './styles/base.css';
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @plugin "@tailwindcss/typography";

@@ -1,42 +1,105 @@
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowRight, Camera, Check, CircleAlert, FileText, Filter, ImagePlus, LoaderCircle, ScanBarcode, Search, Send, ShieldCheck, Sparkles, Trash2 } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowRight,
+  Bot,
+  Camera,
+  Check,
+  CircleAlert,
+  Cpu,
+  FileText,
+  Filter,
+  HeartPulse,
+  ImagePlus,
+  Leaf,
+  LoaderCircle,
+  RefreshCw,
+  ScanBarcode,
+  Search,
+  Send,
+  ShieldAlert,
+  ShieldCheck,
+  Sparkles,
+  Trash2,
+  Wand2,
+  Zap,
+} from 'lucide-react';
 import { Link } from 'wouter';
 import { getGetScanQueryKey, getGetScansQueryKey, useCreateScan, useGetScans, useSubmitScan } from '@workspace/api-client-react';
-import type { Scan, ScanInput } from '@workspace/api-client-react';
+import type { ComplianceCheck, Scan, ScanInput } from '@workspace/api-client-react';
 import { appConfig } from '@/config';
 import { EmptyState, ErrorState, ScanRow, SkeletonRows, StatusPill } from '@/components/scan-ui';
 import { BarcodeScanner } from '@/components/barcode-scanner';
+import { LiveCameraCapture } from '@/components/live-camera-capture';
 import { preparePhoto, runImageOcr, type OcrResult } from '@/lib/ocr';
+import { prepareEnhancedPhoto } from '@/lib/image-enhancer';
+import { buildCategorySpecificChecks } from '@/lib/date-compliance';
+import { useAuth } from '@/hooks/use-auth';
+import { useI18n } from '@/lib/i18n';
+
+export interface HealthImpactReport {
+  ingredients: string[];
+  benefits: string[];
+  harmsAndRisks: string[];
+  healthScore: string;
+  safetyRating: string;
+  dietaryAdvisories: string[];
+  allergens: string[];
+}
+
+export interface TechnicalSafetyReport {
+  technicalSpecs: Array<{ label: string; value: string }>;
+  safetyWarnings: string[];
+  certificationMarks: string[];
+  precautions: string[];
+}
+
+export interface AiAnalysisData {
+  productName: string;
+  category: 'Packaged food' | 'Personal care' | 'Household goods' | 'Electrical goods' | 'Textiles & Apparel' | 'Other';
+  mrp: string | null;
+  unitSalePrice: string | null;
+  netQuantity: string | null;
+  dateMarking: string | null;
+  consumerCare: string | null;
+  manufacturerPacker: string | null;
+  countryOfOrigin: string | null;
+  summary: string;
+  status: 'compliant' | 'violation' | 'pending';
+  fullOcrText: string;
+  missingDeclarations: string[];
+  confidence: number;
+  healthReport?: HealthImpactReport | null;
+  technicalSafetyReport?: TechnicalSafetyReport | null;
+}
 
 export default function HomePage() {
   const queryClient = useQueryClient();
-  // Remember the officer's language choice between visits (design doc: saved locally).
-  const [language, setLanguage] = useState<'en' | 'hi'>(() =>
-    typeof window !== 'undefined' &&    window.localStorage.getItem('parakh.language') === 'hi' ? 'hi' : 'en',
-  );
-  const chooseLanguage = (lang: 'en' | 'hi') => {
-    setLanguage(lang);
-    window.localStorage.setItem('parakh.language', lang);
-  };
+  const { user } = useAuth();
+  const { language, setLanguage, t } = useI18n();
   const [started, setStarted] = useState(false);
   const [barcodeScanning, setBarcodeScanning] = useState(false);
+  const [liveCameraScanning, setLiveCameraScanning] = useState(false);
   const [photo, setPhoto] = useState<{ dataUrl: string; width: number; height: number } | null>(null);
   const [ocrResult, setOcrResult] = useState<OcrResult | null>(null);
   const [ocrRunning, setOcrRunning] = useState(false);
+  const [aiRunning, setAiRunning] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState<AiAnalysisData | null>(null);
   const [ocrProgress, setOcrProgress] = useState(0);
   const [ocrStatus, setOcrStatus] = useState('');
   const [ocrError, setOcrError] = useState('');
   const [reviewScan, setReviewScan] = useState<Scan | null>(null);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<'all' | 'compliant' | 'violation' | 'pending'>('all');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [notice, setNotice] = useState('');
   const [errorNotice, setErrorNotice] = useState('');
   const [form, setForm] = useState<ScanInput>({
     productName: '',
     category: 'Packaged food',
-    officerName: appConfig.defaultOfficer,
-    location: appConfig.defaultLocation,
+    officerName: user.name,
+    location: user.jurisdiction,
     status: 'pending',
     imageUrl: null,
     ocrText: '',
@@ -47,7 +110,102 @@ export default function HomePage() {
   const createScan = useCreateScan();
   const submitScan = useSubmitScan();
 
-  const update = (key: keyof ScanInput, value: string) => setForm((current) => ({ ...current, [key]: value }));
+  const update = (key: keyof ScanInput, value: string) => {
+    setForm((current) => {
+      const updated = { ...current, [key]: value };
+      if (key === 'category' && aiAnalysis) {
+        const recomputedChecks = buildCategorySpecificChecks(value, {
+          mrp: aiAnalysis.mrp,
+          unitSalePrice: aiAnalysis.unitSalePrice,
+          netQuantity: aiAnalysis.netQuantity,
+          dateMarking: aiAnalysis.dateMarking,
+          consumerCare: aiAnalysis.consumerCare,
+          manufacturerPacker: aiAnalysis.manufacturerPacker,
+          countryOfOrigin: aiAnalysis.countryOfOrigin,
+          fullOcrText: aiAnalysis.fullOcrText || '',
+        });
+        const hasViolations = recomputedChecks.some((c) => c.status === 'failed');
+        updated.checks = recomputedChecks;
+        updated.status = hasViolations ? 'violation' : (aiAnalysis.status === 'violation' ? 'violation' : 'compliant');
+      }
+      return updated;
+    });
+  };
+
+  const triggerAiVision = async (dataUrl: string) => {
+    setAiRunning(true);
+    setOcrStatus(language === 'hi' ? 'एआई विज़न (Google Gemini 2.5) लेबल स्कैन कर रहा है…' : 'AI Vision (Google Gemini 2.5) analyzing package label…');
+    try {
+      const res = await fetch('/api/ai/analyze-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: dataUrl }),
+      });
+      const data = await res.json();
+      if (data.success && data.analysis) {
+        const a: AiAnalysisData = data.analysis;
+        setAiAnalysis(a);
+
+        // Build deterministic Legal Metrology compliance checks from AI analysis
+        const generatedChecks = buildCategorySpecificChecks(a.category, {
+          mrp: a.mrp,
+          unitSalePrice: a.unitSalePrice,
+          netQuantity: a.netQuantity,
+          dateMarking: a.dateMarking,
+          consumerCare: a.consumerCare,
+          manufacturerPacker: a.manufacturerPacker,
+          countryOfOrigin: a.countryOfOrigin,
+          fullOcrText: a.fullOcrText || '',
+        });
+
+        // Strict statutory violation determination:
+        const hasViolations = generatedChecks.some((c) => c.status === 'failed');
+        const calculatedStatus = hasViolations ? 'violation' : (a.status === 'violation' ? 'violation' : 'compliant');
+
+        // Format structured transcription text with clear labels at top so it is never lost in saved scans or PDFs
+        const structuredSummary = [
+          `PRODUCT: ${a.productName}`,
+          `CATEGORY: ${a.category}`,
+          a.mrp ? `MRP: ${a.mrp}` : 'MRP: Not detected',
+          a.unitSalePrice ? `UNIT SALE PRICE: ${a.unitSalePrice}` : '',
+          a.netQuantity ? `NET QUANTITY: ${a.netQuantity}` : '',
+          a.dateMarking ? `DATE OF MFG / PACKING: ${a.dateMarking}` : '',
+          a.consumerCare ? `CONSUMER CARE: ${a.consumerCare}` : '',
+          a.manufacturerPacker ? `MANUFACTURER / PACKER: ${a.manufacturerPacker}` : '',
+          a.countryOfOrigin ? `COUNTRY OF ORIGIN: ${a.countryOfOrigin}` : '',
+          '',
+          '--- STATUTORY COMPLIANCE STATUS ---',
+          `VERDICT: ${calculatedStatus.toUpperCase()}`,
+          ...(hasViolations
+            ? ['VIOLATIONS DETECTED:', ...generatedChecks.filter((c) => c.status === 'failed').map((c) => `• [${c.label}]: ${c.note}`)]
+            : ['All primary statutory declarations verified under LMPC Rules, 2011.']),
+          '',
+          '--- RAW OCR & PACKAGING TRANSCRIPTION ---',
+          a.fullOcrText || '',
+        ].filter(Boolean).join('\n');
+
+        setForm((cur) => ({
+          ...cur,
+          productName: a.productName || cur.productName,
+          category: a.category || cur.category,
+          ocrText: structuredSummary || cur.ocrText,
+          status: calculatedStatus,
+          checks: generatedChecks,
+        }));
+
+        setNotice(
+          language === 'hi'
+            ? `✨ एआई स्वतः श्रेणी: "${a.category}" | मूल्य: ${a.mrp || 'अज्ञात'} | स्थिति: ${calculatedStatus === 'violation' ? 'उल्लंघन' : 'अनुपालक'}`
+            : `✨ AI auto-classified "${a.category}" | MRP: ${a.mrp || 'N/A'} | Status: ${calculatedStatus.toUpperCase()}`
+        );
+      }
+    } catch (err) {
+      console.warn('AI Vision call failed, local OCR will be used:', err);
+    } finally {
+      setAiRunning(false);
+    }
+  };
+
   const handlePhoto = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = '';
@@ -55,24 +213,68 @@ export default function HomePage() {
     setOcrError('');
     setNotice('');
     setErrorNotice('');
+    setStarted(true);
     try {
-      const prepared = await preparePhoto(file);
+      const prepared = await prepareEnhancedPhoto(file);
       setPhoto(prepared);
-      // Read the label straight off the photo so the rule engine can analyse
-      // the actual package, not just a manual transcription.
+      setForm((current) => ({ ...current, imageUrl: prepared.dataUrl }));
       setOcrRunning(true);
-      setOcrProgress(0);
-      setOcrStatus('Loading OCR engine…');
-      const result = await runImageOcr(prepared.dataUrl, prepared, (progress) => {
-        setOcrStatus(progress.status);
+      setOcrProgress(0.15);
+
+      // Run Vision AI analysis with OpenRouter
+      await triggerAiVision(prepared.dataUrl);
+
+      // Also gather physical bounding boxes via Tesseract in background for font/placement millimeter checks
+      runImageOcr(prepared.dataUrl, prepared, (progress) => {
         if (progress.progress >= 0) setOcrProgress(progress.progress);
+      }).then((result) => {
+        setOcrResult(result);
+        setForm((current) => ({
+          ...current,
+          ocrDetails: {
+            engine: result.engine,
+            imageWidth: result.imageWidth,
+            imageHeight: result.imageHeight,
+            words: result.words,
+          },
+        }));
+      }).catch(() => {
+        // Tesseract failure is non-fatal when AI Vision has run
       });
+    } catch {
+      setOcrError(language === 'hi' ? 'तस्वीर को प्रोसेस नहीं किया जा सका।' : 'The photo could not be read on this device.');
+    } finally {
+      setOcrRunning(false);
+    }
+  };
+
+  const handleLiveCapture = async (captured: { dataUrl: string; width: number; height: number; panelsCount?: number }) => {
+    setLiveCameraScanning(false);
+    setOcrError('');
+    setNotice(
+      captured.panelsCount && captured.panelsCount > 1
+        ? (language === 'hi'
+            ? `${captured.panelsCount} पैकेज पैनल सफलतापूर्वक कैप्चर किए गए। एआई विश्लेषण जारी है…`
+            : `${captured.panelsCount} package panels captured. Vision AI analyzing all sides…`)
+        : ''
+    );
+    setErrorNotice('');
+    setStarted(true);
+    setPhoto(captured);
+    setForm((current) => ({ ...current, imageUrl: captured.dataUrl }));
+    setOcrRunning(true);
+    setOcrProgress(0.15);
+
+    // Run Vision AI analysis with OpenRouter
+    await triggerAiVision(captured.dataUrl);
+
+    // Also gather physical bounding boxes via Tesseract in background
+    runImageOcr(captured.dataUrl, captured, (progress) => {
+      if (progress.progress >= 0) setOcrProgress(progress.progress);
+    }).then((result) => {
       setOcrResult(result);
-      setOcrStatus('');
       setForm((current) => ({
         ...current,
-        imageUrl: prepared.dataUrl,
-        ocrText: result.text || current.ocrText,
         ocrDetails: {
           engine: result.engine,
           imageWidth: result.imageWidth,
@@ -80,16 +282,13 @@ export default function HomePage() {
           words: result.words,
         },
       }));
-      setNotice(`Label read from the photo — ${result.words.length} words extracted in ${(result.elapsedMs / 1000).toFixed(1)}s. Review it, then save.`);
-    } catch {
-      setOcrError('The photo could not be read on this device. Enter the label text manually below — the rule engine will still check it.');
-    } finally {
-      setOcrRunning(false);
-    }
+    }).catch(() => {});
   };
+
   const removePhoto = () => {
     setPhoto(null);
     setOcrResult(null);
+    setAiAnalysis(null);
     setOcrError('');
     setForm((current) => ({ ...current, imageUrl: null, ocrDetails: null }));
   };
@@ -104,8 +303,8 @@ export default function HomePage() {
         data: {
           productName: `Scanned product (${barcode.format.toUpperCase()} ${barcode.rawValue})`,
           category: 'Other',
-          officerName: appConfig.defaultOfficer,
-          location: appConfig.defaultLocation,
+          officerName: user.name,
+          location: user.jurisdiction,
           status: 'pending',
           imageUrl: null,
           barcode: barcode.rawValue,
@@ -157,6 +356,33 @@ export default function HomePage() {
     });
   };
 
+  const handleDeleteScan = async (e: React.MouseEvent, scan: Scan) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const confirmed = window.confirm(
+      language === 'hi'
+        ? `क्या आप वाकई "${scan.productName}" के इस निरीक्षण रिकॉर्ड को हटाना चाहते हैं?`
+        : `Are you sure you want to delete this inspection record for "${scan.productName}"?`
+    );
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch(`/api/scans/${scan.id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Failed to delete scan');
+      await queryClient.invalidateQueries({ queryKey: getGetScansQueryKey() });
+      if (reviewScan?.id === scan.id) {
+        setReviewScan(null);
+      }
+      setNotice(
+        language === 'hi'
+          ? `"${scan.productName}" का रिकॉर्ड सफलतापूर्वक हटा दिया गया।`
+          : `Inspection record for "${scan.productName}" deleted successfully.`
+      );
+    } catch (err: any) {
+      setErrorNotice(language === 'hi' ? 'हटाने में विफल: ' + (err.message || '') : 'Failed to delete record: ' + (err.message || ''));
+    }
+  };
+
   const cityLabel = language === 'hi' ? 'जयपुर' : (appConfig.defaultLocation.split(' • ')[0] || 'Jaipur');
   const dateStamp = new Intl.DateTimeFormat('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
     .format(new Date())
@@ -170,120 +396,708 @@ export default function HomePage() {
         <div className="relative flex flex-col justify-between gap-7 lg:flex-row lg:items-end">
           <div className="max-w-2xl">
             <div className="flex flex-wrap items-center gap-3">
-              <span className="inline-flex items-center gap-2 rounded-full bg-primary-foreground/10 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[.16em] text-primary-foreground/75"><span className="size-1.5 rounded-full bg-accent" />Field desk</span>
+              <span className="inline-flex items-center gap-2 rounded-full bg-primary-foreground/10 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[.16em] text-primary-foreground/75"><span className="size-1.5 rounded-full bg-accent" />{t.fieldDeskBadge}</span>
               <span className="font-mono text-[10px] uppercase tracking-[.16em] text-primary-foreground/45">{cityLabel} • {dateStamp}</span>
             </div>
-            <h1 className="mt-5 max-w-xl text-3xl font-semibold tracking-[-.045em] md:text-5xl">{language === 'hi' ? <>आत्मविश्वास से निरीक्षण करें।<br /><span className="text-accent">जो मायने रखता है, रिकॉर्ड करें।</span></> : <>Inspect with confidence.<br /><span className="text-accent">Record what matters.</span></>}</h1>
-            <p className="mt-4 max-w-lg text-sm leading-6 text-primary-foreground/65">{language === 'hi' ? 'हर पैकेज्ड वस्तु का स्पष्ट, सुरक्षित रिकॉर्ड — पहली तस्वीर से अंतिम सबमिशन तक।' : 'A clear, defensible record of every packaged good you inspect — from first capture to final submission.'}</p>
+            <h1 className="mt-5 max-w-xl text-3xl font-semibold tracking-[-.045em] md:text-5xl">{t.heroTitle}<br /><span className="text-accent">{t.heroAccent}</span></h1>
+            <p className="mt-4 max-w-lg text-sm leading-6 text-primary-foreground/65">{t.heroSub}</p>
           </div>
           <div className="flex shrink-0 items-center gap-2 self-start rounded-xl border border-primary-foreground/15 bg-primary-foreground/10 p-1 lg:self-end">
-            <button type="button" onClick={() => chooseLanguage('en')} className={`rounded-lg px-3 py-2 text-xs font-semibold ${language === 'en' ? 'bg-accent text-accent-foreground' : 'text-primary-foreground/55'}`} data-testid="button-language-en">English</button>
-            <button type="button" onClick={() => chooseLanguage('hi')} className={`rounded-lg px-3 py-2 text-xs font-semibold ${language === 'hi' ? 'bg-accent text-accent-foreground' : 'text-primary-foreground/55'}`} data-testid="button-language-hi">हिन्दी</button>
+            <button type="button" onClick={() => setLanguage('en')} className={`rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${language === 'en' ? 'bg-accent text-accent-foreground' : 'text-primary-foreground/70 hover:text-primary-foreground'}`} data-testid="button-language-en">English</button>
+            <button type="button" onClick={() => setLanguage('hi')} className={`rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${language === 'hi' ? 'bg-accent text-accent-foreground' : 'text-primary-foreground/70 hover:text-primary-foreground'}`} data-testid="button-language-hi">हिन्दी</button>
           </div>
         </div>
         <div className="relative mt-8 flex flex-wrap items-center gap-x-7 gap-y-3 border-t border-primary-foreground/10 pt-5 text-xs text-primary-foreground/55">
-          <span className="inline-flex items-center gap-2"><ShieldCheck size={14} className="text-accent" /> {language === 'hi' ? 'सबूत-पहले कार्यप्रवाह' : 'Evidence-first workflow'}</span>
-          <span className="inline-flex items-center gap-2"><Camera size={14} className="text-accent" /> {language === 'hi' ? 'कम नेटवर्क पर भी काम करता है' : 'Works with intermittent network'}</span>
-          <Link href="/dashboard" className="inline-flex items-center gap-2 font-semibold text-accent hover:underline" data-testid="link-open-dashboard">{language === 'hi' ? 'सुपरवाइज़र दृश्य खोलें' : 'Open supervisor view'} <ArrowRight size={14} /></Link>
+          <span className="inline-flex items-center gap-2"><ShieldCheck size={14} className="text-accent" /> {t.evidenceWorkflow}</span>
+          <span className="inline-flex items-center gap-2"><Camera size={14} className="text-accent" /> {t.intermittentNetwork}</span>
+          <Link href="/dashboard" className="inline-flex items-center gap-2 font-semibold text-accent hover:underline" data-testid="link-open-dashboard">{t.openSupervisorView} <ArrowRight size={14} /></Link>
         </div>
       </section>
 
       <div className="grid gap-7 xl:grid-cols-[minmax(0,1.5fr)_minmax(350px,1fr)]">
         <section className="appear delay-1 min-w-0">
           <div className="mb-4 flex items-end justify-between gap-4">
-            <div><p className="font-mono text-[10px] uppercase tracking-[.18em] text-muted-foreground">Capture desk</p><h2 className="mt-1 text-xl font-semibold tracking-[-.03em]">{language === 'hi' ? 'नया निरीक्षण शुरू करें' : 'Start a new inspection'}</h2></div>
+            <div><p className="font-mono text-[10px] uppercase tracking-[.18em] text-muted-foreground">{t.captureDesk}</p><h2 className="mt-1 text-xl font-semibold tracking-[-.03em]">{t.startNewInspection}</h2></div>
             <div className="flex items-center gap-2">
-              {!started && !barcodeScanning && <button type="button" onClick={() => { setBarcodeScanning(true); setStarted(false); }} className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold shadow-sm transition-transform hover:-translate-y-0.5" data-testid="button-scan-barcode"><ScanBarcode size={16} /> {language === 'hi' ? 'बारकोड स्कैन करें' : 'Scan barcode'}</button>}
-              {!started && !barcodeScanning && <button type="button" onClick={() => setStarted(true)} className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-transform hover:-translate-y-0.5" data-testid="button-start-scan"><Camera size={16} /> {language === 'hi' ? 'स्कैन शुरू करें' : 'Start scan'}</button>}
+              {!started && !barcodeScanning && !liveCameraScanning && (
+                <>
+                  <button type="button" onClick={() => { setBarcodeScanning(true); setLiveCameraScanning(false); setStarted(false); }} className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3.5 py-2.5 text-xs font-semibold shadow-sm transition-transform hover:-translate-y-0.5" data-testid="button-scan-barcode">
+                    <ScanBarcode size={15} /> {t.scanBarcode}
+                  </button>
+                  <button type="button" onClick={() => { setLiveCameraScanning(true); setBarcodeScanning(false); setStarted(false); }} className="inline-flex items-center gap-2 rounded-xl bg-secondary px-4 py-2.5 text-xs font-semibold text-secondary-foreground shadow-sm shadow-secondary/20 transition-transform hover:-translate-y-0.5" data-testid="button-live-camera-scanner">
+                    <Camera size={15} />
+                    <span>{language === 'hi' ? 'लाइव कैमरा स्कैनर' : 'Live Camera Scanner'}</span>
+                    <Sparkles size={13} className="text-accent" />
+                  </button>
+                </>
+              )}
             </div>
           </div>
-          {barcodeScanning ? (
+
+          {liveCameraScanning ? (
+            <LiveCameraCapture onCapture={handleLiveCapture} onCancel={() => setLiveCameraScanning(false)} />
+          ) : barcodeScanning ? (
             <BarcodeScanner onDetected={handleBarcode} onCancel={() => setBarcodeScanning(false)} />
           ) : !started ? (
-            <div className="field-grid relative overflow-hidden rounded-2xl border border-border bg-card px-6 py-12 md:px-10">
-              <div className="relative max-w-md">
-                <span className="grid size-12 place-items-center rounded-2xl bg-accent/25 text-foreground"><Camera size={23} /></span>
-                <h3 className="mt-5 text-lg font-semibold">Ready when you are</h3>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">Capture the package, confirm the label details, and submit a clean evidence trail in under a minute.</p>
-                <button type="button" onClick={() => setStarted(true)} className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-secondary hover:gap-3 transition-all" data-testid="button-begin-capture">Begin capture <ArrowRight size={16} /></button>
+            <div className="field-grid relative overflow-hidden rounded-2xl border border-border bg-card px-6 py-10 md:px-10">
+              <div className="relative max-w-lg">
+                <div className="flex items-center gap-2">
+                  <span className="grid size-12 place-items-center rounded-2xl bg-secondary/15 text-secondary"><Camera size={23} /></span>
+                  <span className="grid size-10 place-items-center rounded-xl bg-accent/30 text-foreground"><Sparkles size={18} /></span>
+                </div>
+                <h3 className="mt-5 text-xl font-semibold">
+                  {language === 'hi' ? 'लाइव कैमरा से उत्पाद स्कैन करें' : 'Scan Packaged Products with Live Camera & AI'}
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  {language === 'hi'
+                    ? 'लाइव कैमरे से सीधे पैकेट की फोटो लें — एआई (Gemini 2.5) तुरंत विधिक मापविज्ञान नियमों (MRP, Net Qty) की जांच करेगा और सामग्री, स्वास्थ्य लाभ एवं जोखिम की विस्तृत रिपोर्ट तैयार करेगा।'
+                    : 'Point your camera directly at the commodity label — AI analyzes Legal Metrology compliance (MRP, Net Qty) and instantly generates an in-depth Ingredients, Benefits & Health Harms Report.'}
+                </p>
+                <div className="mt-6 flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => { setLiveCameraScanning(true); setBarcodeScanning(false); setStarted(false); }}
+                    className="inline-flex items-center gap-2 rounded-xl bg-secondary px-5 py-3 text-sm font-semibold text-secondary-foreground shadow-lg shadow-secondary/20 hover:opacity-95 transition-all hover:scale-[1.02] active:scale-95"
+                    data-testid="button-begin-live-camera"
+                  >
+                    <Camera size={18} />
+                    <span>{language === 'hi' ? 'लाइव कैमरा खोलें' : 'Open Live Camera'}</span>
+                    <Sparkles size={15} className="text-accent" />
+                  </button>
+
+                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-xs font-semibold text-foreground/80 hover:bg-muted transition-colors" data-testid="label-quick-ai-scan">
+                    <ImagePlus size={15} />
+                    {language === 'hi' ? 'फ़ाइल से चुनें' : 'Choose from files'}
+                    <input type="file" accept="image/*" className="hidden" onChange={handlePhoto} data-testid="input-quick-ai-scan" />
+                  </label>
+
+                  <button
+                    type="button"
+                    onClick={() => setStarted(true)}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-border px-3.5 py-2.5 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                  >
+                    {language === 'hi' ? 'मैन्युअल फ़ॉर्म' : 'Manual Entry'}
+                  </button>
+                </div>
               </div>
-              <div className="absolute bottom-6 right-8 hidden font-mono text-[10px] uppercase leading-5 tracking-[.14em] text-muted-foreground/55 md:block">/01<br />capture<br /><span className="text-secondary">● live</span></div>
+              <div className="absolute bottom-6 right-8 hidden font-mono text-[10px] uppercase leading-5 tracking-[.14em] text-muted-foreground/55 md:block">/01<br />camera<br /><span className="text-secondary">● live ai</span></div>
             </div>
           ) : (
             <form onSubmit={handleCreate} className="rounded-2xl border border-border bg-card p-5 md:p-6" data-testid="form-new-scan">
-              <div className="mb-5 flex items-center justify-between border-b border-border pb-4"><div><p className="font-mono text-[10px] uppercase tracking-[.16em] text-secondary">Capture mode active</p><p className="mt-1 text-sm text-muted-foreground">Enter what the label tells you.</p></div><button type="button" onClick={() => setStarted(false)} className="text-xs font-semibold text-muted-foreground hover:text-foreground" data-testid="button-cancel-capture">Cancel</button></div>
+              <div className="mb-5 flex items-center justify-between border-b border-border pb-4"><div><p className="font-mono text-[10px] uppercase tracking-[.16em] text-secondary">{t.captureModeActive}</p><p className="mt-1 text-sm text-muted-foreground">{t.enterWhatLabelTells}</p></div><button type="button" onClick={() => setStarted(false)} className="text-xs font-semibold text-muted-foreground hover:text-foreground" data-testid="button-cancel-capture">{t.cancel}</button></div>
+
+              {/* 1. Category-specific Intelligence Card */}
+              {/* CASE A: Food Items -> Full Nutritional Ingredients, Health Benefits & Harms */}
+              {aiAnalysis?.category === 'Packaged food' && aiAnalysis?.healthReport && (
+                <div className="mb-5 overflow-hidden rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4 md:p-5 shadow-xs" data-testid="box-health-report-card">
+                  {/* Header */}
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-emerald-500/15 pb-3">
+                    <div className="flex items-center gap-2.5">
+                      <span className="grid size-8 place-items-center rounded-xl bg-emerald-600 text-white shadow-sm">
+                        <HeartPulse size={18} />
+                      </span>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+                            {language === 'hi' ? 'खाद्य सामग्री, पोषण लाभ एवं स्वास्थ्य जोखिम' : 'Food Ingredients, Nutritional Benefits & Health Harms'}
+                          </h4>
+                          <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
+                            FSSAI & LMPC
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground">
+                          {language === 'hi' ? 'सामग्री विवरण, पोषण लाभ एवं संभावित जोखिम विश्लेषण' : 'Culinary ingredient breakdown, nutrition & physiological impact'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5 rounded-xl border border-emerald-500/30 bg-card px-2.5 py-1 shadow-xs">
+                        <span className="text-[10px] uppercase font-mono text-muted-foreground">{language === 'hi' ? 'स्कोर:' : 'Score:'}</span>
+                        <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 font-mono">
+                          {aiAnalysis.healthReport.healthScore || 'N/A'}
+                        </span>
+                      </div>
+                      <span className="rounded-xl bg-emerald-600/15 px-2.5 py-1 text-xs font-semibold text-emerald-800 dark:text-emerald-200">
+                        {aiAnalysis.healthReport.safetyRating || 'Standard'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Detected Ingredients Badges */}
+                  {aiAnalysis.healthReport.ingredients.length > 0 && (
+                    <div className="mt-3.5">
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+                          {language === 'hi' ? 'पहचानी गई सामग्री (Food Ingredients)' : 'Detected Food Ingredients on Label'}
+                        </span>
+                        <span className="text-[10px] font-mono text-muted-foreground">
+                          {aiAnalysis.healthReport.ingredients.length} {language === 'hi' ? 'घटक' : 'items'}
+                        </span>
+                      </div>
+                      <div className="mt-1.5 flex flex-wrap gap-1.5">
+                        {aiAnalysis.healthReport.ingredients.map((ing, idx) => (
+                          <span
+                            key={idx}
+                            className="inline-flex items-center rounded-lg border border-border/80 bg-card px-2.5 py-1 text-xs text-foreground/90 shadow-xs"
+                          >
+                            {ing}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Dual Columns: Benefits vs Harms & Risks */}
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-xl border border-emerald-500/20 bg-card/85 p-3.5 shadow-xs">
+                      <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-semibold text-xs border-b border-emerald-500/10 pb-2">
+                        <Leaf size={15} />
+                        <span>{language === 'hi' ? 'स्वास्थ्य लाभ एवं पोषण (Benefits)' : 'Nutritional & Health Benefits'}</span>
+                      </div>
+                      <ul className="mt-2.5 space-y-1.5 text-xs leading-5 text-foreground/85">
+                        {aiAnalysis.healthReport.benefits.length > 0 ? (
+                          aiAnalysis.healthReport.benefits.map((b, idx) => (
+                            <li key={idx} className="flex items-start gap-2">
+                              <Check size={14} className="mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                              <span>{b}</span>
+                            </li>
+                          ))
+                        ) : (
+                          <li className="text-muted-foreground text-[11px] italic">
+                            {language === 'hi' ? 'कोई विशेष पोषण लाभ नहीं दर्शाया गया।' : 'No notable nutritional benefits reported.'}
+                          </li>
+                        )}
+                      </ul>
+                    </div>
+
+                    <div className="rounded-xl border border-amber-500/25 bg-card/85 p-3.5 shadow-xs">
+                      <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 font-semibold text-xs border-b border-amber-500/15 pb-2">
+                        <AlertTriangle size={15} />
+                        <span>{language === 'hi' ? 'संभावित नुकसान एवं स्वास्थ्य जोखिम (Harms)' : 'Potential Harms & Side Effects'}</span>
+                      </div>
+                      <ul className="mt-2.5 space-y-1.5 text-xs leading-5 text-foreground/85">
+                        {aiAnalysis.healthReport.harmsAndRisks.length > 0 ? (
+                          aiAnalysis.healthReport.harmsAndRisks.map((h, idx) => (
+                            <li key={idx} className="flex items-start gap-2 text-amber-900 dark:text-amber-200">
+                              <ShieldAlert size={14} className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
+                              <span>{h}</span>
+                            </li>
+                          ))
+                        ) : (
+                          <li className="text-muted-foreground text-[11px] italic">
+                            {language === 'hi' ? 'सामान्य सीमा में कोई प्रत्यक्ष हानिकारक तत्व नहीं।' : 'No critical harms detected.'}
+                          </li>
+                        )}
+                      </ul>
+                    </div>
+                  </div>
+
+                  {/* Dietary Advisories & Allergens */}
+                  {(aiAnalysis.healthReport.dietaryAdvisories.length > 0 || aiAnalysis.healthReport.allergens.length > 0) && (
+                    <div className="mt-3.5 rounded-xl border border-border/70 bg-card/90 p-3 text-xs leading-5">
+                      {aiAnalysis.healthReport.dietaryAdvisories.length > 0 && (
+                        <div className="mb-2">
+                          <span className="font-semibold text-foreground/90 block mb-1">
+                            ⚠️ {language === 'hi' ? 'आहार संबंधी चेतावनियां (Dietary Advisories):' : 'Dietary Advisories:'}
+                          </span>
+                          <ul className="list-disc list-inside space-y-1 text-muted-foreground text-[11px]">
+                            {aiAnalysis.healthReport.dietaryAdvisories.map((adv, idx) => (
+                              <li key={idx}>{adv}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {aiAnalysis.healthReport.allergens.length > 0 && (
+                        <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-border/50">
+                          <span className="font-semibold text-destructive text-[11px]">
+                            {language === 'hi' ? 'एलर्जी चेतावनी (Allergens):' : 'Declared Allergens:'}
+                          </span>
+                          {aiAnalysis.healthReport.allergens.map((alg, idx) => (
+                            <span key={idx} className="rounded-md bg-destructive/10 px-2 py-0.5 text-[10px] font-semibold text-destructive">
+                              {alg}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* CASE B: Personal Care Items -> Cosmetic Formulation & Dermatological Safety */}
+              {aiAnalysis?.category === 'Personal care' && aiAnalysis?.healthReport && (
+                <div className="mb-5 overflow-hidden rounded-2xl border border-purple-500/30 bg-purple-500/5 p-4 md:p-5 shadow-xs" data-testid="box-personal-care-card">
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-purple-500/15 pb-3">
+                    <div className="flex items-center gap-2.5">
+                      <span className="grid size-8 place-items-center rounded-xl bg-purple-600 text-white shadow-sm">
+                        <Sparkles size={18} />
+                      </span>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-xs font-bold uppercase tracking-wider text-purple-700 dark:text-purple-400">
+                            {language === 'hi' ? 'पर्सनल केयर सामग्री व त्वचा सुरक्षा' : 'Personal Care Formulation & Dermatological Safety'}
+                          </h4>
+                          <span className="rounded-full bg-purple-500/20 px-2 py-0.5 text-[10px] font-bold text-purple-700 dark:text-purple-300">
+                            Cosmetic Safety
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground">
+                          {language === 'hi' ? 'सक्रिय घटक, कॉस्मेटिक लाभ एवं त्वचा संवेदनशीलता विश्लेषण' : 'Active ingredients, grooming benefits & topical sensitization'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <span className="rounded-xl bg-purple-600/15 px-2.5 py-1 text-xs font-semibold text-purple-800 dark:text-purple-200">
+                        {aiAnalysis.healthReport.safetyRating || 'Dermatologically Tested'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Ingredients */}
+                  {aiAnalysis.healthReport.ingredients.length > 0 && (
+                    <div className="mt-3.5">
+                      <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground font-semibold block mb-1.5">
+                        {language === 'hi' ? 'सक्रिय घटक व रसायन (Chemical Formulation)' : 'Active Formulation Ingredients'}
+                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {aiAnalysis.healthReport.ingredients.map((ing, idx) => (
+                          <span key={idx} className="rounded-lg border border-purple-500/20 bg-card px-2.5 py-1 text-xs text-foreground/90">
+                            {ing}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Dual Columns: Benefits vs Irritation Precautions */}
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-xl border border-purple-500/20 bg-card/85 p-3.5">
+                      <div className="flex items-center gap-2 text-purple-600 dark:text-purple-400 font-semibold text-xs border-b border-purple-500/10 pb-2">
+                        <Check size={14} />
+                        <span>{language === 'hi' ? 'कॉस्मेटिक एवं त्वचा लाभ' : 'Grooming & Skin Benefits'}</span>
+                      </div>
+                      <ul className="mt-2.5 space-y-1.5 text-xs text-foreground/85">
+                        {aiAnalysis.healthReport.benefits.map((b, idx) => (
+                          <li key={idx} className="flex items-start gap-1.5">
+                            <Check size={13} className="mt-0.5 text-purple-500 shrink-0" />
+                            <span>{b}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div className="rounded-xl border border-amber-500/25 bg-card/85 p-3.5">
+                      <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 font-semibold text-xs border-b border-amber-500/15 pb-2">
+                        <AlertTriangle size={14} />
+                        <span>{language === 'hi' ? 'सावधानी व एलर्जी चेतावनी' : 'Precautions & Irritation Warnings'}</span>
+                      </div>
+                      <ul className="mt-2.5 space-y-1.5 text-xs text-foreground/85">
+                        {aiAnalysis.healthReport.harmsAndRisks.length > 0 ? (
+                          aiAnalysis.healthReport.harmsAndRisks.map((h, idx) => (
+                            <li key={idx} className="flex items-start gap-1.5 text-amber-900 dark:text-amber-200">
+                              <ShieldAlert size={13} className="mt-0.5 text-amber-500 shrink-0" />
+                              <span>{h}</span>
+                            </li>
+                          ))
+                        ) : (
+                          <li className="text-muted-foreground text-[11px] italic">
+                            {language === 'hi' ? 'आंखों के संपर्क से बचाएं। बाहरी उपयोग हेतु।' : 'For external use only. Avoid contact with eyes.'}
+                          </li>
+                        )}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* CASE C: Non-Food Items (Electrical goods, Household goods, Other) -> Technical Specifications & Safety Card */}
+              {aiAnalysis && aiAnalysis.category !== 'Packaged food' && aiAnalysis.category !== 'Personal care' && (
+                <div className="mb-5 overflow-hidden rounded-2xl border border-sky-500/30 bg-sky-500/5 p-4 md:p-5 shadow-xs" data-testid="box-technical-specs-card">
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-sky-500/15 pb-3">
+                    <div className="flex items-center gap-2.5">
+                      <span className="grid size-8 place-items-center rounded-xl bg-sky-600 text-white shadow-sm">
+                        {aiAnalysis.category === 'Electrical goods' ? <Zap size={18} /> : <Cpu size={18} />}
+                      </span>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-xs font-bold uppercase tracking-wider text-sky-700 dark:text-sky-400">
+                            {language === 'hi' ? 'तकनीकी विनिर्देश व सुरक्षा मानक' : 'Technical Specifications & Safety Compliance'}
+                          </h4>
+                          <span className="rounded-full bg-sky-500/20 px-2 py-0.5 text-[10px] font-bold text-sky-700 dark:text-sky-300">
+                            {aiAnalysis.category}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground">
+                          {language === 'hi' ? 'विद्युत/घरेलू उत्पाद विनिर्देश, ISI/BIS मानक व सुरक्षा सावधानियां' : 'Product specifications, statutory BIS/ISI standards & safety notices'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <span className="rounded-xl bg-sky-600/15 px-2.5 py-1 text-xs font-semibold text-sky-800 dark:text-sky-200">
+                      {language === 'hi' ? 'गैर-खाद्य वस्तु (Non-Food)' : 'Non-Food Commodity'}
+                    </span>
+                  </div>
+
+                  {/* Technical specs grid */}
+                  {aiAnalysis.technicalSafetyReport?.technicalSpecs && aiAnalysis.technicalSafetyReport.technicalSpecs.length > 0 && (
+                    <div className="mt-3.5">
+                      <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground font-semibold block mb-1.5">
+                        {language === 'hi' ? 'उत्पाद विनिर्देश (Specifications)' : 'Detected Product Specifications'}
+                      </span>
+                      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                        {aiAnalysis.technicalSafetyReport.technicalSpecs.map((spec, idx) => (
+                          <div key={idx} className="rounded-xl border border-border/80 bg-card p-2.5 shadow-xs">
+                            <span className="font-mono text-[10px] uppercase text-muted-foreground block">{spec.label}</span>
+                            <span className="text-xs font-semibold text-foreground mt-0.5 block">{spec.value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Safety Warnings & Certification Marks */}
+                  <div className="mt-3.5 grid gap-3 sm:grid-cols-2">
+                    {/* Safety Warnings */}
+                    <div className="rounded-xl border border-border/70 bg-card/90 p-3 text-xs leading-5">
+                      <div className="flex items-center gap-1.5 font-semibold text-foreground/90 border-b border-border/50 pb-1.5 mb-2">
+                        <AlertTriangle size={14} className="text-amber-500" />
+                        <span>{language === 'hi' ? 'सुरक्षा चेतावनियां (Safety Warnings)' : 'Safety & Hazard Warnings'}</span>
+                      </div>
+                      <ul className="list-disc list-inside space-y-1 text-muted-foreground text-[11px]">
+                        {aiAnalysis.technicalSafetyReport?.safetyWarnings && aiAnalysis.technicalSafetyReport.safetyWarnings.length > 0 ? (
+                          aiAnalysis.technicalSafetyReport.safetyWarnings.map((w, idx) => (
+                            <li key={idx}>{w}</li>
+                          ))
+                        ) : (
+                          <li>{language === 'hi' ? 'घरेलू उपयोग हेतु मानक विनिर्देश।' : 'Standard domestic use specifications declared.'}</li>
+                        )}
+                      </ul>
+                    </div>
+
+                    {/* Certification Marks & Precautions */}
+                    <div className="rounded-xl border border-border/70 bg-card/90 p-3 text-xs leading-5">
+                      <div className="flex items-center gap-1.5 font-semibold text-foreground/90 border-b border-border/50 pb-1.5 mb-2">
+                        <ShieldCheck size={14} className="text-emerald-500" />
+                        <span>{language === 'hi' ? 'मानक प्रमाणीकरण व सावधानियां' : 'Certification & Precautions'}</span>
+                      </div>
+                      <ul className="list-disc list-inside space-y-1 text-muted-foreground text-[11px]">
+                        {aiAnalysis.technicalSafetyReport?.certificationMarks && aiAnalysis.technicalSafetyReport.certificationMarks.length > 0 ? (
+                          aiAnalysis.technicalSafetyReport.certificationMarks.map((m, idx) => (
+                            <li key={idx} className="font-medium text-foreground/90">{m}</li>
+                          ))
+                        ) : (
+                          <li>{language === 'hi' ? 'विधिक मापविज्ञान नियम, 2011 का अनुपालन आवश्यक।' : 'Compliance with Legal Metrology Rules, 2011 mandatory.'}</li>
+                        )}
+                        {aiAnalysis.technicalSafetyReport?.precautions?.map((p, idx) => (
+                          <li key={`p-${idx}`}>{p}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 2. Legal Metrology Declarations Intelligence Card */}
+              {aiAnalysis && (
+                <div className="mb-5 overflow-hidden rounded-2xl border border-secondary/30 bg-secondary/5 p-4 md:p-5" data-testid="box-ai-summary-card">
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-secondary/15 pb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="grid size-7 place-items-center rounded-lg bg-secondary text-secondary-foreground shadow-sm">
+                        <Sparkles size={15} />
+                      </span>
+                      <div>
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-secondary">
+                          {language === 'hi' ? 'विधिक मापविज्ञान निष्कर्ष (Rule 6, 2011)' : 'Legal Metrology Intelligence (Rule 6, 2011)'}
+                        </h4>
+                        <p className="text-[11px] text-muted-foreground">
+                          {language === 'hi' ? 'विधिक मापविज्ञान (पैक वस्तुएं) नियम, 2011' : 'Prescribed under Legal Metrology Rules, 2011'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="rounded-full bg-secondary/20 px-2.5 py-1 text-[11px] font-semibold text-secondary">
+                        ✓ {language === 'hi' ? 'फ़ॉर्म में स्वतः भरा गया' : 'Auto-filled into form'}
+                      </span>
+                      {photo && (
+                        <button
+                          type="button"
+                          onClick={() => triggerAiVision(photo.dataUrl)}
+                          disabled={aiRunning}
+                          className="inline-flex items-center gap-1 rounded-lg border border-secondary/30 bg-card px-2.5 py-1 text-[11px] font-semibold text-secondary hover:bg-secondary/10 disabled:opacity-50"
+                          title={language === 'hi' ? 'एआई से पुनः स्कैन करें' : 'Re-run AI Analysis'}
+                        >
+                          <RefreshCw size={11} className={aiRunning ? 'animate-spin' : ''} />
+                          {language === 'hi' ? 'पुनः विश्लेषण' : 'Re-analyze'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Executive Summary */}
+                  <div className="mt-3 rounded-xl bg-card/80 p-3 text-xs leading-5 text-foreground/85 border border-border/60">
+                    <span className="font-semibold text-secondary">{language === 'hi' ? 'सारांश: ' : 'Executive Summary: '}</span>
+                    {aiAnalysis.summary}
+                  </div>
+
+                  {/* Extracted Key Declarations Badges */}
+                  <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                    <div className="rounded-xl border border-border/70 bg-card/90 p-2.5">
+                      <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground block">
+                        {language === 'hi' ? 'अधिकतम खुदरा मूल्य (MRP)' : 'MRP Declaration'}
+                      </span>
+                      <span className="text-xs font-semibold text-foreground mt-0.5 block">
+                        {aiAnalysis.mrp ? <span className="text-secondary font-bold">{aiAnalysis.mrp}</span> : <span className="text-destructive">{language === 'hi' ? 'अनुपस्थित (उल्लंघन)' : 'Not detected (Violation)'}</span>}
+                      </span>
+                    </div>
+
+                    <div className="rounded-xl border border-border/70 bg-card/90 p-2.5">
+                      <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground block">
+                        {language === 'hi' ? 'इकाई विक्रय मूल्य (USP)' : 'Unit Sale Price (USP)'}
+                      </span>
+                      <span className="text-xs font-semibold text-foreground mt-0.5 block">
+                        {aiAnalysis.unitSalePrice || (language === 'hi' ? 'लागू नहीं / नहीं मिला' : 'Not detected')}
+                      </span>
+                    </div>
+
+                    <div className="rounded-xl border border-border/70 bg-card/90 p-2.5">
+                      <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground block">
+                        {language === 'hi' ? 'शुद्ध मात्रा (Net Qty)' : 'Net Quantity'}
+                      </span>
+                      <span className="text-xs font-semibold text-foreground mt-0.5 block">
+                        {aiAnalysis.netQuantity ? <span className="text-secondary font-bold">{aiAnalysis.netQuantity}</span> : <span className="text-destructive">{language === 'hi' ? 'अनुपस्थित' : 'Not detected'}</span>}
+                      </span>
+                    </div>
+
+                    <div className="rounded-xl border border-border/70 bg-card/90 p-2.5">
+                      <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground block">
+                        {language === 'hi' ? 'विनिर्माण / पैकिंग तिथि' : 'Date Marking'}
+                      </span>
+                      <span className="text-xs font-semibold text-foreground mt-0.5 block">
+                        {aiAnalysis.dateMarking || (language === 'hi' ? 'अनुपस्थित' : 'Not detected')}
+                      </span>
+                    </div>
+
+                    <div className="rounded-xl border border-border/70 bg-card/90 p-2.5 sm:col-span-2">
+                      <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground block">
+                        {language === 'hi' ? 'निर्माता / पैकर विवरण' : 'Packer / Manufacturer Details'}
+                      </span>
+                      <span className="text-xs text-foreground/90 mt-0.5 block truncate" title={aiAnalysis.manufacturerPacker || ''}>
+                        {aiAnalysis.manufacturerPacker || (language === 'hi' ? 'अनुपस्थित' : 'Not detected')}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Missing Declarations Alert */}
+                  {aiAnalysis.missingDeclarations.length > 0 && (
+                    <div className="mt-3 flex items-start gap-2.5 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive">
+                      <CircleAlert size={16} className="shrink-0 mt-0.5" />
+                      <div>
+                        <span className="font-bold">{language === 'hi' ? 'लापता अनिवार्य विधिक घोषणाएं (नियम 6): ' : 'Missing Mandatory Declarations (Rule 6): '}</span>
+                        <span>{aiAnalysis.missingDeclarations.join(', ')}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="grid gap-4 sm:grid-cols-2">
-                <label className="sm:col-span-2"><span className="field-label">Product name</span><input required value={form.productName} onChange={(e) => update('productName', e.target.value)} placeholder="e.g. Shakti Gold Turmeric Powder" className="field-input" data-testid="input-product-name" /></label>
-                <label><span className="field-label">Category</span><select value={form.category} onChange={(e) => update('category', e.target.value)} className="field-input" data-testid="select-category"><option>Packaged food</option><option>Personal care</option><option>Household goods</option><option>Electrical goods</option><option>Other</option></select></label>
-                <label><span className="field-label">Inspection location</span><input required value={form.location} onChange={(e) => update('location', e.target.value)} className="field-input" data-testid="input-location" /></label>
-                <label><span className="field-label">Officer name</span><input required value={form.officerName} onChange={(e) => update('officerName', e.target.value)} className="field-input" data-testid="input-officer-name" /></label>
-                <label><span className="field-label">Initial assessment</span><select value={form.status} onChange={(e) => update('status', e.target.value)} className="field-input" data-testid="select-assessment"><option value="pending">Pending review</option><option value="compliant">Compliant</option><option value="violation">Violation found</option></select></label>
+                <label className="sm:col-span-2"><span className="field-label">{t.productName}</span><input required value={form.productName} onChange={(e) => update('productName', e.target.value)} placeholder={language === 'hi' ? 'उदा. शक्ति गोल्ड हल्दी पाउडर' : 'e.g. Shakti Gold Turmeric Powder'} className="field-input" data-testid="input-product-name" /></label>
+                <label><span className="field-label">{t.category}</span><select value={form.category} onChange={(e) => update('category', e.target.value)} className="field-input" data-testid="select-category"><option value="Packaged food">{t.catFood}</option><option value="Personal care">{t.catPersonalCare}</option><option value="Household goods">{t.catHousehold}</option><option value="Electrical goods">{t.catElectrical}</option><option value="Textiles & Apparel">{language === 'hi' ? 'वस्त्र एवं परिधान' : 'Textiles & Apparel'}</option><option value="Other">{t.catOther}</option></select></label>
+                <label><span className="field-label">{t.location}</span><input required value={form.location} onChange={(e) => update('location', e.target.value)} className="field-input" data-testid="input-location" /></label>
+                <label><span className="field-label">{language === 'hi' ? 'निरीक्षण अधिकारी' : 'Officer name'}</span><input required value={form.officerName} onChange={(e) => update('officerName', e.target.value)} className="field-input" data-testid="input-officer-name" /></label>
+                <label><span className="field-label">{language === 'hi' ? 'प्रारंभिक स्थिति' : 'Initial assessment'}</span><select value={form.status} onChange={(e) => update('status', e.target.value)} className="field-input" data-testid="select-assessment"><option value="pending">{t.pendingReview}</option><option value="compliant">{t.compliant}</option><option value="violation">{t.violation}</option></select></label>
                 <div className="sm:col-span-2">
-                  <span className="field-label">Package photo</span>
+                  <span className="field-label">{t.capturedEvidence}</span>
                   {photo ? (
                     <div className="flex items-center gap-4 rounded-xl border border-border bg-muted/25 p-3" data-testid="box-photo-preview">
                       <img src={photo.dataUrl} alt="Package photo selected" className="h-20 w-20 shrink-0 rounded-lg object-cover" data-testid="img-photo-preview" />
                       <div className="min-w-0 flex-1">
-                        {ocrRunning ? (
+                        {aiRunning || ocrRunning ? (
                           <div className="space-y-2">
                             <p className="flex items-center gap-2 text-xs font-medium text-foreground/80"><LoaderCircle size={13} className="animate-spin text-secondary" />{ocrStatus}</p>
                             <div className="h-1.5 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-secondary transition-all duration-200" style={{ width: `${Math.max(6, Math.round(ocrProgress * 100))}%` }} /></div>
                           </div>
                         ) : (
                           <div className="flex flex-wrap items-center gap-2">
-                            <span className="rounded-full bg-secondary/10 px-2.5 py-1 text-[11px] font-semibold text-secondary" data-testid="text-ocr-words">✓ {ocrResult?.words.length ?? 0} words read</span>
-                            <span className="font-mono text-[10px] text-muted-foreground">Tesseract · {photo.width}×{photo.height}px</span>
+                            {aiAnalysis ? (
+                              <span className="rounded-full bg-secondary/15 px-2.5 py-1 text-[11px] font-semibold text-secondary" data-testid="text-ai-analyzed">
+                                ✨ {language === 'hi' ? 'एआई विज़न सत्यापित' : 'AI Vision Analyzed'}
+                              </span>
+                            ) : null}
+                            <span className="rounded-full bg-secondary/10 px-2.5 py-1 text-[11px] font-semibold text-secondary" data-testid="text-ocr-words">✓ {ocrResult?.words.length ?? 0} {language === 'hi' ? 'शब्द' : 'words'}</span>
+                            <button
+                              type="button"
+                              onClick={() => triggerAiVision(photo.dataUrl)}
+                              disabled={aiRunning}
+                              className="inline-flex items-center gap-1 rounded-full border border-secondary/30 bg-card px-2.5 py-0.5 text-[10px] font-medium text-secondary hover:bg-secondary/10"
+                            >
+                              <Sparkles size={11} /> {language === 'hi' ? 'एआई पुनः चलाएं' : 'Re-run AI'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setLiveCameraScanning(true)}
+                              className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-2.5 py-0.5 text-[10px] font-medium text-foreground hover:bg-muted"
+                              title={language === 'hi' ? 'लाइव कैमरा से दोबारा फोटो लें' : 'Retake photo with live camera'}
+                            >
+                              <Camera size={11} /> {language === 'hi' ? 'कैमरा से पुनः लें' : 'Retake Live'}
+                            </button>
                           </div>
                         )}
                       </div>
-                      <button type="button" onClick={removePhoto} className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-destructive" aria-label="Remove photo" data-testid="button-remove-photo"><Trash2 size={16} /></button>
+                      <button type="button" onClick={removePhoto} className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-destructive" aria-label={t.removePhoto} data-testid="button-remove-photo"><Trash2 size={16} /></button>
                     </div>
                   ) : (
-                    <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-muted/15 px-4 py-5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/40" data-testid="label-upload-photo">
-                      <ImagePlus size={17} />
-                      Attach a package photo — the label is read automatically
-                      <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePhoto} data-testid="input-upload-photo" />
-                    </label>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      <button
+                        type="button"
+                        onClick={() => setLiveCameraScanning(true)}
+                        className="flex items-center justify-center gap-2 rounded-xl border border-secondary/40 bg-secondary/10 px-4 py-4 text-xs font-semibold text-secondary transition-colors hover:bg-secondary/20"
+                        data-testid="button-open-live-cam-form"
+                      >
+                        <Camera size={16} />
+                        {language === 'hi' ? 'लाइव कैमरा से फोटो लें' : 'Capture with Live Camera'}
+                        <Sparkles size={14} className="text-accent" />
+                      </button>
+
+                      <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-muted/15 px-4 py-4 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/40" data-testid="label-upload-photo">
+                        <ImagePlus size={16} />
+                        {language === 'hi' ? 'फ़ाइल से फोटो चुनें' : 'Choose photo from file'}
+                        <input type="file" accept="image/*" className="hidden" onChange={handlePhoto} data-testid="input-upload-photo" />
+                      </label>
+                    </div>
                   )}
                   {ocrError && <p className="mt-2 text-xs leading-5 text-destructive" data-testid="text-ocr-error">{ocrError}</p>}
                 </div>
-                <label className="sm:col-span-2"><span className="field-label">OCR / label notes</span><textarea required value={form.ocrText} onChange={(e) => update('ocrText', e.target.value)} rows={4} placeholder="Transcribed from the photo, or enter the key declarations visible on the package…" className="field-input resize-none" data-testid="textarea-ocr-text" /></label>
+                <label className="sm:col-span-2"><span className="field-label">{t.labelText}</span><textarea required value={form.ocrText} onChange={(e) => update('ocrText', e.target.value)} rows={4} placeholder={language === 'hi' ? 'फोटो से स्वतः ट्रांसक्राइब हुआ, या पैकेज पर दिखाई देने वाली प्रमुख घोषणाएं दर्ज करें…' : 'Transcribed from the photo, or enter the key declarations visible on the package…'} className="field-input resize-none" data-testid="textarea-ocr-text" /></label>
               </div>
               <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-5">
-                <p className="inline-flex max-w-xs items-start gap-2 text-xs leading-5 text-muted-foreground"><Sparkles size={14} className="mt-0.5 shrink-0 text-secondary" />The rule engine checks MRP, unit sale price, net quantity, date marking, consumer care and packer details. With a photo it also verifies font size, readability and placement.</p>
-                <button disabled={createScan.isPending} type="submit" className="inline-flex items-center gap-2 rounded-xl bg-secondary px-4 py-2.5 text-sm font-semibold text-secondary-foreground disabled:opacity-60" data-testid="button-create-scan">{createScan.isPending ? <LoaderCircle size={16} className="animate-spin" /> : <FileText size={16} />} {createScan.isPending ? 'Running checks…' : 'Save & review'}</button>
+                <p className="inline-flex max-w-xs items-start gap-2 text-xs leading-5 text-muted-foreground"><Sparkles size={14} className="mt-0.5 shrink-0 text-secondary" />{language === 'hi' ? 'नियम इंजन एमआरपी, यूनिट बिक्री मूल्य, शुद्ध मात्रा, विनिर्माण तिथि, उपभोक्ता सेवा और निर्माता विवरण की विधिक जांच करता है।' : 'The rule engine checks MRP, unit sale price, net quantity, date marking, consumer care and packer details. With a photo it also verifies font size, readability and placement.'}</p>
+                <button disabled={createScan.isPending} type="submit" className="inline-flex items-center gap-2 rounded-xl bg-secondary px-4 py-2.5 text-sm font-semibold text-secondary-foreground disabled:opacity-60" data-testid="button-create-scan">{createScan.isPending ? <LoaderCircle size={16} className="animate-spin" /> : <FileText size={16} />} {createScan.isPending ? t.savingScan : t.saveAndAnalyze}</button>
               </div>
             </form>
           )}
           {notice && <div className="mt-3 flex items-center gap-2 rounded-xl bg-secondary/10 px-4 py-3 text-sm font-medium text-secondary" data-testid="status-action-notice"><Check size={16} />{notice}</div>}
           {errorNotice && <div className="mt-3 flex items-start gap-2 rounded-xl border border-destructive/25 bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive" data-testid="status-action-error"><CircleAlert size={16} className="mt-0.5 shrink-0" />{errorNotice}</div>}
-          {reviewScan && <ReviewCard scan={reviewScan} onSubmit={handleSubmit} submitting={submitScan.isPending} />}
+          {reviewScan && (
+            <ReviewCard
+              scan={reviewScan}
+              onSubmit={handleSubmit}
+              submitting={submitScan.isPending}
+              onDelete={(s) => handleDeleteScan({ preventDefault: () => {}, stopPropagation: () => {} } as any, s)}
+            />
+          )}
         </section>
 
         <section className="appear delay-2 min-w-0">
-          <div className="mb-4 flex items-end justify-between gap-4"><div><p className="font-mono text-[10px] uppercase tracking-[.18em] text-muted-foreground">{language === 'hi' ? 'स्थानीय रजिस्टर' : 'Local register'}</p><h2 className="mt-1 text-xl font-semibold tracking-[-.03em]">{language === 'hi' ? 'हालिया स्कैन' : 'Recent scans'}</h2></div><span className="font-mono text-[11px] text-muted-foreground">{scanQuery.data?.length ?? 0} records</span></div>
-          <div className="mb-3 grid gap-2 sm:grid-cols-[1fr_145px]">
-            <label className="relative block"><Search size={15} className="pointer-events-none absolute left-3 top-3 text-muted-foreground" /><input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search product or reference" className="field-input pl-9" data-testid="input-search-scans" /></label>
-            <label className="relative block"><Filter size={14} className="pointer-events-none absolute left-3 top-3 text-muted-foreground" /><select value={status} onChange={(e) => setStatus(e.target.value as typeof status)} className="field-input pl-8" data-testid="select-filter-status"><option value="all">All statuses</option><option value="pending">Pending</option><option value="compliant">Compliant</option><option value="violation">Violations</option></select></label>
+          <div className="mb-4 flex items-end justify-between gap-4"><div><p className="font-mono text-[10px] uppercase tracking-[.18em] text-muted-foreground">{language === 'hi' ? 'स्थानीय रजिस्टर' : 'Local register'}</p><h2 className="mt-1 text-xl font-semibold tracking-[-.03em]">{t.recentScans}</h2></div><span className="font-mono text-[11px] text-muted-foreground">{scanQuery.data?.length ?? 0} {language === 'hi' ? 'रिकॉर्ड्स' : 'records'}</span></div>
+
+          {/* Category Filter Pills */}
+          <div className="mb-3 flex flex-wrap gap-1.5 overflow-x-auto pb-1">
+            {[
+              { id: 'all', labelEn: 'All Categories', labelHi: 'सभी श्रेणियां' },
+              { id: 'Packaged food', labelEn: 'Packaged Food', labelHi: 'खाद्य सामग्री' },
+              { id: 'Personal care', labelEn: 'Personal Care', labelHi: 'व्यक्तिगत देखभाल' },
+              { id: 'Household goods', labelEn: 'Household Goods', labelHi: 'घरेलू वस्तुएं' },
+              { id: 'Electrical goods', labelEn: 'Electrical Goods', labelHi: 'विद्युत उपकरण' },
+              { id: 'Textiles & Apparel', labelEn: 'Textiles & Apparel', labelHi: 'वस्त्र एवं परिधान' },
+              { id: 'Other', labelEn: 'Other', labelHi: 'अन्य' },
+            ].map((cat) => (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => setCategoryFilter(cat.id)}
+                className={`rounded-full px-3 py-1 text-xs font-semibold transition-all ${
+                  categoryFilter === cat.id
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'border border-border bg-card text-muted-foreground hover:bg-muted'
+                }`}
+                data-testid={`filter-category-${cat.id.replaceAll(' ', '-')}`}
+              >
+                {language === 'hi' ? cat.labelHi : cat.labelEn}
+              </button>
+            ))}
           </div>
-          {scanQuery.isPending ? <SkeletonRows /> : scanQuery.isError ? <ErrorState onRetry={() => scanQuery.refetch()} /> : scanQuery.data?.length ? <div className="space-y-1 rounded-2xl border border-border bg-card p-2">{scanQuery.data.map((scan) => <ScanRow key={scan.id} scan={scan} compact />)}</div> : <EmptyState title="No scans match this view" body="Your next capture will appear here with its evidence trail." />}
+
+          <div className="mb-3 grid gap-2 sm:grid-cols-[1fr_145px]">
+            <label className="relative block"><Search size={15} className="pointer-events-none absolute left-3 top-3 text-muted-foreground" /><input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t.searchPlaceholder} className="field-input pl-9" data-testid="input-search-scans" /></label>
+            <label className="relative block"><Filter size={14} className="pointer-events-none absolute left-3 top-3 text-muted-foreground" /><select value={status} onChange={(e) => setStatus(e.target.value as typeof status)} className="field-input pl-8" data-testid="select-filter-status"><option value="all">{t.filterAll}</option><option value="pending">{t.filterPending}</option><option value="compliant">{t.filterCompliant}</option><option value="violation">{t.filterViolation}</option></select></label>
+          </div>
+          {scanQuery.isPending ? (
+            <SkeletonRows />
+          ) : scanQuery.isError ? (
+            <ErrorState onRetry={() => scanQuery.refetch()} />
+          ) : (scanQuery.data ?? []).filter((s) => categoryFilter === 'all' || s.category === categoryFilter).length ? (
+            <div className="space-y-1 rounded-2xl border border-border bg-card p-2">
+              {(scanQuery.data ?? [])
+                .filter((s) => categoryFilter === 'all' || s.category === categoryFilter)
+                .map((scan) => (
+                  <ScanRow key={scan.id} scan={scan} compact onDelete={handleDeleteScan} />
+                ))}
+            </div>
+          ) : (
+            <EmptyState title={t.noScansYet} body={t.noScansSub} />
+          )}
         </section>
       </div>
     </div>
   );
 }
 
-function ReviewCard({ scan, onSubmit, submitting }: { scan: Scan; onSubmit: () => void; submitting: boolean }) {
+function ReviewCard({
+  scan,
+  onSubmit,
+  submitting,
+  onDelete,
+}: {
+  scan: Scan;
+  onSubmit: () => void;
+  submitting: boolean;
+  onDelete?: (scan: Scan) => void;
+}) {
+  const { language, t } = useI18n();
   return (
     <div className="mt-6 overflow-hidden rounded-2xl border border-secondary/25 bg-card" data-testid="card-review-scan">
       <div className="scanline h-1" />
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
-        <div><p className="font-mono text-[10px] uppercase tracking-[.15em] text-secondary">Review before submit</p><h3 className="mt-1 text-base font-semibold">{scan.productName}</h3></div>
+        <div><p className="font-mono text-[10px] uppercase tracking-[.15em] text-secondary">{t.reviewBannerTitle}</p><h3 className="mt-1 text-base font-semibold">{scan.productName}</h3></div>
         <StatusPill status={scan.status} submitted={scan.submitted} />
       </div>
       <div className="grid gap-4 px-5 py-5 md:grid-cols-[1fr_auto]">
-        <div className="space-y-2">{scan.checks.map((check) => <div key={check.key} className="flex items-start gap-3 rounded-lg bg-muted/50 px-3 py-2.5"><span className={`mt-1 size-2 rounded-full ${check.status === 'passed' ? 'bg-secondary' : check.status === 'failed' ? 'bg-destructive' : 'bg-accent'}`} /><div><p className="text-xs font-semibold">{check.label}</p><p className="mt-0.5 text-[11px] text-muted-foreground">{check.note}</p></div></div>)}</div>
-        <div className="flex flex-col justify-end gap-2"><Link href={`/scans/${scan.id}`} className="inline-flex items-center justify-center gap-2 rounded-xl border border-border px-4 py-2.5 text-xs font-semibold hover:bg-muted" data-testid="link-review-detail">Open detail <ArrowRight size={14} /></Link>{!scan.submitted && <button type="button" onClick={onSubmit} disabled={submitting} className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-xs font-semibold text-primary-foreground disabled:opacity-60" data-testid="button-submit-scan">{submitting ? <LoaderCircle size={14} className="animate-spin" /> : <Send size={14} />} Submit record</button>}</div>
+        <div className="space-y-2">
+          {scan.checks.map((check) => (
+            <div key={check.key} className="flex items-start gap-3 rounded-lg bg-muted/50 px-3 py-2.5">
+              <span className={`mt-1 size-2 rounded-full shrink-0 ${check.status === 'passed' ? 'bg-secondary' : check.status === 'failed' ? 'bg-destructive' : 'bg-accent'}`} />
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-xs font-semibold">{check.label}</p>
+                  <span className="font-mono text-xs font-bold text-secondary">{check.value}</span>
+                </div>
+                <p className="mt-0.5 text-[11px] text-muted-foreground">{check.note}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="flex flex-col justify-end gap-2">
+          <Link href={`/scans/${scan.id}`} className="inline-flex items-center justify-center gap-2 rounded-xl border border-border px-4 py-2.5 text-xs font-semibold hover:bg-muted" data-testid="link-review-detail">{t.viewDetails} <ArrowRight size={14} /></Link>
+          {!scan.submitted && (
+            <button type="button" onClick={onSubmit} disabled={submitting} className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-xs font-semibold text-primary-foreground disabled:opacity-60" data-testid="button-submit-scan">
+              {submitting ? <LoaderCircle size={14} className="animate-spin" /> : <Send size={14} />} {submitting ? t.submitting : t.submitToSupervisor}
+            </button>
+          )}
+          {onDelete && (
+            <button
+              type="button"
+              onClick={() => onDelete(scan)}
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-2.5 text-xs font-semibold text-destructive hover:bg-destructive/10 transition-colors"
+              data-testid="button-delete-review-scan"
+            >
+              <Trash2 size={14} /> {t.deleteRecord}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
