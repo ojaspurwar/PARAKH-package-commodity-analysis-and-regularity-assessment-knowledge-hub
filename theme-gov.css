@@ -1,0 +1,124 @@
+/* theme-gov.css — two-tier navy government header, structured after state.gov.
+   Import AFTER tokens.css. Replaces the indigo chrome; the six category card
+   colours in AGENTS.md section 5 are untouched. */
+
+:root {
+  /* ---- Navy chrome, two tones for depth ---- */
+  --gov-banner:  #F5F5F5;  /* top identification strip, dark text on light */
+  --navy-950:    #062135;  /* utility strip + footer — the darker tone      */
+  --navy-900:    #0A314D;  /* masthead band + nav — the lighter tone        */
+  --navy-800:    #0F4067;  /* hover / active fill                          */
+  --navy-700:    #1A4480;  /* slab headers                                  */
+  --navy-600:    #205493;  /* primary button                                */
+  --navy-500:    #005EA2;  /* links, focus ring                             */
+  --navy-100:    #E1E9F2;
+  --navy-050:    #F0F4F9;
+
+  /* Aliases so existing markup keeps working without a rename */
+  --indigo-700: var(--navy-800);
+  --indigo-600: var(--navy-700);
+  --indigo-100: var(--navy-100);
+  --indigo-050: var(--navy-050);
+
+  --link:       var(--navy-500);
+  --link-hover: #1A4480;
+
+  /* ---- Tiranga (Flag Code of India values) ---- */
+  --tiranga-saffron: #FF9933;
+  --tiranga-white:   #FFFFFF;
+  --tiranga-green:   #138808;
+  --tiranga-navy:    #000080;
+
+  --sh-2: 0 8px 24px rgba(6, 33, 53, .14);
+}
+
+/* Row 0 — identification banner. Light, small, unobtrusive.
+   Mirrors "An official website of the United States Government". */
+.gov-banner {
+  background: var(--gov-banner);
+  color: #2C3038;
+  font-size: 13px;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+.gov-banner__flag { width: 18px; height: 12px; flex: none; }
+
+/* Row 1 — utility strip, darker tone. Right-aligned controls. */
+.utility-strip {
+  background: var(--navy-950);
+  color: #C9DAEC;
+  min-height: 44px;
+  font-size: 14px;
+}
+.utility-strip a { color: #C9DAEC; }
+.utility-strip a:hover { color: #fff; }
+
+/* Row 2 — masthead band, lighter tone. Emblem lockup left, nav right. */
+.masthead {
+  background: var(--navy-900);
+  color: #fff;
+  min-height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-6);
+}
+.masthead__lockup { display: flex; align-items: center; gap: var(--s-4); }
+.masthead__emblem { height: 64px; width: auto; flex: none; }
+.masthead__flag   { height: 40px; width: auto; flex: none; }
+.masthead__rule   { width: 1px; align-self: stretch; background: rgba(255,255,255,.22); }
+.masthead__hi     { font-family: var(--font-hi); font-size: 20px; font-weight: 600; }
+.masthead__en     { font-size: 15px; color: #C9DAEC; }
+
+.nav-bar        { display: flex; align-items: center; gap: var(--s-2); }
+.nav-bar a      { color: #DCE6F2; padding: 10px var(--s-4); border-radius: var(--r-sm); }
+.nav-bar a:hover{ background: var(--navy-800); color: #fff; }
+.nav-bar a[aria-current="page"] {
+  background: var(--navy-800);
+  color: #fff;
+  box-shadow: inset 0 -3px 0 var(--tiranga-saffron);
+}
+
+/* The tricolour rule. Exactly two placements: below the masthead, and along the
+   top edge of the footer. Decorative — aria-hidden. */
+.tiranga-rule {
+  height: 4px;
+  width: 100%;
+  background: linear-gradient(
+    to right,
+    var(--tiranga-saffron) 0 33.333%,
+    var(--tiranga-white)   33.333% 66.666%,
+    var(--tiranga-green)   66.666% 100%
+  );
+}
+
+.slab, .portal-slab { background: var(--navy-900); }
+
+.site-footer      { background: var(--navy-950); color: #C9DAEC; }
+.site-footer h3   { color: #fff; font-size: var(--fs-h3); }
+.site-footer a    { color: #C9DAEC; }
+.site-footer a:hover { color: #fff; }
+.site-footer__marks { display: flex; align-items: center; gap: var(--s-6); flex-wrap: wrap; }
+.site-footer__marks img { height: 44px; width: auto; }
+
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid #7FB3E0;
+  outline-offset: 2px;
+}
+
+/* Public landing hero — this page ONLY. Never on a workspace page. */
+.landing-hero {
+  position: relative;
+  min-height: 520px;
+  display: flex;
+  align-items: center;
+  background: var(--navy-950);
+}
+.landing-hero__media { position: absolute; inset: 0; object-fit: cover; width: 100%; height: 100%; }
+.landing-hero__scrim {
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg, rgba(6,33,53,.92) 0%, rgba(6,33,53,.72) 55%, rgba(6,33,53,.45) 100%);
+}
+.landing-hero__body { position: relative; color: #fff; max-width: 34ch; }

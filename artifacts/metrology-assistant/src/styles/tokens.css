@@ -20,6 +20,8 @@
   --ls-heading: -0.008em;
 
   /* ---- Institutional ---- */
+  --navy-900:   #1a164b;
+  --navy-700:   #3D2A93;
   --indigo-700: #3D2A93;
   --indigo-600: #5138B8;
   --indigo-100: #E7E2FA;
@@ -98,7 +100,7 @@ h3 { font-size: var(--fs-h3); }
 
 /* Slab header sitting flush on a white panel. */
 .slab, .portal-slab {
-  background: var(--indigo-600);
+  background: var(--navy-900);
   color: #fff;
   font-size: var(--fs-slab);
   font-weight: 600;

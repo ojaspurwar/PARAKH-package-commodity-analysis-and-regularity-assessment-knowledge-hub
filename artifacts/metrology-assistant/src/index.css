@@ -1,4 +1,5 @@
 @import './styles/tokens.css';
+@import './styles/theme-gov.css';
 @import './styles/base.css';
 @import 'tailwindcss';
 @import 'tw-animate-css';
@@ -68,11 +69,26 @@
   --radius-lg: 14px;
   --radius-xl: 18px;
 
-  /* Institutional */
+  /* Institutional & Navy Chrome (theme-gov) */
+  --color-gov-banner: #F5F5F5;
+  --color-navy-950: #062135;
+  --color-navy-900: #0A314D;
+  --color-navy-800: #0F4067;
+  --color-navy-700: #1A4480;
+  --color-navy-600: #205493;
+  --color-navy-500: #005EA2;
+  --color-navy-100: #E1E9F2;
+  --color-navy-050: #F0F4F9;
   --color-indigo-700: #3D2A93;
   --color-indigo-600: #5138B8;
   --color-indigo-100: #E7E2FA;
   --color-indigo-050: #F3F0FD;
+
+  /* Tiranga (Flag Code of India) */
+  --color-tiranga-saffron: #FF9933;
+  --color-tiranga-white: #FFFFFF;
+  --color-tiranga-green: #138808;
+  --color-tiranga-navy: #000080;
 
   /* Surfaces & Text */
   --color-bg-page: #FAFAFA;
