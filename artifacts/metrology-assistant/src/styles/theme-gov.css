@@ -32,72 +32,377 @@
   --sh-2: 0 8px 24px rgba(6, 33, 53, .14);
 }
 
-/* Row 0 — identification banner. Light, small, unobtrusive.
-   Mirrors "An official website of the United States Government". */
-.gov-banner {
-  background: var(--gov-banner);
+/* ==========================================================================
+   ROW 1 — IDENTIFICATION BANNER
+   background #F5F5F5 · height 36px · font-size 14px · colour #2C3038
+   Left: Indian flag icon 20×14, then "An official portal of the Government of India"
+   Right: "Ministry of Consumer Affairs, Food & Public Distribution"
+   Both single-line, white-space: nowrap.
+   ========================================================================== */
+.header-row-1 {
+  background: #F5F5F5;
   color: #2C3038;
-  font-size: 13px;
-  min-height: 32px;
-  display: flex;
-  align-items: center;
-  gap: var(--s-3);
-}
-.gov-banner__flag { width: 18px; height: 12px; flex: none; }
-
-/* Row 1 — utility strip, darker tone. Right-aligned controls. */
-.utility-strip {
-  background: var(--navy-950);
-  color: #C9DAEC;
-  min-height: 44px;
+  height: 36px;
+  min-height: 36px;
   font-size: 14px;
+  font-family: var(--font-sans);
+  border-bottom: 1px solid var(--border);
+  width: 100%;
 }
-.utility-strip a { color: #C9DAEC; }
-.utility-strip a:hover { color: #fff; }
-
-/* Row 2 — masthead band, lighter tone. Emblem lockup left, nav right. */
-.masthead {
-  background: var(--navy-900);
-  color: #fff;
-  min-height: 110px;
+.header-row-1__inner {
+  width: min(100% - 2 * var(--gutter), 1560px);
+  margin-inline: auto;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--s-6);
+  white-space: nowrap;
 }
-.masthead__lockup { display: flex; align-items: center; gap: var(--s-4); }
-.masthead__emblem { height: 64px; width: auto; flex: none; }
-.masthead__flag   { height: 40px; width: auto; flex: none; }
-.masthead__rule   { width: 1px; align-self: stretch; background: rgba(255,255,255,.22); }
-.masthead__hi     { font-family: var(--font-hi); font-size: 20px; font-weight: 600; }
-.masthead__en     { font-size: 15px; color: #C9DAEC; }
-
-.nav-bar        { align-items: center; gap: var(--s-2); }
-@media (min-width: 1280px) {
-  .nav-bar { display: flex !important; }
-}
-@media (max-width: 1279px) {
-  .nav-bar { display: none !important; }
-}
-.nav-bar a      { color: #DCE6F2; padding: 10px var(--s-4); border-radius: var(--r-sm); }
-.nav-bar a:hover{ background: var(--navy-800); color: #fff; }
-.nav-bar a[aria-current="page"] {
-  background: var(--navy-800);
-  color: #fff;
-  box-shadow: inset 0 -3px 0 var(--tiranga-saffron);
+.gov-banner__flag {
+  width: 20px;
+  height: 14px;
+  flex: none;
 }
 
-/* The tricolour rule. Exactly two placements: below the masthead, and along the
-   top edge of the footer. Decorative — aria-hidden. */
+/* ==========================================================================
+   ROW 2 — UTILITY STRIP
+   background #052963 · height 46px · font-size 15px · colour #C9DAEC
+   Left: "Legal Metrology Division | Legal Metrology (Packaged Commodities) Rules, 2011" (+ skip link)
+   Right: "A− A A+" controls · 1px rgba(255,255,255,.28) divider · Contrast toggle · divider · "English / हिन्दी".
+   Single line, nowrap.
+   ========================================================================== */
+.header-row-2 {
+  background: #052963;
+  color: #C9DAEC;
+  height: 46px;
+  min-height: 46px;
+  font-size: 15px;
+  font-family: var(--font-sans);
+  width: 100%;
+}
+.header-row-2__inner {
+  width: min(100% - 2 * var(--gutter), 1560px);
+  margin-inline: auto;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  white-space: nowrap;
+}
+.header-row-2 a {
+  color: #C9DAEC;
+}
+.header-row-2 a:hover {
+  color: #FFFFFF;
+}
+
+/* ==========================================================================
+   ROW 3 — MASTHEAD (#FFFFFF, 3-column grid)
+   display: grid; grid-template-columns: auto 1fr auto; align-items: center;
+   gap: 32px; min-height: 148px; padding-inline: clamp(16px, 3vw, 56px);
+   All 3 columns share ONE vertical centre axis (align-items: center).
+   Left: Single <img> doca-lockup.png (height 88px)
+   Centre: Exactly 3 stacked lines, text-align: center, white-space: nowrap:
+     1. "वैध मापविज्ञान प्रवर्तन पोर्टल" — 22px, 500, Noto Sans Devanagari, #1E1F24
+     2. "Legal Metrology Enforcement Portal" — 30px, 700, Noto Sans, #1E1F24, line-height: 1.2
+     3. "PARAKH" — 16px, 600, #55565E, letter-spacing: 0.04em
+   Right: Flex row, align-items: center, gap: 16px, white-space: nowrap:
+     PARAKH mark: parakh.svg (height 56px)
+     Officer chip: 1px solid #E2E2E7, border-radius: 8px, padding: 10px 16px
+   ========================================================================== */
+.header-row-3 {
+  background: #FFFFFF;
+  color: #1E1F24;
+  min-height: 148px;
+  width: 100%;
+  border-bottom: 1px solid #E6E0D6;
+}
+.header-row-3__grid {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: clamp(16px, 2.5vw, 32px);
+  min-height: 148px;
+  padding-inline: clamp(16px, 3vw, 56px);
+  max-width: 1560px;
+  margin-inline: auto;
+  width: 100%;
+  padding-block: 16px;
+}
+.masthead-doca-img {
+  height: 88px;
+  width: auto;
+  display: block;
+  flex: none;
+  mix-blend-mode: multiply;
+}
+.masthead-center-block {
+  text-align: center;
+  white-space: nowrap;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.masthead-title-hi {
+  font-family: var(--font-hi);
+  font-size: 22px;
+  font-weight: 500;
+  color: #1E1F24;
+  line-height: 1.3;
+}
+.masthead-title-en {
+  font-family: var(--font-sans);
+  font-size: 30px;
+  font-weight: 700;
+  color: #1E1F24;
+  line-height: 1.2;
+}
+.masthead-title-brand {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 600;
+  color: #55565E;
+  letter-spacing: 0.04em;
+  line-height: 1.3;
+  margin-top: 2px;
+}
+.masthead-right-block {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  white-space: nowrap;
+}
+.masthead-parakh-svg {
+  height: 56px;
+  width: auto;
+  display: block;
+  flex: none;
+}
+.masthead-officer-chip {
+  border: 1px solid #E2E2E7;
+  border-radius: 8px;
+  padding: 10px 16px;
+  background: #FFFFFF;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  transition: background-color 140ms ease, border-color 140ms ease;
+  cursor: pointer;
+}
+.masthead-officer-chip:hover {
+  border-color: #C4C4CD;
+  background: #FAFAFA;
+}
+.masthead-officer-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1E1F24;
+}
+.masthead-officer-badge {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  background: #E1E9F2;
+  color: #0A314D;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-variant-numeric: tabular-nums;
+  margin-left: 8px;
+}
+.masthead-officer-jur {
+  font-size: 13px;
+  font-weight: 400;
+  color: #55565E;
+  white-space: nowrap;
+  display: block;
+  margin-top: 2px;
+}
+
+/* Row 3 Responsive */
+@media (max-width: 1024px) {
+  .header-row-3__grid {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+    gap: 16px;
+    padding-block: 20px;
+  }
+  .masthead-right-block {
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+}
+@media (max-width: 640px) {
+  .masthead-doca-img {
+    height: 64px;
+  }
+  .masthead-parakh-svg {
+    height: 44px;
+  }
+  .masthead-center-block {
+    white-space: normal;
+    text-align: center;
+    max-width: 100%;
+  }
+  .masthead-title-hi {
+    font-size: 18px;
+    white-space: normal;
+  }
+  .masthead-title-en {
+    font-size: clamp(20px, 6vw, 24px);
+    white-space: normal;
+    line-height: 1.25;
+  }
+  .masthead-title-brand {
+    font-size: 14px;
+  }
+  .masthead-right-block {
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    gap: 12px;
+  }
+  .masthead-officer-chip {
+    width: auto;
+    max-width: 100%;
+  }
+}
+
+/* ==========================================================================
+   ROW 4 — NAVIGATION
+   background #F6F3EE · height 56px · border-top: 1px solid #E6E0D6 · border-bottom: 1px solid #E6E0D6
+   Six items: 17px, weight 500, #1E1F24, padding: 0 22px, white-space: nowrap, 18px icon with 8px gap
+   Active: solid saffron #FBAC1B, weight 600
+   Hover: #EDE8DE
+   ========================================================================== */
+.header-row-4 {
+  background: #F6F3EE;
+  height: 56px;
+  min-height: 56px;
+  border-top: 1px solid #E6E0D6;
+  border-bottom: 1px solid #E6E0D6;
+  width: 100%;
+}
+.header-row-4__inner {
+  width: min(100% - 2 * var(--gutter), 1560px);
+  margin-inline: auto;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.header-nav-list {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  width: 100%;
+}
+.header-nav-item {
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+.header-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 100%;
+  padding: 0 22px;
+  font-size: 17px;
+  font-weight: 500;
+  color: #1E1F24;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: background-color 140ms ease, color 140ms ease;
+  user-select: none;
+}
+.header-nav-link:hover {
+  background-color: #EDE8DE;
+  color: #1E1F24;
+}
+.header-nav-link[aria-current="page"],
+.header-nav-link.active {
+  background-color: #FBAC1B;
+  color: #1E1F24;
+  font-weight: 600;
+}
+.header-nav-link[aria-current="page"]:hover,
+.header-nav-link.active:hover {
+  background-color: #FBAC1B;
+}
+
+/* Row 4 between 861px and 1280px */
+@media (max-width: 1280px) and (min-width: 861px) {
+  .header-nav-link {
+    padding: 0 clamp(12px, 1.4vw, 18px);
+    font-size: 16px;
+  }
+}
+
+/* Row 4 Hamburger toggle */
+.header-hamburger-btn {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: #1E1F24;
+  font-size: 15px;
+  font-weight: 600;
+  border: 1px solid #D8D2C6;
+  cursor: pointer;
+  transition: background-color 140ms ease;
+}
+.header-hamburger-btn:hover {
+  background-color: #EDE8DE;
+}
+
+/* Responsive for Row 4 */
+@media (max-width: 1024px) and (min-width: 861px) {
+  .header-nav-list {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .header-nav-list::-webkit-scrollbar {
+    display: none;
+  }
+  .header-hamburger-btn {
+    display: none !important;
+  }
+}
+@media (max-width: 860px) {
+  .header-nav-list {
+    display: none !important;
+  }
+  .header-hamburger-btn {
+    display: flex !important;
+  }
+}
+
+/* ==========================================================================
+   TIRANGA TRICOLOUR RULE
+   Height 4px · width: 100vw · touches both edges · exact thirds: saffron, white, green
+   ========================================================================== */
 .tiranga-rule {
   height: 4px;
   width: 100%;
   background: linear-gradient(
     to right,
-    var(--tiranga-saffron) 0 33.333%,
-    var(--tiranga-white)   33.333% 66.666%,
-    var(--tiranga-green)   66.666% 100%
+    #FF9933 0% 33.333%,
+    #FFFFFF 33.333% 66.666%,
+    #138808 66.666% 100%
   );
+  margin: 0;
+  padding: 0;
+  border: none;
 }
 
 .slab, .portal-slab { background: var(--navy-900); }

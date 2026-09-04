@@ -113,15 +113,19 @@ export function AppShell({ children }: AppShellProps) {
       {/* ============================================================ */}
       {/* ROW 0: GREY IDENTIFICATION BANNER (.gov-banner, 32px, #F5F5F5)*/}
       {/* ============================================================ */}
-      <div className="gov-banner band border-b border-[var(--border)] select-none">
-        <div className="portal-container flex items-center justify-between py-1 text-xs">
+      {/* ============================================================ */}
+      {/* ╔══ ROW 1 — IDENTIFICATION BANNER ══╗                       */}
+      {/* background #F5F5F5 · height 36px · font-size 14px · #2C3038 */}
+      {/* ============================================================ */}
+      <div className="header-row-1 select-none">
+        <div className="header-row-1__inner">
           <div className="flex items-center gap-2.5">
-            {/* Tiranga Flag Icon */}
-            <svg className="gov-banner__flag rounded-[2px] shadow-xs" viewBox="0 0 24 16" width="18" height="12" aria-hidden="true">
-              <rect width="24" height="5.33" fill="#FF9933" />
-              <rect y="5.33" width="24" height="5.33" fill="#FFFFFF" />
-              <rect y="10.66" width="24" height="5.34" fill="#138808" />
-              <circle cx="12" cy="8" r="2.2" fill="#000080" />
+            {/* Indian flag icon 20×14 */}
+            <svg className="gov-banner__flag rounded-[2px]" viewBox="0 0 20 14" width="20" height="14" aria-hidden="true">
+              <rect width="20" height="4.67" fill="#FF9933" />
+              <rect y="4.67" width="20" height="4.67" fill="#FFFFFF" />
+              <rect y="9.34" width="20" height="4.66" fill="#138808" />
+              <circle cx="10" cy="7" r="1.9" fill="#000080" />
             </svg>
             <span className="font-medium text-[#2C3038]">
               {language === 'hi'
@@ -129,7 +133,7 @@ export function AppShell({ children }: AppShellProps) {
                 : 'An official portal of the Government of India'}
             </span>
           </div>
-          <span className="hidden sm:inline text-[11px] text-[var(--text-muted)] font-medium">
+          <span className="hidden sm:inline text-[13px] text-[#55565E] font-medium">
             {language === 'hi'
               ? 'उपभोक्ता मामले, खाद्य और सार्वजनिक वितरण मंत्रालय'
               : 'Ministry of Consumer Affairs, Food & Public Distribution'}
@@ -138,19 +142,20 @@ export function AppShell({ children }: AppShellProps) {
       </div>
 
       {/* ============================================================ */}
-      {/* ROW 1: NAVY UTILITY STRIP (.utility-strip, 44px, --navy-950) */}
+      {/* ╔══ ROW 2 — UTILITY STRIP ══╗                                */}
+      {/* background #052963 · height 46px · font-size 15px · #C9DAEC */}
       {/* ============================================================ */}
-      <header className="utility-strip band flex items-center z-50 select-none">
-        <div className="portal-container flex items-center justify-between py-2">
+      <header className="header-row-2 z-40 select-none">
+        <div className="header-row-2__inner">
           {/* Left: Accessible Skip Link & Statutory Department Tag */}
           <div className="flex items-center gap-3">
             <a
               href="#main-content"
-              className="sr-only focus:not-sr-only focus:static focus:px-3 focus:py-1 focus:bg-white focus:text-[var(--navy-950)] focus:font-semibold focus:rounded-[var(--r-sm)] focus:shadow-md"
+              className="sr-only focus:not-sr-only focus:static focus:px-3 focus:py-1 focus:bg-white focus:text-[#052963] focus:font-semibold focus:rounded-[var(--r-sm)] focus:shadow-md"
             >
               {language === 'hi' ? 'मुख्य सामग्री पर जाएं' : 'Skip to main content'}
             </a>
-            <span className="hidden md:inline-flex items-center text-xs font-medium text-[#C9DAEC]">
+            <span className="hidden md:inline-flex items-center text-[15px] font-medium text-[#C9DAEC]">
               {language === 'hi'
                 ? 'विधिक मापविज्ञान प्रभाग | विधिक मापविज्ञान (पैकेज्ड कमोडिटीज) नियम, 2011'
                 : 'Legal Metrology Division | Legal Metrology (Packaged Commodities) Rules, 2011'}
@@ -158,14 +163,14 @@ export function AppShell({ children }: AppShellProps) {
           </div>
 
           {/* Right: Accessibility Controls & Language Toggle */}
-          <div className="flex items-center gap-1.5 sm:gap-3 text-xs">
-            {/* Text size controls */}
-            <div className="hidden sm:flex items-center bg-black/25 rounded-[var(--r-sm)] px-1 py-0.5" title="Font size control">
+          <div className="flex items-center gap-3 text-[14px]">
+            {/* A− A A+ font size controls */}
+            <div className="flex items-center gap-1 font-medium" title="Font size control">
               <button
                 type="button"
                 onClick={() => handleTextSizeChange('sm')}
-                className={`px-1.5 py-0.5 rounded font-medium transition-colors ${
-                  textSize === 'sm' ? 'bg-white text-[var(--navy-950)] font-bold' : 'text-[#C9DAEC] hover:text-white'
+                className={`px-1.5 py-0.5 rounded transition-colors ${
+                  textSize === 'sm' ? 'bg-white text-[#052963] font-bold' : 'text-[#C9DAEC] hover:text-white'
                 }`}
                 aria-label="Decrease text size"
               >
@@ -174,8 +179,8 @@ export function AppShell({ children }: AppShellProps) {
               <button
                 type="button"
                 onClick={() => handleTextSizeChange('base')}
-                className={`px-1.5 py-0.5 rounded font-medium transition-colors ${
-                  textSize === 'base' ? 'bg-white text-[var(--navy-950)] font-bold' : 'text-[#C9DAEC] hover:text-white'
+                className={`px-1.5 py-0.5 rounded transition-colors ${
+                  textSize === 'base' ? 'bg-white text-[#052963] font-bold' : 'text-[#C9DAEC] hover:text-white'
                 }`}
                 aria-label="Reset text size"
               >
@@ -184,8 +189,8 @@ export function AppShell({ children }: AppShellProps) {
               <button
                 type="button"
                 onClick={() => handleTextSizeChange('lg')}
-                className={`px-1.5 py-0.5 rounded font-medium transition-colors ${
-                  textSize === 'lg' ? 'bg-white text-[var(--navy-950)] font-bold' : 'text-[#C9DAEC] hover:text-white'
+                className={`px-1.5 py-0.5 rounded transition-colors ${
+                  textSize === 'lg' ? 'bg-white text-[#052963] font-bold' : 'text-[#C9DAEC] hover:text-white'
                 }`}
                 aria-label="Increase text size"
               >
@@ -193,39 +198,42 @@ export function AppShell({ children }: AppShellProps) {
               </button>
             </div>
 
-            <span className="hidden sm:inline opacity-30">|</span>
+            {/* 1px divider */}
+            <span className="inline-block w-[1px] h-4 bg-white/28" aria-hidden="true" />
 
-            {/* High contrast toggle */}
+            {/* Contrast toggle */}
             <button
               type="button"
               onClick={handleToggleContrast}
-              className={`px-2 py-0.5 rounded-[var(--r-sm)] font-medium transition-colors inline-flex items-center gap-1 ${
-                highContrast ? 'bg-white text-[var(--navy-950)] font-bold' : 'text-[#C9DAEC] hover:text-white'
+              className={`px-2 py-0.5 rounded-[var(--r-sm)] font-medium transition-colors inline-flex items-center gap-1.5 ${
+                highContrast ? 'bg-white text-[#052963] font-bold' : 'text-[#C9DAEC] hover:text-white'
               }`}
               title="Toggle High Contrast"
             >
-              <Sun size={12} />
+              <Sun size={14} />
               <span className="hidden xs:inline">{highContrast ? 'Normal' : 'Contrast'}</span>
             </button>
 
-            <span className="opacity-30">|</span>
+            {/* 1px divider */}
+            <span className="inline-block w-[1px] h-4 bg-white/28" aria-hidden="true" />
 
-            {/* Language Switcher */}
-            <div className="flex items-center bg-black/25 rounded-[var(--r-sm)] p-0.5 font-medium">
+            {/* Language Switcher: English / हिन्दी */}
+            <div className="flex items-center gap-1 font-medium">
               <button
                 type="button"
                 onClick={() => setLanguage('en')}
                 className={`px-1.5 sm:px-2 py-0.5 rounded transition-colors text-xs ${
-                  language === 'en' ? 'bg-white text-[var(--navy-950)] font-bold' : 'text-[#C9DAEC] hover:text-white'
+                  language === 'en' ? 'bg-white text-[#052963] font-bold' : 'text-[#C9DAEC] hover:text-white'
                 }`}
               >
                 English
               </button>
+              <span className="text-[#C9DAEC]/60">/</span>
               <button
                 type="button"
                 onClick={() => setLanguage('hi')}
                 className={`px-1.5 sm:px-2 py-0.5 rounded transition-colors text-xs font-medium ${
-                  language === 'hi' ? 'bg-white text-[var(--navy-950)] font-bold' : 'text-[#C9DAEC] hover:text-white'
+                  language === 'hi' ? 'bg-white text-[#052963] font-bold' : 'text-[#C9DAEC] hover:text-white'
                 }`}
                 style={{ fontFamily: 'var(--font-hi)' }}
               >
@@ -237,82 +245,71 @@ export function AppShell({ children }: AppShellProps) {
       </header>
 
       {/* ============================================================ */}
-      {/* ROW 2: NAVY MASTHEAD + NAV (.masthead, 110px, --navy-900)    */}
+      {/* ╔══ ROW 3 — MASTHEAD (#FFFFFF, 3-column grid) ══╗            */}
       {/* ============================================================ */}
-      <div className="masthead band">
-        <div className="portal-container flex items-center justify-between py-3 gap-2 sm:gap-4">
-          {/* Left: National Emblem Lockup + Bilingual Portal Name */}
-          <div className="masthead__lockup min-w-0">
-            <Link href="/" className="flex items-center gap-2 sm:gap-4 group focus:outline-none min-w-0" aria-label="PARAKH Portal Home">
-              <div className="shrink-0 flex items-center">
-                <NationalEmblemSvg className="h-10 sm:h-14 md:h-16 w-auto" />
-              </div>
-
-              <div className="masthead__rule" />
-
-              <div className="leading-tight min-w-0">
-                <span className="masthead__hi block text-sm sm:text-base md:text-lg lg:text-[20px] truncate">
-                  वैध मापविज्ञान प्रवर्तन पोर्टल
-                </span>
-                <span className="masthead__en block text-[10px] sm:text-xs md:text-sm font-medium truncate">
-                  Legal Metrology Enforcement Portal (PARAKH)
-                </span>
-              </div>
+      <div className="header-row-3">
+        <div className="header-row-3__grid">
+          {/* Left: A single <img> of DoCA lockup (height 88px) */}
+          <div className="flex items-center shrink-0">
+            <Link href="/" className="block focus:outline-none focus:ring-2 focus:ring-[#005EA2] rounded" aria-label="PARAKH Portal Home">
+              <img
+                src="/assets/doca-lockup.png"
+                alt="Department of Consumer Affairs, Government of India"
+                className="masthead-doca-img"
+              />
             </Link>
           </div>
 
-          {/* Right: Desktop Navigation Bar (.nav-bar) + Officer Switcher */}
-          <div className="flex items-center gap-3">
-            {/* Desktop Navigation Links (Sentence case) */}
-            <nav className="nav-bar hidden xl:flex" aria-label="Main navigation">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                const active = item.href === '/' ? location === '/' : location.startsWith(item.href);
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    aria-current={active ? 'page' : undefined}
-                    className="flex items-center gap-1.5 text-xs font-medium transition-colors select-none"
-                  >
-                    <Icon size={14} className={active ? 'text-[var(--tiranga-saffron)]' : 'opacity-80'} />
-                    <span>{item.label}</span>
-                  </Link>
-                );
-              })}
-            </nav>
+          {/* Centre: Exactly 3 stacked lines */}
+          <div className="masthead-center-block select-none">
+            <span className="masthead-title-hi block">
+              वैध मापविज्ञान प्रवर्तन पोर्टल
+            </span>
+            <span className="masthead-title-en block">
+              Legal Metrology Enforcement Portal
+            </span>
+            <span className="masthead-title-brand block">
+              PARAKH
+            </span>
+          </div>
 
-            {/* Officer Profile & Switch Role dropdown */}
+          {/* Right: PARAKH mark + Officer chip */}
+          <div className="masthead-right-block">
+            <img
+              src="/assets/parakh.svg"
+              alt="PARAKH"
+              className="masthead-parakh-svg"
+            />
+
+            {/* Officer Chip with Role Switcher Dropdown */}
             <div className="relative" ref={roleMenuRef}>
               <button
                 type="button"
                 onClick={() => setRoleMenuOpen(!roleMenuOpen)}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-[var(--r-sm)] bg-[var(--navy-800)] hover:bg-[#14476e] text-white transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--navy-500)] text-xs border border-white/15"
+                className="masthead-officer-chip focus:outline-none focus:ring-2 focus:ring-[#005EA2]"
                 aria-expanded={roleMenuOpen}
                 aria-haspopup="true"
               >
-                <div className="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center font-semibold text-xs shrink-0">
-                  <User size={13} />
-                </div>
-                <div className="text-left hidden sm:block">
-                  <div className="font-semibold text-white leading-tight flex items-center gap-1 text-[11px]">
-                    {user.name}
-                    <span className="text-[10px] font-mono text-[#C9DAEC] bg-white/15 px-1 rounded">
-                      {user.badgeId}
-                    </span>
+                <div className="flex flex-col">
+                  <div className="flex items-center">
+                    <span className="masthead-officer-name">{user.name}</span>
+                    <span className="masthead-officer-badge">{user.badgeId}</span>
                   </div>
-                  <div className="text-[10px] text-[#C9DAEC] leading-tight">
-                    {user.jurisdiction}
-                  </div>
+                  <span className="masthead-officer-jur">{user.jurisdiction}</span>
                 </div>
-                <ChevronDown size={13} className={`text-[#C9DAEC] transition-transform duration-150 ${roleMenuOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown
+                  size={16}
+                  className={`text-[#55565E] transition-transform duration-150 ${roleMenuOpen ? 'rotate-180' : ''}`}
+                />
               </button>
 
               {/* Role Switcher Popover */}
               {roleMenuOpen && (
-                <div className="absolute right-0 mt-1.5 w-72 rounded-[var(--r-md)] border border-[var(--border)] bg-white shadow-[var(--sh-2)] z-50 p-2 text-xs text-[var(--text)]">
+                <div className="absolute right-0 mt-2 w-72 rounded-[var(--r-md)] border border-[var(--border)] bg-white shadow-[var(--sh-2)] z-50 p-2 text-xs text-[var(--text)]">
                   <div className="px-2.5 py-1.5 border-b border-[var(--border)] mb-1 text-[var(--text-muted)]">
-                    <span className="font-semibold text-[var(--text)] block">{language === 'hi' ? 'सक्रिय अधिकारी प्रोफ़ाइल' : 'Active Officer Profile'}</span>
+                    <span className="font-semibold text-[var(--text)] block">
+                      {language === 'hi' ? 'सक्रिय अधिकारी प्रोफ़ाइल' : 'Active Officer Profile'}
+                    </span>
                     <span className="text-[11px] font-mono">{user.roleTitle}</span>
                   </div>
                   <div className="py-1">
@@ -346,36 +343,64 @@ export function AppShell({ children }: AppShellProps) {
                 </div>
               )}
             </div>
-
-            {/* Mobile Hamburger Drawer Trigger */}
-            <button
-              type="button"
-              onClick={() => setMobileOpen(true)}
-              className="p-2 rounded-[var(--r-sm)] bg-[var(--navy-800)] text-white hover:bg-[#14476e] xl:hidden focus:outline-none focus:ring-2 focus:ring-[var(--navy-500)] border border-white/15"
-              aria-label="Open navigation menu"
-            >
-              <Menu size={18} />
-            </button>
           </div>
         </div>
       </div>
 
       {/* ============================================================ */}
-      {/* ROW 3: TIRANGA TRICOLOUR RULE (.tiranga-rule, 4px)           */}
+      {/* ╔══ ROW 4 — NAVIGATION (#F6F3EE, 56px) ══╗                   */}
       {/* ============================================================ */}
-      <div className="tiranga-rule band" aria-hidden="true" />
+      <nav className="header-row-4" aria-label="Main navigation">
+        <div className="header-row-4__inner">
+          {/* Six navigation items in one horizontal flex row */}
+          <ul className="header-nav-list">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const active = item.href === '/' ? location === '/' : location.startsWith(item.href);
+              return (
+                <li key={item.href} className="header-nav-item">
+                  <Link
+                    href={item.href}
+                    aria-current={active ? 'page' : undefined}
+                    className={`header-nav-link ${active ? 'active' : ''}`}
+                  >
+                    <Icon size={18} className="shrink-0" />
+                    <span>{item.label}</span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+
+          {/* Mobile hamburger button (< 860px) */}
+          <button
+            type="button"
+            onClick={() => setMobileOpen(true)}
+            className="header-hamburger-btn"
+            aria-label="Open navigation menu"
+          >
+            <Menu size={20} />
+            <span>{language === 'hi' ? 'नेविगेशन' : 'Menu'}</span>
+          </button>
+        </div>
+      </nav>
 
       {/* ============================================================ */}
-      {/* MOBILE HAMBURGER DRAWER (< 1280px)                            */}
+      {/* ╔══ TIRANGA TRICOLOUR RULE (4px, 100vw exact thirds) ══╗     */}
+      {/* ============================================================ */}
+      <div className="tiranga-rule" aria-hidden="true" role="presentation" />
+
+      {/* ============================================================ */}
+      {/* MOBILE HAMBURGER DRAWER (< 860px)                             */}
       {/* ============================================================ */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-50 flex xl:hidden" role="dialog" aria-modal="true">
+        <div className="fixed inset-0 z-50 flex md:hidden" role="dialog" aria-modal="true">
           <div className="fixed inset-0 bg-black/50 backdrop-blur-xs transition-opacity" onClick={() => setMobileOpen(false)} />
 
           <div className="relative ml-auto w-full max-w-xs h-full bg-white shadow-2xl flex flex-col z-50">
-            <div className="h-16 px-4 bg-[var(--navy-900)] text-white flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <NationalEmblemSvg className="h-8 w-auto" />
+            <div className="h-16 px-4 bg-[#052963] text-white flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <img src="/assets/parakh.svg" alt="PARAKH" className="h-7 w-auto brightness-0 invert" />
                 <span className="font-semibold text-sm">PARAKH Menu</span>
               </div>
               <button
@@ -407,11 +432,11 @@ export function AppShell({ children }: AppShellProps) {
                     onClick={() => setMobileOpen(false)}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-[var(--r-sm)] text-sm font-medium transition-colors ${
                       active
-                        ? 'bg-[var(--navy-900)] text-white font-semibold'
+                        ? 'bg-[#FBAC1B] text-[#1E1F24] font-semibold'
                         : 'text-[var(--text)] hover:bg-[var(--bg-sunken)]'
                     }`}
                   >
-                    <Icon size={17} className={active ? 'text-[var(--tiranga-saffron)]' : 'text-[var(--text-muted)]'} />
+                    <Icon size={18} className="shrink-0" />
                     <span>{item.label}</span>
                   </Link>
                 );
@@ -425,14 +450,14 @@ export function AppShell({ children }: AppShellProps) {
                   <button
                     type="button"
                     onClick={() => setLanguage('en')}
-                    className={`px-2 py-1 rounded text-xs ${language === 'en' ? 'bg-[var(--navy-900)] text-white' : 'bg-[var(--bg-sunken)]'}`}
+                    className={`px-2 py-1 rounded text-xs ${language === 'en' ? 'bg-[#052963] text-white font-semibold' : 'bg-[var(--bg-sunken)]'}`}
                   >
                     English
                   </button>
                   <button
                     type="button"
                     onClick={() => setLanguage('hi')}
-                    className={`px-2 py-1 rounded text-xs ${language === 'hi' ? 'bg-[var(--navy-900)] text-white' : 'bg-[var(--bg-sunken)]'}`}
+                    className={`px-2 py-1 rounded text-xs ${language === 'hi' ? 'bg-[#052963] text-white font-semibold' : 'bg-[var(--bg-sunken)]'}`}
                   >
                     हिन्दी
                   </button>
