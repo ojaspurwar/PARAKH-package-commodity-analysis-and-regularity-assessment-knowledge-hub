@@ -6,12 +6,11 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const dbPath = path.join(root, ".data", "nirikshan.db");
+const dbPath = path.join(root, ".data", "parakh.db");
 
 const port = process.env.PORT || "5000";
 
-console.log("──────────────────────────────────────────────────────────");
-console.log(`  Nirikshan — single-server mode`);
+console.log("──────────────────────────────────────────────────────────");  console.log(`  PARAKH — single-server mode`);
 console.log(`  App + API:  http://localhost:${port}`);
 console.log(`  Health:     http://localhost:${port}/api/healthz`);
 console.log(`  Database:   ${dbPath} (SQLite, persists across restarts)`);

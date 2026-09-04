@@ -7,7 +7,7 @@ function defaultDbPath(): string {
   if (process.env.DATABASE_PATH) {
     return path.resolve(process.env.DATABASE_PATH);
   }
-  return path.resolve(process.cwd(), ".data", "nirikshan.db");
+  return path.resolve(process.cwd(), ".data", "parakh.db");
 }
 
 export default defineConfig({

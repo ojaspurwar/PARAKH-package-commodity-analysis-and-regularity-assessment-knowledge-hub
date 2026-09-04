@@ -10,7 +10,7 @@ import * as schema from "./schema";
  * Priority:
  *  1. DATABASE_PATH  — absolute or relative path to the .db file
  *  2. DATABASE_URL   — convenience: a bare file path or `sqlite://...` URL
- *  3. <cwd>/.data/nirikshan.db
+ *  3. <cwd>/.data/parakh.db
  *
  * A file on disk means scans survive server restarts and browser refreshes —
  * nothing is lost when a tab is closed or the process is restarted.
@@ -20,7 +20,7 @@ function resolveDbPath(): string {
   if (fromEnv) {
     return path.resolve(fromEnv.replace(/^sqlite:\/\//, ""));
   }
-  return path.resolve(process.cwd(), ".data", "nirikshan.db");
+  return path.resolve(process.cwd(), ".data", "parakh.db");
 }
 
 const dbPath = resolveDbPath();

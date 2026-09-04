@@ -18,7 +18,7 @@ export default function EcommercePage() {
     <div className="space-y-8">
       <section className="appear relative overflow-hidden rounded-3xl border border-border bg-card px-6 py-8 md:px-9 md:py-10">
         <div className="absolute right-[-40px] top-[-120px] size-[300px] rounded-full border border-secondary/10" />
-        <div className="relative max-w-3xl"><div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[.2em] text-secondary"><span className="size-1.5 rounded-full bg-secondary" />Online marketplace desk</div><h1 className="mt-5 text-3xl font-semibold tracking-[-.05em] md:text-5xl">Bring the shelf<br /><span className="text-secondary">to your desk.</span></h1><p className="mt-4 max-w-xl text-sm leading-6 text-muted-foreground">Submit an Amazon or Flipkart product link. Nirikshan extracts the declared label information and returns the same reviewable evidence structure used in the field.</p></div>
+        <div className="relative max-w-3xl"><div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[.2em] text-secondary"><span className="size-1.5 rounded-full bg-secondary" />Online marketplace desk</div><h1 className="mt-5 text-3xl font-semibold tracking-[-.05em] md:text-5xl">Bring the shelf<br /><span className="text-secondary">to your desk.</span></h1><p className="mt-4 max-w-xl text-sm leading-6 text-muted-foreground">Submit an Amazon or Flipkart product link. PARAKH extracts the declared label information and returns the same reviewable evidence structure used in the field.</p></div>
       </section>
       <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_minmax(330px,.65fr)]">
         <section className="appear delay-1 rounded-2xl border border-border bg-card p-6 md:p-8">

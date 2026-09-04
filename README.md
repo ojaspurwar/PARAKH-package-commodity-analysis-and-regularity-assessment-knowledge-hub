@@ -1,7 +1,8 @@
-# Nirikshan — Legal Metrology Assistant (SIH26034)
+# PARAKH — Package Commodity Analysis & Regularity Assessment Knowledge Hub (SIH26034)
 
-A field enforcement workspace that **scans and analyzes packaged commodities** to automatically
-check compliance under the **Legal Metrology (Packaged Commodities) Rules, 2011**.
+**PARAKH** (Hindi for “test / measure”) is a knowledge hub and field enforcement workspace that
+**scans and analyzes packaged commodities** to automatically check compliance under the
+**Legal Metrology (Packaged Commodities) Rules, 2011**.
 
 Officers photograph a product label (or scan its barcode), and the system reads the
 declarations, verifies them against the rules, flags missing/non-compliant declarations, and
@@ -54,7 +55,7 @@ pnpm dev
 ```
 
 `pnpm dev` auto-picks free ports and prints the URLs (including a LAN link to share).
-The SQLite database auto-creates and seeds at `.data/nirikshan.db` on first run.
+The SQLite database auto-creates and seeds at `.data/parakh.db` on first run.
 
 Other commands:
 

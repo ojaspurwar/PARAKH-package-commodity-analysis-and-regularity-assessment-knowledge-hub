@@ -13,11 +13,11 @@ export default function HomePage() {
   const queryClient = useQueryClient();
   // Remember the officer's language choice between visits (design doc: saved locally).
   const [language, setLanguage] = useState<'en' | 'hi'>(() =>
-    typeof window !== 'undefined' && window.localStorage.getItem('nirikshan.language') === 'hi' ? 'hi' : 'en',
+    typeof window !== 'undefined' &&    window.localStorage.getItem('parakh.language') === 'hi' ? 'hi' : 'en',
   );
   const chooseLanguage = (lang: 'en' | 'hi') => {
     setLanguage(lang);
-    window.localStorage.setItem('nirikshan.language', lang);
+    window.localStorage.setItem('parakh.language', lang);
   };
   const [started, setStarted] = useState(false);
   const [barcodeScanning, setBarcodeScanning] = useState(false);

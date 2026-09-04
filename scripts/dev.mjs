@@ -21,7 +21,7 @@ import { fileURLToPath } from "node:url";
 import selfsigned from "selfsigned";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const dbPath = path.join(root, ".data", "nirikshan.db");
+const dbPath = path.join(root, ".data", "parakh.db");
 const httpsMode = process.argv.includes("--https") || process.env.HTTPS === "1";
 
 const children = [];
@@ -88,13 +88,13 @@ async function ensureCert(lan) {
 
   const altNames = [
     { type: 2, value: "localhost" },
-    { type: 2, value: "nirikshan.local" },
+    { type: 2, value: "parakh.local" },
   ];
   if (lan) altNames.push({ type: 7, ip: lan });
 
   console.log("[dev] Generating a local HTTPS certificate… (one-time)");
   const pems = await selfsigned.generate(
-    [{ name: "commonName", value: "nirikshan.local" }],
+    [{ name: "commonName", value: "parakh.local" }],
     {
       keySize: 2048,
       algorithm: "sha256",
@@ -144,7 +144,7 @@ async function main() {
 
   const scheme = tls ? "https" : "http";
   console.log("──────────────────────────────────────────────────────────");
-  console.log(`  Nirikshan — local development`);
+  console.log(`  PARAKH — local development`);
   if (tls) console.log(`  ⚠  HTTPS mode: needed for camera access on phones`);
   console.log(`  Web app:     ${scheme}://localhost:${webPort}`);
   if (lan) console.log(`  On network:  ${scheme}://${lan}:${webPort}  (share this on your wifi)`);

@@ -1,4 +1,4 @@
-# Nirikshan — Legal Metrology Assistant (SIH26034)
+# PARAKH — Package Commodity Analysis & Regularity Assessment Knowledge Hub (SIH26034)
 
 Field enforcement workspace for officers inspecting packaged commodities under the
 **Legal Metrology (Packaged Commodities) Rules, 2011**. Capture product label
@@ -29,7 +29,7 @@ Requirements: Node.js 20.19+/24 and pnpm (`corepack enable` or `npm i -g pnpm`).
 ### Database
 
 - **SQLite** via `better-sqlite3` + Drizzle ORM. No Postgres/installation needed.
-- Default file: `.data/nirikshan.db` at the repo root (override with `DATABASE_PATH`).
+- Default file: `.data/parakh.db` at the repo root (override with `DATABASE_PATH`).
 - Created automatically on first run, including the `scans` table.
 - Data **persists** across browser refreshes, tab closes, and server restarts.
 - Env overrides: `PORT` (default 5000), `API_PORT`/`WEB_PORT` for `pnpm dev`,

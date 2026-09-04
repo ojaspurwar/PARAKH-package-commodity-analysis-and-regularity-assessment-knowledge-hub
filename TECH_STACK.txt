@@ -1,12 +1,13 @@
 ================================================================
-NIRIKSHAN — LEGAL METROLOGY ASSISTANT (SIH26034)
+PARAKH — PACKAGE COMMODITY ANALYSIS & REGULARITY ASSESSMENT KNOWLEDGE HUB (SIH26034)
 TECHNOLOGY STACK
 ================================================================
 
 WHAT IT IS
 ----------
-A field enforcement workspace for inspecting packaged commodities
-under the Legal Metrology (Packaged Commodities) Rules, 2011.
+PARAKH (Hindi for “test / measure”) is a knowledge hub and field
+enforcement workspace for inspecting packaged commodities under the
+Legal Metrology (Packaged Commodities) Rules, 2011.
 Officers capture product labels, the rule engine auto-checks the
 mandatory declarations, and supervisors review scans and export
 court-admissible PDF reports.
@@ -64,7 +65,7 @@ DATABASE
 - SQLite — embedded file database (zero setup, no server)
 - better-sqlite3 — native SQLite driver
 - Drizzle ORM — typed schema + queries
-- File: .data/nirikshan.db (auto-created + seeded on first run)
+- File: .data/parakh.db (auto-created + seeded on first run)
 
 ----------------------------------------------------------------
 SHARED / GENERATED LIBRARIES (lib/)

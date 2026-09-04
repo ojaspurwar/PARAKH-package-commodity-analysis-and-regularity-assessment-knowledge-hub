@@ -257,7 +257,7 @@ router.get("/scans/:id/report", async (req, res): Promise<void> => {
   res.setHeader("Content-Type", "application/pdf");
   res.setHeader(
     "Content-Disposition",
-    `attachment; filename="nirikshan-${scan.reference.toLowerCase()}.pdf"`,
+    `attachment; filename="parakh-${scan.reference.toLowerCase()}.pdf"`,
   );
   doc.pipe(res);
   doc.end();

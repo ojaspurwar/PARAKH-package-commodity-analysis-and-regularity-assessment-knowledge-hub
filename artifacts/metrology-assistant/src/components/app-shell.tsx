@@ -29,7 +29,7 @@ export function AppShell({ children }: AppShellProps) {
             </span>
             <span>
               <span className="block font-semibold tracking-[-.03em]">{appConfig.name}</span>
-              <span className="mt-0.5 block font-mono text-[10px] uppercase tracking-[.18em] text-sidebar-foreground/55">L.M. workspace</span>
+              <span className="mt-0.5 block font-mono text-[10px] uppercase tracking-[.18em] text-sidebar-foreground/55">Legal Metrology workspace</span>
             </span>
           </Link>
           <button type="button" className="rounded-lg p-2 text-sidebar-foreground/60 hover:bg-sidebar-accent md:hidden" onClick={() => setMobileOpen(false)} aria-label="Close menu" data-testid="button-close-menu">
