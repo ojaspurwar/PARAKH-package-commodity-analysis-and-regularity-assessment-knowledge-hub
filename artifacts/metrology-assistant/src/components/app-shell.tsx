@@ -128,7 +128,7 @@ export function AppShell({ children }: AppShellProps) {
     { href: '/products', label: language === 'hi' ? 'उत्पाद रिपोजिटरी' : 'Products repository', icon: Boxes },
     { href: '/ecommerce', label: language === 'hi' ? 'ऑनलाइन उत्पाद' : 'Online products', icon: ExternalLink },
     { href: '/docs', label: language === 'hi' ? 'वैधानिक दस्तावेज' : 'Statutory documents', icon: BookOpen },
-    { href: '/styleguide', label: language === 'hi' ? 'डिजाइन टोकन' : 'Styleguide & tokens', icon: FileSpreadsheet },
+    { href: '/styleguide', label: language === 'hi' ? 'रिपोर्ट्स' : 'Reports', icon: FileSpreadsheet },
   ];
 
   const healthText = healthPending
