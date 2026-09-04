@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'wouter';
-import { Activity, ClipboardList, ExternalLink, LayoutDashboard, Menu, Radio, ShieldCheck, X } from 'lucide-react';
+import { Activity, Boxes, ClipboardList, ExternalLink, LayoutDashboard, Menu, Radio, ShieldCheck, X } from 'lucide-react';
 import { useHealthCheck } from '@workspace/api-client-react';
 import { appConfig } from '@/config';
 
@@ -9,6 +9,7 @@ type AppShellProps = { children: React.ReactNode };
 const navItems = [
   { href: '/', label: 'Field scanner', hindi: 'फील्ड स्कैनर', icon: Radio },
   { href: '/dashboard', label: 'Supervisor view', hindi: 'सुपरवाइज़र दृश्य', icon: LayoutDashboard },
+  { href: '/products', label: 'Products repository', hindi: 'उत्पाद रजिस्टर', icon: Boxes },
   { href: '/ecommerce', label: 'Online products', hindi: 'ऑनलाइन उत्पाद', icon: ExternalLink },
 ];
 

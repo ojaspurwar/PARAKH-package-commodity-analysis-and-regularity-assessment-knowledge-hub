@@ -1,4 +1,4 @@
-import { and, desc, eq, ilike } from "drizzle-orm";
+import { and, desc, eq, like } from "drizzle-orm";
 import { Router, type IRouter } from "express";
 import {
   CreateScanBody,
@@ -15,6 +15,8 @@ import {
   SubmitScanResponse,
 } from "@workspace/api-zod";
 import { db, scansTable, type ComplianceCheck, type Scan } from "@workspace/db";
+import { analyzeLabelText, computeEvidenceHash, statusFromChecks } from "../lib/metrology";
+import { buildComplianceReportPdf } from "../lib/report";
 
 const router: IRouter = Router();
 
@@ -46,8 +48,11 @@ const seedScans: Array<Omit<Scan, "id">> = [
     submitted: true,
     capturedAt: new Date(Date.now() - 1000 * 60 * 18),
     imageUrl: null,
+    barcode: "8901030303586",
     ocrText: "Saffola Gold | MRP ₹249.00 | Net Qty 500 g | MFD 08/2026 | Consumer care 1800 123 4567",
+    ocrDetails: null,
     checks: passedChecks,
+    evidenceHash: null,
   },
   {
     reference: "LM-260900",
@@ -60,8 +65,11 @@ const seedScans: Array<Omit<Scan, "id">> = [
     submitted: true,
     capturedAt: new Date(Date.now() - 1000 * 60 * 42),
     imageUrl: null,
+    barcode: "8710103831765",
     ocrText: "Philips Air Fryer | MRP ₹1,299.00 | Net Qty 1 unit | Consumer care 1800 987 1122",
+    ocrDetails: null,
     checks: reviewChecks,
+    evidenceHash: null,
   },
   {
     reference: "LM-260899",
@@ -74,7 +82,10 @@ const seedScans: Array<Omit<Scan, "id">> = [
     submitted: false,
     capturedAt: new Date(Date.now() - 1000 * 60 * 77),
     imageUrl: null,
+    barcode: null,
     ocrText: "Cotton Comfort Bedsheet | MRP ₹899.00 | 100% cotton | Size King",
+    ocrDetails: null,
+    evidenceHash: null,
     checks: [
       { key: "mrp", label: "MRP declaration", value: "₹ 899.00", status: "passed", note: "Detected on listing" },
       { key: "date", label: "Date marking", value: "Not applicable", status: "review", note: "Requires officer review" },
@@ -114,12 +125,20 @@ router.get("/dashboard/summary", async (req, res): Promise<void> => {
     new Date(0),
   );
 
+  const productsTracked = new Set(scans.map((scan) => scan.productName.trim().toLowerCase())).size;
+  const violationsByType = [...violationCounts.entries()]
+    .map(([label, count]) => ({ label, count }))
+    .sort((a, b) => b.count - a.count);
+
   const data = {
+    totalScans: scans.length,
     totalScansToday: scans.length,
     complianceRate: scans.length ? Math.round((compliantCount / scans.length) * 100) : 0,
     topViolationType,
     queuedOffline: scans.filter((scan) => !scan.submitted).length,
     activeOfficers: officers.size,
+    productsTracked,
+    violationsByType,
     lastSyncAt,
   };
   res.json(GetDashboardSummaryResponse.parse(data));
@@ -138,7 +157,9 @@ router.get("/scans", async (req, res): Promise<void> => {
     filters.push(eq(scansTable.status, parsed.data.status));
   }
   if (parsed.data.search) {
-    filters.push(ilike(scansTable.productName, `%${parsed.data.search}%`));
+    // SQLite LIKE is case-insensitive for ASCII, matching the previous
+    // Postgres-style ilike intent.
+    filters.push(like(scansTable.productName, `%${parsed.data.search}%`));
   }
   const scans = await db
     .select()
@@ -154,11 +175,37 @@ router.post("/scans", async (req, res): Promise<void> => {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
+  const reference = `LM-${Date.now().toString().slice(-6)}`;
+  const capturedAt = new Date();
+  // When the client omits checks, run the Legal Metrology rule engine over
+  // the label text so checks are generated automatically (the automated
+  // compliance-checking core of the problem statement).
+  const checks =
+    parsed.data.checks && parsed.data.checks.length > 0
+      ? parsed.data.checks
+      : analyzeLabelText(parsed.data.ocrText, parsed.data.ocrDetails ?? null);
+  // Derive the verdict from the checks unless the officer chose a specific
+  // assessment themselves.
+  const status =
+    parsed.data.status === "pending" ? statusFromChecks(checks) : parsed.data.status;
+  const evidenceHash = computeEvidenceHash({
+    reference,
+    productName: parsed.data.productName,
+    barcode: parsed.data.barcode,
+    ocrText: parsed.data.ocrText,
+    ocrDetails: parsed.data.ocrDetails ?? null,
+    checks,
+    capturedAt,
+  });
   const [created] = await db
     .insert(scansTable)
     .values({
       ...parsed.data,
-      reference: `LM-${Date.now().toString().slice(-6)}`,
+      checks,
+      status,
+      capturedAt,
+      evidenceHash,
+      reference,
       source: "field",
       submitted: false,
     })
@@ -179,6 +226,41 @@ router.get("/scans/:id", async (req, res): Promise<void> => {
     return;
   }
   res.json(GetScanResponse.parse(scan));
+});
+
+router.get("/scans/:id/report", async (req, res): Promise<void> => {
+  await ensureSeeded();
+  const params = GetScanParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+  const scan = await findScan(params.data.id);
+  if (!scan) {
+    res.status(404).json({ error: "Scan not found" });
+    return;
+  }
+  // Recompute the fingerprint for legacy rows that predate the evidence-hash
+  // column so every export carries a verifiable hash.
+  const evidenceHash =
+    scan.evidenceHash ??
+    computeEvidenceHash({
+      reference: scan.reference,
+      productName: scan.productName,
+      barcode: scan.barcode,
+      ocrText: scan.ocrText,
+      ocrDetails: scan.ocrDetails ?? null,
+      checks: scan.checks,
+      capturedAt: scan.capturedAt,
+    });
+  const doc = buildComplianceReportPdf(scan, evidenceHash);
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename="nirikshan-${scan.reference.toLowerCase()}.pdf"`,
+  );
+  doc.pipe(res);
+  doc.end();
 });
 
 router.post("/scans/:id", async (req, res): Promise<void> => {
@@ -218,20 +300,36 @@ router.post("/web-scans", async (req, res): Promise<void> => {
       return "online listing";
     }
   })();
+  const reference = `WEB-${Date.now().toString().slice(-6)}`;
+  const capturedAt = new Date();
+  // The listing text is the product URL's extracted label info. When real
+  // scraping lands this will carry the listing declarations; today the rule
+  // engine still runs so checks stay consistent with field scans.
+  const ocrText = `Product listing submitted from ${parsed.data.url}`;
+  const checks = analyzeLabelText(ocrText);
+  const evidenceHash = computeEvidenceHash({
+    reference,
+    productName: `Online product from ${hostname}`,
+    ocrText,
+    checks,
+    capturedAt,
+  });
   const [created] = await db
     .insert(scansTable)
     .values({
-      reference: `WEB-${Date.now().toString().slice(-6)}`,
+      reference,
       productName: `Online product from ${hostname}`,
       category: "E-commerce listing",
       officerName: "Online review queue",
       source: "ecommerce",
       location: `${hostname} listing`,
-      status: "pending",
+      status: statusFromChecks(checks),
       submitted: false,
       imageUrl: null,
-      ocrText: `Product listing submitted from ${parsed.data.url}`,
-      checks: reviewChecks.map((check) => ({ ...check, status: "review" as const })),
+      capturedAt,
+      evidenceHash,
+      ocrText,
+      checks,
     })
     .returning();
   res.status(201).json(CreateWebScanResponse.parse(created));

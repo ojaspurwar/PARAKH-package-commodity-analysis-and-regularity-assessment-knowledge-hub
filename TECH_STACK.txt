@@ -1,0 +1,103 @@
+================================================================
+NIRIKSHAN — LEGAL METROLOGY ASSISTANT (SIH26034)
+TECHNOLOGY STACK
+================================================================
+
+WHAT IT IS
+----------
+A field enforcement workspace for inspecting packaged commodities
+under the Legal Metrology (Packaged Commodities) Rules, 2011.
+Officers capture product labels, the rule engine auto-checks the
+mandatory declarations, and supervisors review scans and export
+court-admissible PDF reports.
+
+----------------------------------------------------------------
+LANGUAGES
+----------------------------------------------------------------
+- TypeScript (5.9) — the entire project, frontend + backend + shared libs
+  (JavaScript with static types)
+- HTML + CSS (Tailwind) for the web UI
+- SQL for the embedded database
+
+----------------------------------------------------------------
+FRONTEND (the web app the officer sees)
+----------------------------------------------------------------
+- React 19 — UI library (components, pages, state)
+- Vite 7 — dev server + production bundler (instant hot reload)
+- Tailwind CSS v4 — styling (utility classes, design tokens in
+  src/index.css)
+- wouter — tiny React router (URLs: /, /dashboard, /scans/:id, /ecommerce,
+  /products)
+- TanStack Query (React Query) — fetching API data + cache
+- lucide-react — icons
+- Generated API client (@workspace/api-client-react) — typed hooks like
+  useGetScans(), useCreateScan() generated from the OpenAPI spec
+- Camera + barcode scanning (works in every browser):
+  - navigator.mediaDevices.getUserMedia() — live camera feed
+  - BarcodeDetector API — native on-device detection where available
+    (Chromium); @zxing/browser + @zxing/library — pure-JS decoder fallback
+    for Firefox/Safari/anything else (EAN-13, UPC, Code 128, QR, etc.)
+- Photo OCR — tesseract.js: reads the label straight off a package photo
+  in the browser (word boxes + confidence included), so the rule engine can
+  also check font size, readability and placement. No API key, works on
+  any device. Engine + traineddata load from the jsDelivr CDN on first use.
+- HTTPS dev mode — pnpm dev:https (self-signed cert with your LAN IP) so
+  phone browsers allow camera access (getUserMedia needs a secure context)
+
+----------------------------------------------------------------
+BACKEND (the API server)
+----------------------------------------------------------------
+- Node.js 24 + Express 5 — HTTP server + REST API
+- Zod — runtime validation of every request/response
+- pino + pino-http — structured logging
+- pdfkit — generates the PDF compliance reports server-side
+- Rule engine (src/lib/metrology.ts) — checks for MRP, Unit Sale Price,
+  net quantity, date marking, consumer care, packer details, plus
+  declaration placement, font-size minimums (Rule 7(3) / Schedule I,
+  keyed on the net-quantity band) and readability from OCR word boxes —
+  the automated compliance core
+- SHA-256 (node:crypto) — tamper-evident evidence hash on every scan
+
+----------------------------------------------------------------
+DATABASE
+----------------------------------------------------------------
+- SQLite — embedded file database (zero setup, no server)
+- better-sqlite3 — native SQLite driver
+- Drizzle ORM — typed schema + queries
+- File: .data/nirikshan.db (auto-created + seeded on first run)
+
+----------------------------------------------------------------
+SHARED / GENERATED LIBRARIES (lib/)
+----------------------------------------------------------------
+- lib/api-spec — OpenAPI 3.1 specification (single source of truth
+  for the API contract)
+- lib/api-zod — Zod schemas generated from the spec
+- lib/api-client-react — React Query hooks generated from the spec
+  (run: pnpm --filter @workspace/api-spec run codegen)
+- lib/db — Drizzle schema + SQLite bootstrap
+
+----------------------------------------------------------------
+TOOLING / WORKSPACE
+----------------------------------------------------------------
+- pnpm workspaces — monorepo layout (packages in artifacts/ and lib/)
+- esbuild — bundles the API server into a single file
+- Prettier — code formatting
+
+----------------------------------------------------------------
+HOW TO RUN
+----------------------------------------------------------------
+- pnpm dev     — development mode (auto-picks free ports, prints URLs)
+- pnpm dev:https — HTTPS dev mode for phone camera testing (prints the
+  https:// LAN link to open on your phone)
+- pnpm start   — production-style single server (builds first)
+- pnpm run build      — typecheck + build everything
+- pnpm run typecheck  — full typecheck across all packages
+
+----------------------------------------------------------------
+KEY FILE LOCATIONS
+----------------------------------------------------------------
+- artifacts/metrology-assistant/  — the React web app
+- artifacts/api-server/           — Express API server + rule engine
+- lib/db/                         — database schema + bootstrap
+- lib/api-spec/openapi.yaml       — API contract (edit then codegen)
+- scripts/dev.mjs                 — dev runner (port picking)

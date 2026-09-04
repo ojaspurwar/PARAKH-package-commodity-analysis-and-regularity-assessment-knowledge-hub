@@ -47,3 +47,11 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# Local SQLite database files (auto-created at runtime)
+.data/
+**/.data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm

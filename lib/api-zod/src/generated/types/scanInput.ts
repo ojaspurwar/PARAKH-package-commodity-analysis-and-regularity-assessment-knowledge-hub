@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { ComplianceCheck } from './complianceCheck';
+import type { ScanInputOcrDetails } from './scanInputOcrDetails';
 import type { ScanInputStatus } from './scanInputStatus';
 
 export interface ScanInput {
@@ -16,6 +17,17 @@ export interface ScanInput {
   status: ScanInputStatus;
   /** @nullable */
   imageUrl: string | null;
+  /**
+     * Barcode / QR value captured from the product package
+     * @nullable
+     */
+  barcode?: string | null;
   ocrText: string;
-  checks: ComplianceCheck[];
+  /**
+     * Structured OCR output read from the package image. When present the rule engine also verifies font size, readability and placement.
+     * @nullable
+     */
+  ocrDetails?: ScanInputOcrDetails;
+  /** Optional. When omitted, the server runs the Legal Metrology rule engine over ocrText to generate checks automatically. */
+  checks?: ComplianceCheck[];
 }

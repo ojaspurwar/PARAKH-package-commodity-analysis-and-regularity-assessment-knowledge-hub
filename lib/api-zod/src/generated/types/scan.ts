@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { ComplianceCheck } from './complianceCheck';
+import type { ScanOcrDetails } from './scanOcrDetails';
 import type { ScanSource } from './scanSource';
 import type { ScanStatus } from './scanStatus';
 
@@ -22,6 +23,21 @@ export interface Scan {
   capturedAt: Date;
   /** @nullable */
   imageUrl: string | null;
+  /**
+     * Barcode / QR value captured from the product package
+     * @nullable
+     */
+  barcode: string | null;
   ocrText: string;
+  /**
+     * Structured OCR output (word boxes + confidence) read from the package image. Lets the rule engine verify font size, readability and placement.
+     * @nullable
+     */
+  ocrDetails: ScanOcrDetails;
   checks: ComplianceCheck[];
+  /**
+     * SHA-256 fingerprint of the evidence record
+     * @nullable
+     */
+  evidenceHash?: string | null;
 }

@@ -22,11 +22,17 @@ export const HealthCheckResponse = zod.object({
  * @summary Get dashboard summary
  */
 export const GetDashboardSummaryResponse = zod.object({
+  "totalScans": zod.number().describe('Total records in the compliance repository'),
   "totalScansToday": zod.number(),
   "complianceRate": zod.number(),
   "topViolationType": zod.string(),
   "queuedOffline": zod.number(),
   "activeOfficers": zod.number(),
+  "productsTracked": zod.number().describe('Distinct packaged products under compliance review'),
+  "violationsByType": zod.array(zod.object({
+  "label": zod.string(),
+  "count": zod.number()
+})).describe('Failed declaration types ranked by frequency'),
   "lastSyncAt": zod.coerce.date()
 })
 
@@ -54,14 +60,29 @@ export const GetScansResponseItem = zod.object({
   "submitted": zod.boolean(),
   "capturedAt": zod.coerce.date(),
   "imageUrl": zod.string().nullable(),
+  "barcode": zod.string().nullable().describe('Barcode \/ QR value captured from the product package'),
   "ocrText": zod.string(),
+  "ocrDetails": zod.object({
+  "engine": zod.string(),
+  "imageWidth": zod.number(),
+  "imageHeight": zod.number(),
+  "words": zod.array(zod.object({
+  "text": zod.string(),
+  "x": zod.number(),
+  "y": zod.number(),
+  "width": zod.number(),
+  "height": zod.number(),
+  "confidence": zod.number()
+}))
+}).nullable().describe('Structured OCR output (word boxes + confidence) read from the package image. Lets the rule engine verify font size, readability and placement.'),
   "checks": zod.array(zod.object({
   "key": zod.string(),
   "label": zod.string(),
   "value": zod.string(),
   "status": zod.enum(['passed', 'failed', 'review']),
   "note": zod.string()
-}))
+})),
+  "evidenceHash": zod.string().nullish().describe('SHA-256 fingerprint of the evidence record')
 })
 export const GetScansResponse = zod.array(GetScansResponseItem)
 
@@ -77,14 +98,28 @@ export const CreateScanBody = zod.object({
   "location": zod.string(),
   "status": zod.enum(['compliant', 'violation', 'pending']),
   "imageUrl": zod.string().nullable(),
+  "barcode": zod.string().nullish().describe('Barcode \/ QR value captured from the product package'),
   "ocrText": zod.string(),
+  "ocrDetails": zod.object({
+  "engine": zod.string(),
+  "imageWidth": zod.number(),
+  "imageHeight": zod.number(),
+  "words": zod.array(zod.object({
+  "text": zod.string(),
+  "x": zod.number(),
+  "y": zod.number(),
+  "width": zod.number(),
+  "height": zod.number(),
+  "confidence": zod.number()
+}))
+}).nullish().describe('Structured OCR output read from the package image. When present the rule engine also verifies font size, readability and placement.'),
   "checks": zod.array(zod.object({
   "key": zod.string(),
   "label": zod.string(),
   "value": zod.string(),
   "status": zod.enum(['passed', 'failed', 'review']),
   "note": zod.string()
-}))
+})).optional().describe('Optional. When omitted, the server runs the Legal Metrology rule engine over ocrText to generate checks automatically.')
 })
 
 export const CreateScanResponse = zod.object({
@@ -99,14 +134,29 @@ export const CreateScanResponse = zod.object({
   "submitted": zod.boolean(),
   "capturedAt": zod.coerce.date(),
   "imageUrl": zod.string().nullable(),
+  "barcode": zod.string().nullable().describe('Barcode \/ QR value captured from the product package'),
   "ocrText": zod.string(),
+  "ocrDetails": zod.object({
+  "engine": zod.string(),
+  "imageWidth": zod.number(),
+  "imageHeight": zod.number(),
+  "words": zod.array(zod.object({
+  "text": zod.string(),
+  "x": zod.number(),
+  "y": zod.number(),
+  "width": zod.number(),
+  "height": zod.number(),
+  "confidence": zod.number()
+}))
+}).nullable().describe('Structured OCR output (word boxes + confidence) read from the package image. Lets the rule engine verify font size, readability and placement.'),
   "checks": zod.array(zod.object({
   "key": zod.string(),
   "label": zod.string(),
   "value": zod.string(),
   "status": zod.enum(['passed', 'failed', 'review']),
   "note": zod.string()
-}))
+})),
+  "evidenceHash": zod.string().nullish().describe('SHA-256 fingerprint of the evidence record')
 })
 
 
@@ -130,14 +180,29 @@ export const GetScanResponse = zod.object({
   "submitted": zod.boolean(),
   "capturedAt": zod.coerce.date(),
   "imageUrl": zod.string().nullable(),
+  "barcode": zod.string().nullable().describe('Barcode \/ QR value captured from the product package'),
   "ocrText": zod.string(),
+  "ocrDetails": zod.object({
+  "engine": zod.string(),
+  "imageWidth": zod.number(),
+  "imageHeight": zod.number(),
+  "words": zod.array(zod.object({
+  "text": zod.string(),
+  "x": zod.number(),
+  "y": zod.number(),
+  "width": zod.number(),
+  "height": zod.number(),
+  "confidence": zod.number()
+}))
+}).nullable().describe('Structured OCR output (word boxes + confidence) read from the package image. Lets the rule engine verify font size, readability and placement.'),
   "checks": zod.array(zod.object({
   "key": zod.string(),
   "label": zod.string(),
   "value": zod.string(),
   "status": zod.enum(['passed', 'failed', 'review']),
   "note": zod.string()
-}))
+})),
+  "evidenceHash": zod.string().nullish().describe('SHA-256 fingerprint of the evidence record')
 })
 
 
@@ -167,14 +232,29 @@ export const SubmitScanResponse = zod.object({
   "submitted": zod.boolean(),
   "capturedAt": zod.coerce.date(),
   "imageUrl": zod.string().nullable(),
+  "barcode": zod.string().nullable().describe('Barcode \/ QR value captured from the product package'),
   "ocrText": zod.string(),
+  "ocrDetails": zod.object({
+  "engine": zod.string(),
+  "imageWidth": zod.number(),
+  "imageHeight": zod.number(),
+  "words": zod.array(zod.object({
+  "text": zod.string(),
+  "x": zod.number(),
+  "y": zod.number(),
+  "width": zod.number(),
+  "height": zod.number(),
+  "confidence": zod.number()
+}))
+}).nullable().describe('Structured OCR output (word boxes + confidence) read from the package image. Lets the rule engine verify font size, readability and placement.'),
   "checks": zod.array(zod.object({
   "key": zod.string(),
   "label": zod.string(),
   "value": zod.string(),
   "status": zod.enum(['passed', 'failed', 'review']),
   "note": zod.string()
-}))
+})),
+  "evidenceHash": zod.string().nullish().describe('SHA-256 fingerprint of the evidence record')
 })
 
 
@@ -198,14 +278,29 @@ export const CreateWebScanResponse = zod.object({
   "submitted": zod.boolean(),
   "capturedAt": zod.coerce.date(),
   "imageUrl": zod.string().nullable(),
+  "barcode": zod.string().nullable().describe('Barcode \/ QR value captured from the product package'),
   "ocrText": zod.string(),
+  "ocrDetails": zod.object({
+  "engine": zod.string(),
+  "imageWidth": zod.number(),
+  "imageHeight": zod.number(),
+  "words": zod.array(zod.object({
+  "text": zod.string(),
+  "x": zod.number(),
+  "y": zod.number(),
+  "width": zod.number(),
+  "height": zod.number(),
+  "confidence": zod.number()
+}))
+}).nullable().describe('Structured OCR output (word boxes + confidence) read from the package image. Lets the rule engine verify font size, readability and placement.'),
   "checks": zod.array(zod.object({
   "key": zod.string(),
   "label": zod.string(),
   "value": zod.string(),
   "status": zod.enum(['passed', 'failed', 'review']),
   "note": zod.string()
-}))
+})),
+  "evidenceHash": zod.string().nullish().describe('SHA-256 fingerprint of the evidence record')
 })
 
 

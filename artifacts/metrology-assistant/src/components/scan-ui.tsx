@@ -28,6 +28,7 @@ export function ScanRow({ scan, compact = false }: { scan: Scan; compact?: boole
         <span className="flex flex-wrap items-center gap-2">
           <span className="truncate text-sm font-semibold text-foreground">{scan.productName}</span>
           <span className="font-mono text-[10px] text-muted-foreground">{scan.reference}</span>
+          {scan.barcode && <span className="font-mono text-[10px] text-secondary/80">{scan.barcode}</span>}
         </span>
         <span className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
           <span>{scan.category}</span>

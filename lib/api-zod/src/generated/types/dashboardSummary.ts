@@ -5,12 +5,19 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { DashboardSummaryViolationsByTypeItem } from './dashboardSummaryViolationsByTypeItem';
 
 export interface DashboardSummary {
+  /** Total records in the compliance repository */
+  totalScans: number;
   totalScansToday: number;
   complianceRate: number;
   topViolationType: string;
   queuedOffline: number;
   activeOfficers: number;
+  /** Distinct packaged products under compliance review */
+  productsTracked: number;
+  /** Failed declaration types ranked by frequency */
+  violationsByType: DashboardSummaryViolationsByTypeItem[];
   lastSyncAt: Date;
 }

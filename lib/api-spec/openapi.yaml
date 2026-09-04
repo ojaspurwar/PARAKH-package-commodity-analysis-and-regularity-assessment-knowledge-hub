@@ -205,13 +205,48 @@ components:
           format: date-time
         imageUrl:
           type: ["string", "null"]
+        barcode:
+          type: ["string", "null"]
+          description: Barcode / QR value captured from the product package
         ocrText:
           type: string
+        ocrDetails:
+          type: ["object", "null"]
+          description: Structured OCR output (word boxes + confidence) read from the package image. Lets the rule engine verify font size, readability and placement.
+          properties:
+            engine:
+              type: string
+            imageWidth:
+              type: number
+            imageHeight:
+              type: number
+            words:
+              type: array
+              items:
+                type: object
+                properties:
+                  text:
+                    type: string
+                  x:
+                    type: number
+                  y:
+                    type: number
+                  width:
+                    type: number
+                  height:
+                    type: number
+                  confidence:
+                    type: number
+                required: [text, x, y, width, height, confidence]
+          required: [engine, imageWidth, imageHeight, words]
         checks:
           type: array
           items:
             $ref: "#/components/schemas/ComplianceCheck"
-      required: [id, reference, productName, category, officerName, source, location, status, submitted, capturedAt, imageUrl, ocrText, checks]
+        evidenceHash:
+          type: ["string", "null"]
+          description: SHA-256 fingerprint of the evidence record
+      required: [id, reference, productName, category, officerName, source, location, status, submitted, capturedAt, imageUrl, barcode, ocrText, ocrDetails, checks]
     ScanInput:
       type: object
       properties:
@@ -228,13 +263,46 @@ components:
           enum: [compliant, violation, pending]
         imageUrl:
           type: ["string", "null"]
+        barcode:
+          type: ["string", "null"]
+          description: Barcode / QR value captured from the product package
         ocrText:
           type: string
+        ocrDetails:
+          type: ["object", "null"]
+          description: Structured OCR output read from the package image. When present the rule engine also verifies font size, readability and placement.
+          properties:
+            engine:
+              type: string
+            imageWidth:
+              type: number
+            imageHeight:
+              type: number
+            words:
+              type: array
+              items:
+                type: object
+                properties:
+                  text:
+                    type: string
+                  x:
+                    type: number
+                  y:
+                    type: number
+                  width:
+                    type: number
+                  height:
+                    type: number
+                  confidence:
+                    type: number
+                required: [text, x, y, width, height, confidence]
+          required: [engine, imageWidth, imageHeight, words]
         checks:
           type: array
           items:
             $ref: "#/components/schemas/ComplianceCheck"
-      required: [productName, category, officerName, location, status, imageUrl, ocrText, checks]
+          description: Optional. When omitted, the server runs the Legal Metrology rule engine over ocrText to generate checks automatically.
+      required: [productName, category, officerName, location, status, imageUrl, ocrText]
     ScanSubmission:
       type: object
       properties:
@@ -250,6 +318,9 @@ components:
     DashboardSummary:
       type: object
       properties:
+        totalScans:
+          type: number
+          description: Total records in the compliance repository
         totalScansToday:
           type: number
         complianceRate:
@@ -260,8 +331,22 @@ components:
           type: number
         activeOfficers:
           type: number
+        productsTracked:
+          type: number
+          description: Distinct packaged products under compliance review
+        violationsByType:
+          type: array
+          description: Failed declaration types ranked by frequency
+          items:
+            type: object
+            properties:
+              label:
+                type: string
+              count:
+                type: number
+            required: [label, count]
         lastSyncAt:
           type: string
           format: date-time
-      required: [totalScansToday, complianceRate, topViolationType, queuedOffline, activeOfficers, lastSyncAt]
+      required: [totalScans, totalScansToday, complianceRate, topViolationType, queuedOffline, activeOfficers, productsTracked, violationsByType, lastSyncAt]
 

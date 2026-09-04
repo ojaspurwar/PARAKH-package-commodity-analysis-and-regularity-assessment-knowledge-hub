@@ -8,6 +8,7 @@ import HomePage from '@/pages/home';
 import DashboardPage from '@/pages/dashboard';
 import ScanDetailPage from '@/pages/scan-detail';
 import EcommercePage from '@/pages/ecommerce';
+import ProductsPage from '@/pages/products';
 import NotFound from '@/pages/not-found';
 import {
   Route,
@@ -28,6 +29,7 @@ function Router() {
         <Route path="/dashboard" component={DashboardPage} />
         <Route path="/scans/:id" component={ScanDetailPage} />
         <Route path="/ecommerce" component={EcommercePage} />
+        <Route path="/products" component={ProductsPage} />
         <Route component={NotFound} />
       </Switch>
     </RoutedErrorBoundary>

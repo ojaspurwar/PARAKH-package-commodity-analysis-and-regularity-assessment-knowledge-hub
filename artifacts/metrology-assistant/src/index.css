@@ -1,4 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+/* Fonts (DM Sans, IBM Plex Mono, Noto Sans Devanagari) are loaded via
+   <link> tags in index.html so they don't block the stylesheet. */
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @plugin "@tailwindcss/typography";
@@ -141,9 +142,9 @@
   --chart-4: 2 67% 48%;
   --chart-5: 150 28% 49%;
 
-  --app-font-sans: 'DM Sans', sans-serif;
-  --app-font-serif: Georgia, serif;
-  --app-font-mono: 'IBM Plex Mono', monospace;
+  --app-font-sans: 'DM Sans', 'Noto Sans Devanagari', sans-serif;
+  --app-font-serif: Georgia, 'Noto Sans Devanagari', serif;
+  --app-font-mono: 'IBM Plex Mono', 'Noto Sans Devanagari', monospace;
   --radius: 0.65rem;
   --shadow-2xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0); /*replace with H S L */
   --shadow-xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0); /*replace with H S L */

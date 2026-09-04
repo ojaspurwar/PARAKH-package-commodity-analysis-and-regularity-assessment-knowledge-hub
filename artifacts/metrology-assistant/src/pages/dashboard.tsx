@@ -1,4 +1,4 @@
-import { ArrowUpRight, CheckCircle2, Clock3, CloudOff, FileSearch, Gauge, MapPin, Users } from 'lucide-react';
+import { ArrowUpRight, Boxes, CheckCircle2, Clock3, CloudOff, FileSearch, Gauge, MapPin, TriangleAlert } from 'lucide-react';
 import { Link } from 'wouter';
 import { useGetDashboardSummary, useGetScans } from '@workspace/api-client-react';
 import { ErrorState, ScanRow, SkeletonRows, StatusPill, formatDateTime } from '@/components/scan-ui';
@@ -8,20 +8,21 @@ export default function DashboardPage() {
   const scans = useGetScans();
   const metrics = summary.data;
   const compliance = metrics ? Math.round(metrics.complianceRate <= 1 ? metrics.complianceRate * 100 : metrics.complianceRate) : 0;
+  const todayLabel = new Intl.DateTimeFormat('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date());
 
   return (
     <div className="space-y-8">
       <section className="appear flex flex-col justify-between gap-5 md:flex-row md:items-end">
         <div><p className="font-mono text-[10px] uppercase tracking-[.2em] text-secondary">Supervisor console / today</p><h1 className="mt-2 text-3xl font-semibold tracking-[-.045em] md:text-4xl">The day, at a glance.</h1><p className="mt-3 max-w-xl text-sm leading-6 text-muted-foreground">A compact view of field activity, exceptions, and the evidence waiting for your attention.</p></div>
-        <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-xs text-muted-foreground"><span className="size-2 rounded-full bg-secondary" /> Live register <span className="mx-1 text-border">/</span> 14 Oct 2024</div>
+        <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-xs text-muted-foreground"><span className="size-2 rounded-full bg-secondary" /> Live register <span className="mx-1 text-border">/</span> {todayLabel}</div>
       </section>
 
       {summary.isError ? <ErrorState onRetry={() => summary.refetch()} /> : summary.isPending ? <MetricSkeleton /> : (
         <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <MetricCard label="Scans today" value={String(metrics?.totalScansToday ?? 0)} detail="Across all active desks" icon={FileSearch} accent="navy" />
+          <MetricCard label="Records in repository" value={String(metrics?.totalScans ?? 0)} detail="All captured evidence" icon={FileSearch} accent="navy" />
           <MetricCard label="Compliance rate" value={`${compliance}%`} detail="Based on submitted checks" icon={Gauge} accent="teal" progress={compliance} />
+          <MetricCard label="Products tracked" value={String(metrics?.productsTracked ?? 0)} detail="Distinct commodities reviewed" icon={Boxes} accent="ink" />
           <MetricCard label="Queued offline" value={String(metrics?.queuedOffline ?? 0)} detail="Waiting for a connection" icon={CloudOff} accent="amber" />
-          <MetricCard label="Active officers" value={String(metrics?.activeOfficers ?? 0)} detail="Reporting in this shift" icon={Users} accent="ink" />
         </section>
       )}
 
@@ -31,8 +32,30 @@ export default function DashboardPage() {
           {scans.isPending ? <SkeletonRows count={5} /> : scans.isError ? <ErrorState onRetry={() => scans.refetch()} /> : scans.data?.length ? <div className="space-y-1 rounded-2xl border border-border bg-card p-2">{scans.data.slice(0, 8).map((scan) => <ScanRow key={scan.id} scan={scan} compact />)}</div> : <div className="rounded-2xl border border-dashed border-border p-12 text-center text-sm text-muted-foreground">No audit activity has arrived yet.</div>}
         </section>
 
-        <section className="appear delay-2">
-          <div className="mb-4"><p className="font-mono text-[10px] uppercase tracking-[.18em] text-muted-foreground">Attention queue</p><h2 className="mt-1 text-xl font-semibold tracking-[-.03em]">Exceptions to review</h2></div>
+        <section className="appear delay-2 space-y-6">
+          <div>
+            <div className="mb-4"><p className="font-mono text-[10px] uppercase tracking-[.18em] text-muted-foreground">Enforcement signal</p><h2 className="mt-1 text-xl font-semibold tracking-[-.03em]">Violation breakdown</h2></div>
+            <div className="rounded-2xl border border-border bg-card p-5" data-testid="card-violation-breakdown">
+              {metrics?.violationsByType.length ? (
+                <div className="space-y-3">
+                  {metrics.violationsByType.slice(0, 6).map((violation) => {
+                    const max = metrics.violationsByType[0].count || 1;
+                    return (
+                      <div key={violation.label} className="flex items-center gap-3">
+                        <span className="w-40 shrink-0 truncate text-xs font-medium text-foreground/85" title={violation.label}>{violation.label}</span>
+                        <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-destructive/75" style={{ width: `${Math.max(8, Math.round((violation.count / max) * 100))}%` }} /></div>
+                        <span className="w-6 text-right font-mono text-xs font-semibold text-destructive">{violation.count}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="flex items-center gap-3 py-2 text-sm text-muted-foreground"><TriangleAlert size={16} className="text-secondary" />No failed declarations on record — the register is clean.</div>
+              )}
+            </div>
+          </div>
+          <div>
+            <div className="mb-4"><p className="font-mono text-[10px] uppercase tracking-[.18em] text-muted-foreground">Attention queue</p><h2 className="mt-1 text-xl font-semibold tracking-[-.03em]">Exceptions to review</h2></div>
           <div className="overflow-hidden rounded-2xl border border-border bg-card">
             <div className="border-b border-border bg-muted/35 px-5 py-4"><div className="flex items-center justify-between"><span className="text-sm font-semibold">Top violation signal</span><span className="rounded-full bg-destructive/10 px-2.5 py-1 text-[11px] font-semibold text-destructive">Needs attention</span></div><p className="mt-3 text-2xl font-semibold tracking-[-.04em]">{metrics?.topViolationType || 'No violations yet'}</p><p className="mt-1 text-xs text-muted-foreground">Most recurring issue across today&apos;s reviewed evidence.</p></div>
             <div className="space-y-1 p-3">
@@ -41,6 +64,7 @@ export default function DashboardPage() {
             </div>
           </div>
           <div className="mt-4 rounded-2xl bg-primary px-5 py-4 text-primary-foreground"><div className="flex items-center justify-between"><p className="font-mono text-[10px] uppercase tracking-[.17em] text-primary-foreground/55">Last sync</p><span className="size-2 rounded-full bg-accent" /></div><p className="mt-2 text-sm font-semibold">{metrics?.lastSyncAt ? formatDateTime(metrics.lastSyncAt) : 'Waiting for first sync'}</p><p className="mt-1 text-xs text-primary-foreground/55">All field devices checked in recently.</p></div>
+          </div>
         </section>
       </div>
     </div>

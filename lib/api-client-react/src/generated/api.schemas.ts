@@ -43,6 +43,26 @@ export const ScanStatus = {
   pending: 'pending',
 } as const;
 
+export type ScanOcrDetailsWordsItem = {
+  text: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  confidence: number;
+};
+
+/**
+ * Structured OCR output (word boxes + confidence) read from the package image. Lets the rule engine verify font size, readability and placement.
+ * @nullable
+ */
+export type ScanOcrDetails = {
+  engine: string;
+  imageWidth: number;
+  imageHeight: number;
+  words: ScanOcrDetailsWordsItem[];
+} | null;
+
 export interface Scan {
   id: number;
   reference: string;
@@ -56,8 +76,23 @@ export interface Scan {
   capturedAt: string;
   /** @nullable */
   imageUrl: string | null;
+  /**
+     * Barcode / QR value captured from the product package
+     * @nullable
+     */
+  barcode: string | null;
   ocrText: string;
+  /**
+     * Structured OCR output (word boxes + confidence) read from the package image. Lets the rule engine verify font size, readability and placement.
+     * @nullable
+     */
+  ocrDetails: ScanOcrDetails;
   checks: ComplianceCheck[];
+  /**
+     * SHA-256 fingerprint of the evidence record
+     * @nullable
+     */
+  evidenceHash?: string | null;
 }
 
 export type ScanInputStatus = typeof ScanInputStatus[keyof typeof ScanInputStatus];
@@ -69,6 +104,26 @@ export const ScanInputStatus = {
   pending: 'pending',
 } as const;
 
+export type ScanInputOcrDetailsWordsItem = {
+  text: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  confidence: number;
+};
+
+/**
+ * Structured OCR output read from the package image. When present the rule engine also verifies font size, readability and placement.
+ * @nullable
+ */
+export type ScanInputOcrDetails = {
+  engine: string;
+  imageWidth: number;
+  imageHeight: number;
+  words: ScanInputOcrDetailsWordsItem[];
+} | null;
+
 export interface ScanInput {
   productName: string;
   category: string;
@@ -77,8 +132,19 @@ export interface ScanInput {
   status: ScanInputStatus;
   /** @nullable */
   imageUrl: string | null;
+  /**
+     * Barcode / QR value captured from the product package
+     * @nullable
+     */
+  barcode?: string | null;
   ocrText: string;
-  checks: ComplianceCheck[];
+  /**
+     * Structured OCR output read from the package image. When present the rule engine also verifies font size, readability and placement.
+     * @nullable
+     */
+  ocrDetails?: ScanInputOcrDetails;
+  /** Optional. When omitted, the server runs the Legal Metrology rule engine over ocrText to generate checks automatically. */
+  checks?: ComplianceCheck[];
 }
 
 export interface ScanSubmission {
@@ -89,12 +155,23 @@ export interface WebScanInput {
   url: string;
 }
 
+export type DashboardSummaryViolationsByTypeItem = {
+  label: string;
+  count: number;
+};
+
 export interface DashboardSummary {
+  /** Total records in the compliance repository */
+  totalScans: number;
   totalScansToday: number;
   complianceRate: number;
   topViolationType: string;
   queuedOffline: number;
   activeOfficers: number;
+  /** Distinct packaged products under compliance review */
+  productsTracked: number;
+  /** Failed declaration types ranked by frequency */
+  violationsByType: DashboardSummaryViolationsByTypeItem[];
   lastSyncAt: string;
 }
 
