@@ -199,8 +199,9 @@ Return a strictly valid JSON object conforming to this schema:
     const rawDate = parsed.dateMarking ? String(parsed.dateMarking).trim() : '';
     const dateYearMatch = rawDate.match(/\b(19\d\d|20\d\d)\b/);
     const dateYear = dateYearMatch ? parseInt(dateYearMatch[1], 10) : null;
-    const isOldDate = dateYear !== null && dateYear < 2025;
-    const isExpired = (Array.isArray(parsed.missingDeclarations) && parsed.missingDeclarations.some((d: string) => /expired/i.test(d))) || isOldDate || /expir/i.test(rawDate);
+    const isPerishable = category === 'Packaged food' || category === 'Personal care';
+    const isOldDate = isPerishable && dateYear !== null && dateYear < 2025;
+    const isExpired = (isPerishable && Array.isArray(parsed.missingDeclarations) && parsed.missingDeclarations.some((d: string) => /expired/i.test(d))) || isOldDate || (isPerishable && /expir/i.test(rawDate));
     const isMissingMandatory = !parsed.mrp || !parsed.netQuantity || !parsed.dateMarking || !parsed.manufacturerPacker;
     const status = (isExpired || isMissingMandatory || parsed.status === 'violation') ? 'violation' : (parsed.status === 'compliant' ? 'compliant' : 'pending');
 

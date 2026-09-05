@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { AlertCircle, CheckCircle2, Eye, ShieldAlert, Sparkles, ZoomIn, ZoomOut } from 'lucide-react';
-import type { ComplianceCheck, OcrDetails } from '@workspace/api-client-react';
+import type { ComplianceCheck, ScanOcrDetails } from '@workspace/api-client-react';
+export type OcrDetails = NonNullable<ScanOcrDetails>;
 import { useI18n } from '@/lib/i18n';
 
 interface AnnotatedPhotoProps {
@@ -166,7 +167,7 @@ export function AnnotatedPhoto({ imageUrl, ocrDetails, checks, productName }: An
               className="absolute inset-0 size-full pointer-events-none"
               style={{ overflow: 'visible' }}
             >
-              {ocrDetails.words.map((w, idx) => {
+              {ocrDetails.words.map((w: any, idx: number) => {
                 const { isViolation, note } = isViolationWord(w.text);
 
                 if (!isViolation && !showAllWords) return null;

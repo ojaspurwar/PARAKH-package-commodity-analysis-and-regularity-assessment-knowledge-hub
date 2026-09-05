@@ -118,18 +118,62 @@ pnpm start    # Serve everything from http://localhost:5000
 
 ---
 
-## Environment variables
+## Setting up OpenRouter AI Vision API Key
 
-Copy `.env.example` to `.env` and fill in:
+To enable real-time camera package label inspection, OCR extraction, and Legal Metrology Rule 6/7 analysis, PARAKH uses OpenRouter Vision AI (Google Gemini 2.5 Flash).
+
+> **Security Note:** Never commit your actual `.env` file to Git or GitHub. The repository includes `.env` in `.gitignore` so your secret keys remain protected locally.
+
+### Step-by-step setup:
+
+1. **Get an OpenRouter API Key:**
+   - Sign up or log in at [openrouter.ai](https://openrouter.ai).
+   - Go to [openrouter.ai/keys](https://openrouter.ai/keys) and click **Create Key**.
+   - Copy your secret API key (starts with `sk-or-v1-...`).
+
+2. **Create your local `.env` file:**
+   - In the project root directory, copy `.env.example`:
+     ```bash
+     # Linux / macOS
+     cp .env.example .env
+
+     # Windows (PowerShell)
+     Copy-Item .env.example .env
+
+     # Windows (Command Prompt)
+     copy .env.example .env
+     ```
+
+3. **Paste your API key into `.env`:**
+   Open `.env` in your editor and set:
+   ```env
+   # PARAKH Legal Metrology AI Scanner Configuration
+   OPENROUTER_API_KEY=sk-or-v1-your-actual-api-key-here
+   AI_VISION_MODEL=google/gemini-2.5-flash
+
+   # Local Dev Ports (HTTPS required for phone camera & mobile testing)
+   WEB_PORT=41052
+   API_PORT=35280
+   HTTPS=1
+   ```
+
+4. **Verify AI service status:**
+   Start the dev server (`pnpm dev`) and check the health endpoint:
+   - `http://localhost:35280/api/ai/status` (or `https://localhost:41052/api/ai/status`)
+   - It will report `{"available": true, "model": "google/gemini-2.5-flash", "provider": "OpenRouter Vision AI"}`.
+
+---
+
+## Environment variables reference
 
 | Variable | Required | Description |
 |---|---|---|
-| `OPENROUTER_API_KEY` | Yes | API key from [openrouter.ai](https://openrouter.ai/keys) |
-| `AI_VISION_MODEL` | No | AI model (default: `google/gemini-2.5-flash`) |
-| `DATABASE_PATH` | No | SQLite path (default: `.data/parakh.db`) |
-| `WEB_PORT` | No | Frontend port (default: auto-picked) |
-| `API_PORT` | No | Backend port (default: auto-picked) |
-| `HTTPS` | No | Set `0` to disable HTTPS in dev |
+| `OPENROUTER_API_KEY` | **Yes** | Your secret API key from [openrouter.ai/keys](https://openrouter.ai/keys) |
+| `AI_VISION_MODEL` | No | Vision model ID (default: `google/gemini-2.5-flash`). Supports other OpenRouter vision models. |
+| `DATABASE_PATH` | No | SQLite database file location (default: `.data/parakh.db`) |
+| `WEB_PORT` | No | Frontend Vite port (default: `41052`) |
+| `API_PORT` | No | Express API server port (default: `35280`) |
+| `HTTPS` | No | Set to `1` to enable auto self-signed HTTPS for camera scanning on mobile devices |
 
 ---
 

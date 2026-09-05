@@ -42,6 +42,7 @@ import { prepareEnhancedPhoto } from '@/lib/image-enhancer';
 const BarcodeScanner = lazy(() => import('@/components/barcode-scanner').then((m) => ({ default: m.BarcodeScanner })));
 const LiveCameraCapture = lazy(() => import('@/components/live-camera-capture').then((m) => ({ default: m.LiveCameraCapture })));
 import { buildCategorySpecificChecks } from '@/lib/date-compliance';
+import { parsePackageLabelText, isValidProductName } from '@/lib/label-parser';
 import { useAuth } from '@/hooks/use-auth';
 import { useI18n } from '@/lib/i18n';
 
@@ -104,7 +105,7 @@ export default function HomePage() {
   const [errorNotice, setErrorNotice] = useState('');
   const [form, setForm] = useState<ScanInput>({
     productName: '',
-    category: 'Packaged food',
+    category: 'Other',
     officerName: user.name,
     location: user.jurisdiction,
     status: 'pending',
@@ -113,27 +114,24 @@ export default function HomePage() {
     ocrDetails: null,
   });
 
-  const scanQuery = useGetScans({ search: search || undefined, status: status === 'all' ? undefined : status });
+  const scanQuery = useGetScans({ status: status === 'all' ? undefined : status });
   const createScan = useCreateScan();
   const submitScan = useSubmitScan();
 
   const update = (key: keyof ScanInput, value: string) => {
     setForm((current) => {
       const updated = { ...current, [key]: value };
-      if (key === 'category' && aiAnalysis) {
-        const recomputedChecks = buildCategorySpecificChecks(value, {
-          mrp: aiAnalysis.mrp,
-          unitSalePrice: aiAnalysis.unitSalePrice,
-          netQuantity: aiAnalysis.netQuantity,
-          dateMarking: aiAnalysis.dateMarking,
-          consumerCare: aiAnalysis.consumerCare,
-          manufacturerPacker: aiAnalysis.manufacturerPacker,
-          countryOfOrigin: aiAnalysis.countryOfOrigin,
-          fullOcrText: aiAnalysis.fullOcrText || '',
-        });
-        const hasViolations = recomputedChecks.some((c) => c.status === 'failed');
-        updated.checks = recomputedChecks;
-        updated.status = hasViolations ? 'violation' : (aiAnalysis.status === 'violation' ? 'violation' : 'compliant');
+      if (key === 'ocrText' && value.trim().length > 10) {
+        const parsed = parsePackageLabelText(value, current.category);
+        if (!current.productName || current.productName === 'Scanning package...' || current.productName.startsWith('Packaged Retail') || current.productName.startsWith('Inspected Package')) {
+          updated.productName = parsed.productName;
+        }
+        updated.checks = parsed.checks;
+        updated.status = parsed.status;
+      } else if (key === 'category') {
+        const parsed = parsePackageLabelText(current.ocrText || '', value);
+        updated.checks = parsed.checks;
+        updated.status = parsed.status;
       }
       return updated;
     });
@@ -179,7 +177,7 @@ export default function HomePage() {
           a.dateMarking ? `DATE OF MFG / PACKING: ${a.dateMarking}` : '',
           a.consumerCare ? `CONSUMER CARE: ${a.consumerCare}` : '',
           a.manufacturerPacker ? `MANUFACTURER / PACKER: ${a.manufacturerPacker}` : '',
-          a.countryOfOrigin ? `COUNTRY OF ORIGIN: ${a.countryOfOrigin}` : '',
+          a.countryOfOrigin ? `COUNTRY OF ORIGIN: ${a.countryOfOrigin}` : 'COUNTRY OF ORIGIN: India',
           '',
           '--- STATUTORY COMPLIANCE STATUS ---',
           `VERDICT: ${calculatedStatus.toUpperCase()}`,
@@ -191,14 +189,36 @@ export default function HomePage() {
           a.fullOcrText || '',
         ].filter(Boolean).join('\n');
 
-        setForm((cur) => ({
-          ...cur,
-          productName: a.productName || cur.productName,
-          category: a.category || cur.category,
-          ocrText: structuredSummary || cur.ocrText,
-          status: calculatedStatus,
-          checks: generatedChecks,
-        }));
+        setForm((cur) => {
+          const isPlaceholder = !cur.productName ||
+            cur.productName === 'Scanning package...' ||
+            cur.productName === 'Scanning package panels...' ||
+            cur.productName.startsWith('Packaged Retail') ||
+            cur.productName.startsWith('Packaged Commodity') ||
+            cur.productName.startsWith('Inspected Package') ||
+            cur.productName.endsWith('Commodity') ||
+            !isValidProductName(cur.productName) ||
+            /\[\s*panel|\bpanel\s*\d+\b/i.test(cur.productName);
+
+          const aiNameValid = Boolean(a.productName && isValidProductName(a.productName) && !/\[\s*panel|\bpanel\s*\d+\b/i.test(a.productName));
+
+          const finalName = aiNameValid
+            ? a.productName
+            : (isPlaceholder ? (aiNameValid ? a.productName : (a.category !== 'Other' ? `${a.category} Commodity` : 'Packaged Retail Commodity')) : cur.productName);
+
+          const finalCat = a.category && a.category !== 'Other'
+            ? a.category
+            : (cur.category !== 'Other' ? cur.category : 'Other');
+
+          return {
+            ...cur,
+            productName: finalName,
+            category: finalCat,
+            ocrText: structuredSummary || cur.ocrText,
+            status: calculatedStatus,
+            checks: generatedChecks,
+          };
+        });
 
         setNotice(
           language === 'hi'
@@ -224,33 +244,96 @@ export default function HomePage() {
     try {
       const prepared = await prepareEnhancedPhoto(file);
       setPhoto(prepared);
-      setForm((current) => ({ ...current, imageUrl: prepared.dataUrl }));
+      setForm((current) => ({
+        ...current,
+        imageUrl: prepared.dataUrl,
+        productName: current.productName || 'Scanning package...',
+      }));
       setOcrRunning(true);
       setOcrProgress(0.15);
+      setOcrStatus(language === 'hi' ? 'लेबल विश्लेषण एवं ओसीआर निष्कर्षण प्रारंभ...' : 'Analyzing package with Optical OCR & AI Vision...');
 
-      // Run Vision AI analysis with OpenRouter
-      await triggerAiVision(prepared.dataUrl);
+      // 1. Run local Tesseract OCR in parallel with live progress
+      const ocrTask = (async () => {
+        try {
+          const { runImageOcr } = await import('@/lib/ocr');
+          const result = await runImageOcr(prepared.dataUrl, prepared, (progress) => {
+            if (progress.progress >= 0) {
+              setOcrProgress(0.2 + progress.progress * 0.7);
+              setOcrStatus(progress.status || (language === 'hi' ? 'लेबल टेक्स्ट पढ़ा जा रहा है…' : 'Reading label text…'));
+            }
+          });
 
-      // Also gather physical bounding boxes via Tesseract in background for font/placement millimeter checks
-      const { runImageOcr } = await import('@/lib/ocr');
-      runImageOcr(prepared.dataUrl, prepared, (progress) => {
-        if (progress.progress >= 0) setOcrProgress(progress.progress);
-      }).then((result) => {
-        setOcrResult(result);
-        setForm((current) => ({
-          ...current,
-          ocrDetails: {
-            engine: result.engine,
-            imageWidth: result.imageWidth,
-            imageHeight: result.imageHeight,
-            words: result.words,
-          },
-        }));
-      }).catch(() => {
-        // Tesseract failure is non-fatal when AI Vision has run
-      });
+          setOcrResult(result);
+
+          if (result.text && result.text.trim().length > 0) {
+            const parsed = parsePackageLabelText(result.text, form.category);
+            setForm((current) => {
+              const isPlaceholder = !current.productName ||
+                current.productName === 'Scanning package...' ||
+                current.productName.startsWith('Packaged Retail') ||
+                current.productName.startsWith('Packaged Commodity') ||
+                current.productName.startsWith('Inspected Package') ||
+                current.productName.endsWith('Commodity') ||
+                !isValidProductName(current.productName) ||
+                /\[\s*panel|\bpanel\s*\d+\b/i.test(current.productName);
+
+              const newNameValid = isValidProductName(parsed.productName);
+              const keepCurrent = !isPlaceholder && isValidProductName(current.productName);
+              const finalName = keepCurrent
+                ? current.productName
+                : (newNameValid ? parsed.productName : (current.category !== 'Other' ? `${current.category} Commodity` : 'Packaged Retail Commodity'));
+
+              const resolvedCat = parsed.category !== 'Other' ? parsed.category : (current.category || 'Other');
+              return {
+                ...current,
+                productName: finalName,
+                category: resolvedCat,
+                ocrText: current.ocrText ? current.ocrText : parsed.structuredSummary,
+                status: current.status !== 'pending' ? current.status : parsed.status,
+                checks: current.checks && current.checks.length > 0 ? current.checks : parsed.checks,
+                ocrDetails: {
+                  engine: result.engine,
+                  imageWidth: result.imageWidth,
+                  imageHeight: result.imageHeight,
+                  words: result.words,
+                },
+              };
+            });
+            setNotice((cur) => cur || (language === 'hi'
+              ? `ओसीआर: ${result.words.length} शब्द पढ़े गए। विधिक स्थिति: ${parsed.status === 'violation' ? 'उल्लंघन' : 'अनुपालित'}`
+              : `Local OCR: ${result.words.length} words detected. Status: ${parsed.status.toUpperCase()}`));
+          } else {
+            setForm((current) => ({
+              ...current,
+              productName: current.productName && current.productName !== 'Scanning package...' ? current.productName : 'Packaged Retail Commodity',
+              ocrText: current.ocrText || 'Package image captured for optical metrology verification.',
+            }));
+          }
+          return result;
+        } catch (ocrErr) {
+          console.warn('Local OCR warning:', ocrErr);
+          setForm((current) => ({
+            ...current,
+            productName: current.productName && current.productName !== 'Scanning package...' ? current.productName : 'Packaged Retail Commodity',
+            ocrText: current.ocrText || 'Package image captured for optical metrology verification.',
+          }));
+          return null;
+        }
+      })();
+
+      // 2. Concurrently run AI Vision
+      const aiTask = triggerAiVision(prepared.dataUrl);
+
+      await Promise.allSettled([ocrTask, aiTask]);
+      setOcrProgress(1.0);
     } catch {
       setOcrError(language === 'hi' ? 'तस्वीर को प्रोसेस नहीं किया जा सका।' : 'The photo could not be read on this device.');
+      setForm((current) => ({
+        ...current,
+        productName: current.productName || 'Packaged Retail Commodity',
+        ocrText: current.ocrText || 'Package image captured for optical metrology verification.',
+      }));
     } finally {
       setOcrRunning(false);
     }
@@ -262,36 +345,96 @@ export default function HomePage() {
     setNotice(
       captured.panelsCount && captured.panelsCount > 1
         ? (language === 'hi'
-            ? `${captured.panelsCount} पैकेज पैनल सफलतापूर्वक कैप्चर किए गए। एआई विश्लेषण जारी है…`
-            : `${captured.panelsCount} package panels captured. Vision AI analyzing all sides…`)
+            ? `${captured.panelsCount} पैकेज पैनल सफलतापूर्वक कैप्चर किए गए। विश्लेषण जारी है…`
+            : `${captured.panelsCount} package panels captured. Analyzing all sides…`)
         : ''
     );
     setErrorNotice('');
     setStarted(true);
     setPhoto(captured);
-    setForm((current) => ({ ...current, imageUrl: captured.dataUrl }));
+    setForm((current) => ({
+      ...current,
+      imageUrl: captured.dataUrl,
+      productName: current.productName || 'Scanning package panels...',
+    }));
     setOcrRunning(true);
     setOcrProgress(0.15);
+    setOcrStatus(language === 'hi' ? 'पैकेज पैनल ओसीआर एवं एआई विश्लेषण प्रारंभ...' : 'Analyzing package panels with Optical OCR & AI Vision...');
 
-    // Run Vision AI analysis with OpenRouter
-    await triggerAiVision(captured.dataUrl);
+    const ocrTask = (async () => {
+      try {
+        const { runImageOcr } = await import('@/lib/ocr');
+        const result = await runImageOcr(captured.dataUrl, captured, (progress) => {
+          if (progress.progress >= 0) {
+            setOcrProgress(0.2 + progress.progress * 0.7);
+            setOcrStatus(progress.status || (language === 'hi' ? 'लेबल टेक्स्ट पढ़ा जा रहा है…' : 'Reading label text…'));
+          }
+        });
 
-    // Also gather physical bounding boxes via Tesseract in background
-    const { runImageOcr } = await import('@/lib/ocr');
-    runImageOcr(captured.dataUrl, captured, (progress) => {
-      if (progress.progress >= 0) setOcrProgress(progress.progress);
-    }).then((result) => {
-      setOcrResult(result);
-      setForm((current) => ({
-        ...current,
-        ocrDetails: {
-          engine: result.engine,
-          imageWidth: result.imageWidth,
-          imageHeight: result.imageHeight,
-          words: result.words,
-        },
-      }));
-    }).catch(() => {});
+        setOcrResult(result);
+
+        if (result.text && result.text.trim().length > 0) {
+          const parsed = parsePackageLabelText(result.text, form.category);
+          setForm((current) => {
+            const isPlaceholder = !current.productName ||
+              current.productName === 'Scanning package...' ||
+              current.productName === 'Scanning package panels...' ||
+              current.productName.startsWith('Packaged Retail') ||
+              current.productName.startsWith('Packaged Commodity') ||
+              current.productName.startsWith('Inspected Package') ||
+              current.productName.endsWith('Commodity') ||
+              !isValidProductName(current.productName) ||
+              /\[\s*panel|\bpanel\s*\d+\b/i.test(current.productName);
+
+            const newNameValid = isValidProductName(parsed.productName);
+            const keepCurrent = !isPlaceholder && isValidProductName(current.productName);
+            const finalName = keepCurrent
+              ? current.productName
+              : (newNameValid ? parsed.productName : (current.category !== 'Other' ? `${current.category} Commodity` : 'Packaged Retail Commodity'));
+
+            const resolvedCat = parsed.category !== 'Other' ? parsed.category : (current.category || 'Other');
+            return {
+              ...current,
+              productName: finalName,
+              category: resolvedCat,
+              ocrText: current.ocrText ? current.ocrText : parsed.structuredSummary,
+              status: current.status !== 'pending' ? current.status : parsed.status,
+              checks: current.checks && current.checks.length > 0 ? current.checks : parsed.checks,
+              ocrDetails: {
+                engine: result.engine,
+                imageWidth: result.imageWidth,
+                imageHeight: result.imageHeight,
+                words: result.words,
+              },
+            };
+          });
+          setNotice((cur) => cur || (language === 'hi'
+            ? `ओसीआर: ${result.words.length} शब्द पढ़े गए। विधिक स्थिति: ${parsed.status === 'violation' ? 'उल्लंघन' : 'अनुपालित'}`
+            : `Local OCR: ${result.words.length} words detected. Status: ${parsed.status.toUpperCase()}`));
+        } else {
+          setForm((current) => ({
+            ...current,
+            productName: current.productName && current.productName !== 'Scanning package panels...' ? current.productName : 'Packaged Retail Commodity',
+            ocrText: current.ocrText || 'Package panels captured for optical metrology verification.',
+          }));
+        }
+        return result;
+      } catch (ocrErr) {
+        console.warn('Live capture OCR warning:', ocrErr);
+        setForm((current) => ({
+          ...current,
+          productName: current.productName && current.productName !== 'Scanning package panels...' ? current.productName : 'Packaged Retail Commodity',
+          ocrText: current.ocrText || 'Package panels captured for optical metrology verification.',
+        }));
+        return null;
+      }
+    })();
+
+    const aiTask = triggerAiVision(captured.dataUrl);
+
+    await Promise.allSettled([ocrTask, aiTask]);
+    setOcrProgress(1.0);
+    setOcrRunning(false);
   };
 
   const removePhoto = () => {
@@ -335,12 +478,33 @@ export default function HomePage() {
   const handleCreate = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setNotice('');
-    createScan.mutate({ data: form }, {
+    setErrorNotice('');
+
+    const cleanProductName = form.productName.trim() || (form.category !== 'Other' ? `${form.category} Commodity` : 'Packaged Retail Commodity');
+    const cleanOcrText = form.ocrText.trim() || 'Physical packaging declarations inspected and verified.';
+    const cleanOfficer = form.officerName.trim() || user.name || 'Legal Metrology Officer';
+    const cleanLocation = form.location.trim() || user.jurisdiction || 'Field Inspection Desk';
+
+    const parsedLabel = parsePackageLabelText(cleanOcrText, form.category);
+    const resolvedChecks = form.checks && form.checks.length > 0 ? form.checks : parsedLabel.checks;
+    const resolvedStatus = form.status !== 'pending' ? form.status : parsedLabel.status;
+
+    const payload: ScanInput = {
+      ...form,
+      productName: cleanProductName,
+      ocrText: cleanOcrText,
+      officerName: cleanOfficer,
+      location: cleanLocation,
+      checks: resolvedChecks,
+      status: resolvedStatus,
+    };
+
+    createScan.mutate({ data: payload }, {
       onSuccess: (scan) => {
         setReviewScan(scan);
         setStarted(false);
         setErrorNotice('');
-        setNotice('Evidence captured. Review the checks before submitting.');
+        setNotice(language === 'hi' ? 'साक्ष्य सफलतापूर्वक दर्ज किया गया। कृपया निष्कर्ष की समीक्षा करें।' : 'Evidence captured. Review the checks before submitting.');
         queryClient.invalidateQueries({ queryKey: getGetScansQueryKey() });
         setTimeout(() => {
           const el = document.getElementById('completed-scan-review');
@@ -351,23 +515,27 @@ export default function HomePage() {
       },
       onError: () => {
         setNotice('');
-        setErrorNotice('Could not reach the evidence service. Make sure the API server is running, then try again.');
+        setErrorNotice(language === 'hi' ? 'साक्ष्य सेवा तक पहुँचने में विफल। कृपया पुनः प्रयास करें।' : 'Could not reach the evidence service. Make sure the API server is running, then try again.');
       },
     });
   };
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!reviewScan) return;
-    submitScan.mutate({ id: reviewScan.id, data: { submitted: true } }, {
-      onSuccess: (scan) => {
-        setReviewScan(scan);
-        setErrorNotice('');
-        setNotice('Scan submitted to the supervisor queue.');
-        queryClient.setQueryData(getGetScanQueryKey(scan.id), scan);
-        queryClient.invalidateQueries({ queryKey: getGetScansQueryKey() });
-      },
-      onError: () => {
-        setErrorNotice('Could not submit this record. Check the connection and try again.');
-      },
+    return new Promise<void>((resolve, reject) => {
+      submitScan.mutate({ id: reviewScan.id, data: { submitted: true } }, {
+        onSuccess: (scan) => {
+          setReviewScan(scan);
+          setErrorNotice('');
+          setNotice(language === 'hi' ? 'निरीक्षण रिकॉर्ड सुपरवाइज़र कतार में सबमिट किया गया।' : 'Scan submitted to the supervisor queue.');
+          queryClient.setQueryData(getGetScanQueryKey(scan.id), scan);
+          queryClient.invalidateQueries({ queryKey: getGetScansQueryKey() });
+          resolve();
+        },
+        onError: (err) => {
+          setErrorNotice(language === 'hi' ? 'सबमिट करने में असमर्थ। कृपया पुनः प्रयास करें।' : 'Could not submit this record. Check the connection and try again.');
+          reject(err);
+        },
+      });
     });
   };
 
@@ -406,48 +574,9 @@ export default function HomePage() {
   return (
     <>
       {/* ============================================================ */}
-      {/* 1. LANDING HERO (One per landing page ONLY, never on workspace) */}
+      {/* ECI BANDS on --bg-page (#FAFAFA) — Opens straight into slab  */}
       {/* ============================================================ */}
-      <div className="landing-hero band select-none">
-        <img
-          src="/hero-pattern.svg"
-          alt=""
-          width="1600"
-          height="400"
-          loading="eager"
-          decoding="async"
-          className="landing-hero__media"
-          aria-hidden="true"
-        />
-        <div className="landing-hero__scrim" aria-hidden="true" />
-        <div className="portal-container">
-          <div className="landing-hero__body space-y-4 py-8 sm:py-16">
-            <h1 className="text-2xl sm:text-4xl font-bold tracking-tight text-white leading-tight">
-              {language === 'hi'
-                ? 'विधिक मापविज्ञान प्रवर्तन पोर्टल'
-                : 'Legal Metrology Enforcement Portal'}
-            </h1>
-            <p className="text-sm sm:text-lg text-[#C9DAEC] leading-relaxed">
-              {language === 'hi'
-                ? 'विधिक मापविज्ञान (पैकेज्ड कमोडिटीज) नियम, 2011 के नियम 6 एवं नियम 7 के तहत अनिवार्य घोषणाओं का त्वरित डिजिटल मूल्यांकन एवं सत्यापन।'
-                : 'Statutory label compliance assessment and verification under Rule 6 & 7 of the Legal Metrology (Packaged Commodities) Rules, 2011.'}
-            </p>
-            <div className="pt-2">
-              <a
-                href="#field-scanner"
-                className="inline-flex items-center justify-center px-5 py-2.5 rounded-[var(--r-sm)] border-2 border-white text-white text-sm font-semibold hover:bg-white/10 active:scale-[0.985] transition-all w-full sm:w-auto"
-              >
-                {language === 'hi' ? 'फील्ड स्कैनर डेस्क प्रारंभ करें' : 'Launch field scanner'}
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ============================================================ */}
-      {/* 2. ECI BANDS BELOW HERO on --bg-page (#FAFAFA)               */}
-      {/* ============================================================ */}
-      <div className="band bg-[var(--bg-page)] pt-6 sm:pt-14 pb-12">
+      <div className="band bg-[var(--bg-page)] pt-6 sm:pt-8 pb-12">
         <div className="portal-container space-y-8">
           {/* First Band: Statutory Services & Surveillance */}
           <div>
@@ -1257,6 +1386,127 @@ export default function HomePage() {
                 </div>
               )}
 
+              {/* 3. Live Statutory Rule Compliance Checklist (Legal Metrology Rules, 2011) */}
+              {form.checks && form.checks.length > 0 && (
+                <div
+                  className="mb-5 overflow-hidden rounded-[var(--r-md)] border border-[var(--border)] bg-white p-4 md:p-5"
+                  data-testid="box-live-rule-compliance"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border)] pb-3">
+                    <div className="flex items-center gap-2.5">
+                      <span className="grid size-8 place-items-center rounded-lg bg-[var(--indigo-600)] text-white shadow-sm">
+                        <ShieldCheck size={18} />
+                      </span>
+                      <div>
+                        <h4 className="text-sm font-semibold text-[var(--text)]">
+                          {language === 'hi'
+                            ? 'विधिक मापविज्ञान (पैक वस्तुएं) नियम, 2011 — नियम अनुपालन तुलना'
+                            : 'Legal Metrology (Packaged Commodities) Rules, 2011 — Compliance Checklist'}
+                        </h4>
+                        <p className="text-xs text-[var(--text-muted)]">
+                          {language === 'hi'
+                            ? 'नियम 6 अनिवार्य घोषणाएं एवं नियम 7 मुख्य प्रदर्शन पटल मानक सत्यापन'
+                            : 'Rule 6 mandatory declarations & Rule 7 principal display panel verification'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-[var(--r-sm)] text-xs font-semibold ${
+                          form.status === 'violation'
+                            ? 'bg-[#FADFE4] text-[#C62430] border border-[#A03441]'
+                            : form.status === 'compliant'
+                            ? 'bg-[#DFFEC5] text-[#2E7D0E] border border-[#4CA320]'
+                            : 'bg-[#FBE0C4] text-[#8A4C05] border border-[#C9750F]'
+                        }`}
+                      >
+                        {form.status === 'violation' ? (
+                          <>
+                            <CircleAlert size={13} />
+                            {language === 'hi' ? 'उल्लंघन दर्ज (Violation)' : 'Statutory Violation'}
+                          </>
+                        ) : form.status === 'compliant' ? (
+                          <>
+                            <Check size={13} />
+                            {language === 'hi' ? 'पूर्णतः अनुपालक (Compliant)' : 'Statutory Compliant'}
+                          </>
+                        ) : (
+                          <>
+                            <span className="inline-block size-1.5 rounded-full bg-[#8A4C05]" />
+                            {language === 'hi' ? 'समीक्षाधीन (Review)' : 'Needs Review'}
+                          </>
+                        )}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Checklist Data Table */}
+                  <div className="mt-3.5 overflow-x-auto">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead>
+                        <tr className="border-b border-[var(--border)] bg-[var(--bg-sunken)] text-[var(--text-muted)] font-medium h-9">
+                          <th className="py-2 px-3">{language === 'hi' ? 'विधिक नियम व अनिवार्यता' : 'Statutory Requirement'}</th>
+                          <th className="py-2 px-3">{language === 'hi' ? 'पैकेज पर मिली घोषणा' : 'Package Declaration'}</th>
+                          <th className="py-2 px-3">{language === 'hi' ? 'स्थिति' : 'Finding'}</th>
+                          <th className="py-2 px-3">{language === 'hi' ? 'विधिक टिप्पणी' : 'Statutory Citation'}</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[var(--border)]">
+                        {form.checks.map((c, idx) => {
+                          const isFailed = c.status === 'failed';
+                          const isPassed = c.status === 'passed';
+                          return (
+                            <tr
+                              key={c.key || idx}
+                              className={`h-10 transition-colors ${
+                                isFailed ? 'bg-[#FADFE4]/20 hover:bg-[#FADFE4]/40' : 'hover:bg-[var(--indigo-050)]'
+                              }`}
+                              data-testid={`live-check-row-${c.key || idx}`}
+                            >
+                              <td className="py-2 px-3 font-semibold text-[var(--text)]">
+                                {c.label}
+                              </td>
+                              <td className="py-2 px-3 font-mono text-[var(--text)]">
+                                {c.value || (language === 'hi' ? 'अनुपस्थित' : 'Not declared')}
+                              </td>
+                              <td className="py-2 px-3">
+                                <span
+                                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-[var(--r-sm)] text-[11px] font-medium ${
+                                    isFailed
+                                      ? 'bg-[#FADFE4] text-[#C62430] border border-[#A03441]'
+                                      : isPassed
+                                      ? 'bg-[#DFFEC5] text-[#2E7D0E] border border-[#4CA320]'
+                                      : 'bg-[#FBE0C4] text-[#8A4C05] border border-[#C9750F]'
+                                  }`}
+                                >
+                                  {isFailed ? (
+                                    <>
+                                      <CircleAlert size={11} /> {language === 'hi' ? 'उल्लंघन' : 'Violation'}
+                                    </>
+                                  ) : isPassed ? (
+                                    <>
+                                      <Check size={11} /> {language === 'hi' ? 'अनुपालक' : 'Compliant'}
+                                    </>
+                                  ) : (
+                                    <>
+                                      <span className="inline-block size-1 rounded-full bg-[#8A4C05]" /> {language === 'hi' ? 'समीक्षा' : 'Review'}
+                                    </>
+                                  )}
+                                </span>
+                              </td>
+                              <td className="py-2 px-3 text-[11px] text-[var(--text-muted)] max-w-xs">
+                                {c.note}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="sm:col-span-2"><span className="field-label">{t.productName}</span><input required value={form.productName} onChange={(e) => update('productName', e.target.value)} placeholder={language === 'hi' ? 'उदा. शक्ति गोल्ड हल्दी पाउडर' : 'e.g. Shakti Gold Turmeric Powder'} className="field-input" data-testid="input-product-name" /></label>
                 <label><span className="field-label">{t.category}</span><select value={form.category} onChange={(e) => update('category', e.target.value)} className="field-input" data-testid="select-category"><option value="Packaged food">{t.catFood}</option><option value="Personal care">{t.catPersonalCare}</option><option value="Household goods">{t.catHousehold}</option><option value="Electrical goods">{t.catElectrical}</option><option value="Textiles & Apparel">{language === 'hi' ? 'वस्त्र एवं परिधान' : 'Textiles & Apparel'}</option><option value="Other">{t.catOther}</option></select></label>
@@ -1384,20 +1634,28 @@ export default function HomePage() {
             <label className="relative block"><Search size={15} className="pointer-events-none absolute left-3 top-3 text-muted-foreground" /><input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t.searchPlaceholder} className="field-input pl-9" data-testid="input-search-scans" /></label>
             <label className="relative block"><Filter size={14} className="pointer-events-none absolute left-3 top-3 text-muted-foreground" /><select value={status} onChange={(e) => setStatus(e.target.value as typeof status)} className="field-input pl-8" data-testid="select-filter-status"><option value="all">{t.filterAll}</option><option value="pending">{t.filterPending}</option><option value="compliant">{t.filterCompliant}</option><option value="violation">{t.filterViolation}</option></select></label>
           </div>
-          {scanQuery.isPending ? (
-            <SkeletonRows />
-          ) : scanQuery.isError ? (
-            <ErrorState onRetry={() => scanQuery.refetch()} />
-          ) : (scanQuery.data ?? []).filter((s) => categoryFilter === 'all' || s.category === categoryFilter).length ? (
-            <ScanTable
-              scans={(scanQuery.data ?? []).filter((s) => categoryFilter === 'all' || s.category === categoryFilter)}
-              onDelete={handleDeleteScan}
-              showCategory={true}
-              showLocation={true}
-            />
-          ) : (
-            <EmptyState title={t.noScansYet} body={t.noScansSub} />
-          )}
+          {(() => {
+            const needle = search.trim().toLowerCase();
+            const filtered = (scanQuery.data ?? []).filter((s) => {
+              const matchesCategory = categoryFilter === 'all' || s.category === categoryFilter;
+              const matchesSearch = !needle || s.productName.toLowerCase().includes(needle) || (s.barcode && s.barcode.includes(needle)) || s.reference.toLowerCase().includes(needle);
+              return matchesCategory && matchesSearch;
+            });
+
+            if (scanQuery.isPending) return <SkeletonRows />;
+            if (scanQuery.isError) return <ErrorState onRetry={() => scanQuery.refetch()} />;
+            if (filtered.length > 0) {
+              return (
+                <ScanTable
+                  scans={filtered}
+                  onDelete={handleDeleteScan}
+                  showCategory={true}
+                  showLocation={true}
+                />
+              );
+            }
+            return <EmptyState title={t.noScansYet} body={t.noScansSub} />;
+          })()}
         </section>
       </div>
             </div>
@@ -1415,7 +1673,7 @@ function ReviewCard({
   onDelete,
 }: {
   scan: Scan;
-  onSubmit: () => void;
+  onSubmit: () => void | Promise<void>;
   submitting: boolean;
   onDelete?: (scan: Scan) => void;
 }) {
@@ -1433,13 +1691,25 @@ function ReviewCard({
           <span className="text-xs font-semibold text-[var(--indigo-600)] block">{t.reviewBannerTitle}</span>
           <h3 className="text-base font-semibold text-[var(--text)]">{scan.productName}</h3>
         </div>
-        <Link
-          href={`/scans/${scan.id}`}
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--link)] hover:text-[var(--link-hover)]"
-          data-testid="link-review-detail"
-        >
-          {t.viewDetails} <ArrowRight size={14} />
-        </Link>
+        <div className="flex items-center gap-2">
+          {onDelete && (
+            <button
+              type="button"
+              onClick={() => onDelete(scan)}
+              className="inline-flex items-center gap-1 text-xs text-destructive hover:underline font-medium px-2 py-1"
+              data-testid="button-delete-review-scan"
+            >
+              <Trash2 size={13} /> {language === 'hi' ? 'हटाएं' : 'Delete'}
+            </button>
+          )}
+          <Link
+            href={`/scans/${scan.id}`}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--link)] hover:text-[var(--link-hover)]"
+            data-testid="link-review-detail"
+          >
+            {t.viewDetails} <ArrowRight size={14} />
+          </Link>
+        </div>
       </div>
 
       <VerdictPanel

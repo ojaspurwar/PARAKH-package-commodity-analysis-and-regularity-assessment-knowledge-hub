@@ -68,7 +68,7 @@ export function evaluateDateCompliance(
     const isPastYear = year < currentYear;
     const isSameYearPastMonth = year === currentYear && month !== null && month < currentMonth;
 
-    // 1. Explicit expiry date in the past
+    // 1. Explicit expiry date in the past (only if explicitly marked as expiry/best before)
     if (isExplicitExpiry && (isPastYear || isSameYearPastMonth)) {
       return {
         status: 'failed',
@@ -78,24 +78,29 @@ export function evaluateDateCompliance(
       };
     }
 
-    // 2. Packaged food or personal care with ancient manufacture date (e.g. December 2020)
+    // 2. Packaged food or personal care with ancient manufacture date (e.g. more than 1 year old without explicit expiry)
     if ((category === 'Packaged food' || category === 'Personal care') && year < currentYear - 1) {
       return {
         status: 'failed',
         value: `${clean} (EXPIRED / OUTDATED)`,
-        note: `CRITICAL VIOLATION: Package date marking indicates ${clean} (more than 1 year old). Expired commodity past permissible consumer shelf life under Rule 6(1)(d).`,
+        note: `CRITICAL VIOLATION: Package date marking indicates ${clean} (more than 1 year old). Expired perishable commodity past permissible consumer shelf life under Rule 6(1)(d).`,
         isExpired: true,
       };
     }
 
-    // 3. Electrical or general goods manufactured years ago (e.g. 2020)
-    if (year < currentYear - 3) {
-      return {
-        status: 'failed',
-        value: `${clean} (OLD / OUTDATED VINTAGE)`,
-        note: `Rule 6(1)(d) Violation: Manufacture/import date ${clean} exceeds 3 years vintage. Old inventory or refurbished stock cannot be sold without re-declaration.`,
-        isExpired: true,
-      };
+    // 3. Non-food items (Electrical goods, Household goods, Textiles): Do NOT expire.
+    // Rule 6(1)(d) only requires that the month & year of manufacture/packing/import is declared.
+    if (category === 'Electrical goods' || category === 'Household goods' || category === 'Textiles & Apparel' || category === 'Other') {
+      // Non-food items do not expire under Legal Metrology Rules, 2011
+      // As long as the date is not post-dated into the distant future, it is fully compliant
+      if (year <= currentYear + 1) {
+        return {
+          status: 'passed',
+          value: clean,
+          note: `Rule 6(1)(d) compliant: Mandatory month & year of manufacture/import declared (${clean})`,
+          isExpired: false,
+        };
+      }
     }
 
     // 4. Post-dated / fraudulent future dates

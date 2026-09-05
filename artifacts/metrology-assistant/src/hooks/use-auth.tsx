@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
-export type UserRole = 'officer' | 'supervisor' | 'auditor';
+export type UserRole = 'officer' | 'supervisor' | 'auditor' | 'citizen';
 
 export interface UserProfile {
   id: string;
@@ -72,6 +72,23 @@ export const PROFILES: Record<UserRole, UserProfile> = {
       canExportReports: true,
     },
   },
+  citizen: {
+    id: 'cit-public',
+    name: 'Citizen / Consumer',
+    role: 'citizen',
+    roleTitle: 'Citizen Verification Desk',
+    roleHindi: 'नागरिक सत्यापन डेस्क',
+    badgeId: 'PUBLIC-ACCESS',
+    jurisdiction: 'National Consumer Verification Desk',
+    permissions: {
+      canCapture: true,
+      canSubmit: false,
+      canAccessSupervisorDashboard: false,
+      canIssueSeizureMemo: false,
+      canAuthorizeCompounding: false,
+      canExportReports: true,
+    },
+  },
 };
 
 interface AuthContextType {
@@ -79,11 +96,15 @@ interface AuthContextType {
   user: UserProfile;
   switchRole: (role: UserRole) => void;
   isAuthenticated: boolean;
+  login: (role: UserRole, badgeId?: string) => Promise<boolean>;
+  logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const AUTH_STORAGE_KEY = 'parakh.auth.role';
+const AUTH_STATUS_KEY = 'parakh.auth.is_authenticated';
+const SESSION_ACTIVE_KEY = 'parakh.auth.session_active';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [role, setRoleState] = useState<UserRole>(() => {
@@ -92,6 +113,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (saved && PROFILES[saved]) return saved;
     }
     return 'officer';
+  });
+
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const sessionActive = window.sessionStorage.getItem(SESSION_ACTIVE_KEY);
+      if (sessionActive === 'true') {
+        const saved = window.localStorage.getItem(AUTH_STATUS_KEY);
+        if (saved !== null) {
+          return saved === 'true';
+        }
+      }
+    }
+    // Default on first visit / new browser session: unauthenticated
+    return false;
   });
 
   const switchRole = (newRole: UserRole) => {
@@ -103,10 +138,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const login = async (newRole: UserRole, _badgeId?: string): Promise<boolean> => {
+    if (PROFILES[newRole]) {
+      setRoleState(newRole);
+      setIsAuthenticated(true);
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(AUTH_STORAGE_KEY, newRole);
+        window.localStorage.setItem(AUTH_STATUS_KEY, 'true');
+        window.sessionStorage.setItem(SESSION_ACTIVE_KEY, 'true');
+      }
+      return true;
+    }
+    return false;
+  };
+
+  const logout = () => {
+    setIsAuthenticated(false);
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(AUTH_STATUS_KEY, 'false');
+      window.sessionStorage.removeItem(SESSION_ACTIVE_KEY);
+    }
+  };
+
   const user = PROFILES[role];
 
   return (
-    <AuthContext.Provider value={{ role, user, switchRole, isAuthenticated: true }}>
+    <AuthContext.Provider value={{ role, user, switchRole, isAuthenticated, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

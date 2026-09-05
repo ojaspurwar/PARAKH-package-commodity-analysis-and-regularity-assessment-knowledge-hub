@@ -11,9 +11,9 @@ interface CategoryComplianceSectionProps {
 export function CategoryComplianceSection({ category, productName, ocrText }: CategoryComplianceSectionProps) {
   const { language } = useI18n();
 
-  const isFood = category === 'Packaged food' || /food|snack|biscuit|oil|tea|coffee|juice|milk|masala|atta|grain/i.test(productName);
-  const isPersonalCare = category === 'Personal care' || /soap|shampoo|cream|lotion|paste|cosmetic|serum|oil|perfume/i.test(productName);
-  const isElectrical = category === 'Electrical goods' || /fryer|iron|bulb|led|charger|heater|kettle|cooker|wire|appliance|cable|fan/i.test(productName);
+  const isElectrical = category === 'Electrical goods' || /electric|electronic|mouse|keyboard|laptop|pc|computer|audio|speaker|headphone|earphone|charger|cable|bulb|led|fryer|iron|kettle|heater|fan|wire|appliance|battery|gadget|dpi|optical/i.test(productName) || /\b(?:voltage|watt|watts|hz|usb|bluetooth|dpi)\b/i.test(ocrText);
+  const isPersonalCare = !isElectrical && (category === 'Personal care' || /soap|shampoo|cream|lotion|paste|cosmetic|serum|perfume|face\s*wash/i.test(productName));
+  const isFood = !isElectrical && !isPersonalCare && (category === 'Packaged food' || /food|snack|biscuit|oil|tea|coffee|juice|milk|masala|atta|grain/i.test(productName));
 
   // Checks detection
   const hasVegLogo = /veg|vegetarian|green dot|non-veg/i.test(ocrText);

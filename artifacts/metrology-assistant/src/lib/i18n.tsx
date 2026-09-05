@@ -148,6 +148,7 @@ export interface Translations {
   evidenceHashLabel: string;
   downloadPdfReport: string;
   exportCsv: string;
+  exportJson: string;
   submitEvidenceToRegister: string;
   deleteRecord: string;
   deleteConfirm: string;

@@ -14,6 +14,9 @@ import {
   User,
   X,
   ArrowUpRight,
+  LogIn,
+  LogOut,
+  ShieldCheck,
 } from 'lucide-react';
 import { appConfig } from '@/config';
 import { useAuth, PROFILES, type UserRole } from '@/hooks/use-auth';
@@ -58,7 +61,7 @@ function NationalEmblemSvg({ className = 'masthead__emblem' }: { className?: str
 }
 
 export function AppShell({ children }: AppShellProps) {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [roleMenuOpen, setRoleMenuOpen] = useState(false);
   const [textSize, setTextSize] = useState<'sm' | 'base' | 'lg'>('base');
@@ -66,8 +69,15 @@ export function AppShell({ children }: AppShellProps) {
 
   const roleMenuRef = useRef<HTMLDivElement>(null);
 
-  const { user, role, switchRole } = useAuth();
+  const { user, role, switchRole, isAuthenticated, logout } = useAuth();
   const { language, setLanguage, t } = useI18n();
+
+  const handleLogout = () => {
+    logout();
+    setRoleMenuOpen(false);
+    setMobileOpen(false);
+    setLocation('/login');
+  };
 
   // Close role menu on outside click
   useEffect(() => {
@@ -101,6 +111,7 @@ export function AppShell({ children }: AppShellProps) {
   // 6 Primary Navigation Items (Sentence case, no uppercase)
   const navItems = [
     { href: '/', label: language === 'hi' ? 'फील्ड स्कैनर' : 'Field scanner', icon: Radio },
+    { href: '/citizen', label: language === 'hi' ? 'नागरिक सत्यापन' : 'Citizen desk', icon: ShieldCheck },
     { href: '/dashboard', label: language === 'hi' ? 'पर्यवेक्षक डैशबोर्ड' : 'Supervisor view', icon: LayoutDashboard },
     { href: '/products', label: language === 'hi' ? 'उत्पाद रिपोजिटरी' : 'Products repository', icon: Boxes },
     { href: '/ecommerce', label: language === 'hi' ? 'ऑनलाइन उत्पाद' : 'Online products', icon: ExternalLink },
@@ -266,9 +277,9 @@ export function AppShell({ children }: AppShellProps) {
               </picture>
             </Link>
             <img
-              src="/assets/parakh.svg"
+              src="/assets/icon-photo.jpeg"
               alt="PARAKH"
-              className="masthead-parakh-svg"
+              className="h-10 w-10 rounded-md object-contain border border-[var(--border)] shadow-xs"
             />
           </div>
 
@@ -306,73 +317,101 @@ export function AppShell({ children }: AppShellProps) {
           {/* Right: PARAKH mark + Officer chip (hidden on mobile, shown on desktop) */}
           <div className="masthead-right-block">
             <img
-              src="/assets/parakh.svg"
+              src="/assets/icon-photo.jpeg"
               alt="PARAKH"
-              className="masthead-parakh-svg"
+              className="h-12 w-12 rounded-md object-contain border border-[var(--border)] shadow-xs shrink-0"
             />
 
-            {/* Officer Chip with Role Switcher Dropdown */}
-            <div className="relative" ref={roleMenuRef}>
-              <button
-                type="button"
-                onClick={() => setRoleMenuOpen(!roleMenuOpen)}
-                className="masthead-officer-chip focus:outline-none focus:ring-2 focus:ring-[#005EA2]"
-                aria-expanded={roleMenuOpen}
-                aria-haspopup="true"
+            {/* Officer Chip with Role Switcher Dropdown OR Sign In Button */}
+            {!isAuthenticated ? (
+              <Link
+                href="/login"
+                className="px-3.5 py-2 rounded-[var(--r-sm)] bg-[#052963] text-white font-medium text-xs hover:bg-[#041f4a] transition-colors flex items-center gap-1.5 shadow-xs"
               >
-                <div className="flex flex-col">
-                  <div className="flex items-center">
-                    <span className="masthead-officer-name">{user.name}</span>
-                    <span className="masthead-officer-badge">{user.badgeId}</span>
+                <LogIn size={15} />
+                <span>{language === 'hi' ? 'अधिकारी लॉगिन' : 'Officer Sign In'}</span>
+              </Link>
+            ) : (
+              <div className="relative" ref={roleMenuRef}>
+                <button
+                  type="button"
+                  onClick={() => setRoleMenuOpen(!roleMenuOpen)}
+                  className="masthead-officer-chip focus:outline-none focus:ring-2 focus:ring-[#005EA2]"
+                  aria-expanded={roleMenuOpen}
+                  aria-haspopup="true"
+                >
+                  <div className="flex flex-col">
+                    <div className="flex items-center">
+                      <span className="masthead-officer-name">{user.name}</span>
+                      <span className="masthead-officer-badge">{user.badgeId}</span>
+                    </div>
+                    <span className="masthead-officer-jur">{user.jurisdiction}</span>
                   </div>
-                  <span className="masthead-officer-jur">{user.jurisdiction}</span>
-                </div>
-                <ChevronDown
-                  size={16}
-                  className={`text-[#55565E] transition-transform duration-150 ${roleMenuOpen ? 'rotate-180' : ''}`}
-                />
-              </button>
+                  <ChevronDown
+                    size={16}
+                    className={`text-[#55565E] transition-transform duration-150 ${roleMenuOpen ? 'rotate-180' : ''}`}
+                  />
+                </button>
 
-              {/* Role Switcher Popover */}
-              {roleMenuOpen && (
-                <div className="absolute right-0 mt-2 w-72 rounded-[var(--r-md)] border border-[var(--border)] bg-white shadow-[var(--sh-2)] z-50 p-2 text-xs text-[var(--text)]">
-                  <div className="px-2.5 py-1.5 border-b border-[var(--border)] mb-1 text-[var(--text-muted)]">
-                    <span className="font-semibold text-[var(--text)] block">
-                      {language === 'hi' ? 'सक्रिय अधिकारी प्रोफ़ाइल' : 'Active Officer Profile'}
-                    </span>
-                    <span className="text-[11px] font-mono">{user.roleTitle}</span>
+                {/* Role Switcher Popover */}
+                {roleMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-72 rounded-[var(--r-md)] border border-[var(--border)] bg-white shadow-[var(--sh-2)] z-50 p-2 text-xs text-[var(--text)]">
+                    <div className="px-2.5 py-1.5 border-b border-[var(--border)] mb-1 text-[var(--text-muted)]">
+                      <span className="font-semibold text-[var(--text)] block">
+                        {language === 'hi' ? 'सक्रिय अधिकारी प्रोफ़ाइल' : 'Active Officer Profile'}
+                      </span>
+                      <span className="text-[11px] font-mono">{user.roleTitle}</span>
+                    </div>
+                    <div className="py-1">
+                      <span className="block px-2.5 py-1 text-[11px] text-[var(--text-muted)] font-medium">
+                        {language === 'hi' ? 'भूमिका बदलें' : 'Switch role & jurisdiction'}:
+                      </span>
+                      {(['officer', 'supervisor', 'auditor', 'citizen'] as UserRole[]).map((r) => {
+                        const p = PROFILES[r];
+                        const isSelected = role === r;
+                        return (
+                          <button
+                            key={r}
+                            type="button"
+                            onClick={() => {
+                              switchRole(r);
+                              setRoleMenuOpen(false);
+                            }}
+                            className={`w-full text-left px-2.5 py-2 rounded-[var(--r-sm)] flex items-center justify-between transition-colors ${
+                              isSelected ? 'bg-[var(--indigo-050)] text-[var(--navy-900)] font-semibold' : 'hover:bg-[var(--bg-sunken)]'
+                            }`}
+                          >
+                            <div>
+                              <div className="font-medium text-xs text-[var(--text)]">{p.name} ({p.roleTitle})</div>
+                              <div className="text-[11px] text-[var(--text-muted)]">{p.jurisdiction}</div>
+                            </div>
+                            {isSelected && <Check size={14} className="text-[var(--navy-900)] shrink-0" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="pt-2 mt-1 border-t border-[var(--border)] space-y-1">
+                      <Link
+                        href="/login"
+                        onClick={() => setRoleMenuOpen(false)}
+                        className="w-full text-left px-2.5 py-1.5 rounded-[var(--r-sm)] flex items-center gap-2 hover:bg-[var(--bg-sunken)] text-[var(--indigo-600)] font-medium"
+                      >
+                        <LogIn size={13} />
+                        <span>{language === 'hi' ? 'भूमिका चयन पृष्ठ' : 'Role login portal'}</span>
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={handleLogout}
+                        className="w-full text-left px-2.5 py-1.5 rounded-[var(--r-sm)] flex items-center gap-2 hover:bg-[#FADFE4] text-[#C62430] font-medium"
+                      >
+                        <LogOut size={13} />
+                        <span>{language === 'hi' ? 'लॉग आउट' : 'Sign out'}</span>
+                      </button>
+                    </div>
                   </div>
-                  <div className="py-1">
-                    <span className="block px-2.5 py-1 text-[11px] text-[var(--text-muted)] font-medium">
-                      {language === 'hi' ? 'भूमिका बदलें' : 'Switch role & jurisdiction'}:
-                    </span>
-                    {(['officer', 'supervisor', 'auditor'] as UserRole[]).map((r) => {
-                      const p = PROFILES[r];
-                      const isSelected = role === r;
-                      return (
-                        <button
-                          key={r}
-                          type="button"
-                          onClick={() => {
-                            switchRole(r);
-                            setRoleMenuOpen(false);
-                          }}
-                          className={`w-full text-left px-2.5 py-2 rounded-[var(--r-sm)] flex items-center justify-between transition-colors ${
-                            isSelected ? 'bg-[var(--indigo-050)] text-[var(--navy-900)] font-semibold' : 'hover:bg-[var(--bg-sunken)]'
-                          }`}
-                        >
-                          <div>
-                            <div className="font-medium text-xs text-[var(--text)]">{p.name} ({p.roleTitle})</div>
-                            <div className="text-[11px] text-[var(--text-muted)]">{p.jurisdiction}</div>
-                          </div>
-                          {isSelected && <Check size={14} className="text-[var(--navy-900)] shrink-0" />}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -444,7 +483,7 @@ export function AppShell({ children }: AppShellProps) {
           <div className="relative ml-auto w-full max-w-xs h-full bg-white shadow-2xl flex flex-col z-50">
             <div className="h-16 px-4 bg-[#052963] text-white flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <img src="/assets/parakh.svg" alt="PARAKH" className="h-7 w-auto brightness-0 invert" />
+                <img src="/assets/icon-photo.jpeg" alt="PARAKH" className="h-8 w-8 rounded object-contain" />
                 <span className="font-semibold text-sm">PARAKH Menu</span>
               </div>
               <button
@@ -457,36 +496,57 @@ export function AppShell({ children }: AppShellProps) {
               </button>
             </div>
 
-            <div className="p-4 bg-[var(--bg-sunken)] border-b border-[var(--border)]">
-              <div className="flex items-center justify-between mb-1">
-                <div className="text-xs font-semibold text-[var(--text)]">{user.name}</div>
-                <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-white border border-[var(--border)] text-[var(--navy-900)]">
-                  {user.badgeId}
-                </span>
+            {!isAuthenticated ? (
+              <div className="p-4 bg-[var(--bg-sunken)] border-b border-[var(--border)]">
+                <Link
+                  href="/login"
+                  onClick={() => setMobileOpen(false)}
+                  className="w-full py-2.5 px-3 rounded-[var(--r-sm)] bg-[#052963] text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-xs"
+                >
+                  <LogIn size={15} />
+                  <span>{language === 'hi' ? 'अधिकारी लॉगिन' : 'Officer Sign In'}</span>
+                </Link>
               </div>
-              <div className="text-[11px] text-[var(--text-muted)]">{user.jurisdiction}</div>
-              <div className="mt-2 pt-2 border-t border-[var(--border)]">
-                <span className="block text-[10px] text-[var(--text-muted)] font-medium mb-1">
-                  {language === 'hi' ? 'भूमिका बदलें' : 'Active role'}:
-                </span>
-                <div className="grid grid-cols-3 gap-1">
-                  {(['officer', 'supervisor', 'auditor'] as UserRole[]).map((r) => (
-                    <button
-                      key={r}
-                      type="button"
-                      onClick={() => switchRole(r)}
-                      className={`px-2 py-1 rounded text-[10px] font-semibold transition-colors capitalize ${
-                        role === r
-                          ? 'bg-[#052963] text-white'
-                          : 'bg-white border border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--bg-sunken)]'
-                      }`}
-                    >
-                      {r}
-                    </button>
-                  ))}
+            ) : (
+              <div className="p-4 bg-[var(--bg-sunken)] border-b border-[var(--border)]">
+                <div className="flex items-center justify-between mb-1">
+                  <div className="text-xs font-semibold text-[var(--text)]">{user.name}</div>
+                  <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-white border border-[var(--border)] text-[var(--navy-900)]">
+                    {user.badgeId}
+                  </span>
                 </div>
+                <div className="text-[11px] text-[var(--text-muted)]">{user.jurisdiction}</div>
+                <div className="mt-2 pt-2 border-t border-[var(--border)]">
+                  <span className="block text-[10px] text-[var(--text-muted)] font-medium mb-1">
+                    {language === 'hi' ? 'भूमिका बदलें' : 'Active role'}:
+                  </span>
+                  <div className="grid grid-cols-4 gap-1">
+                    {(['officer', 'supervisor', 'auditor', 'citizen'] as UserRole[]).map((r) => (
+                      <button
+                        key={r}
+                        type="button"
+                        onClick={() => switchRole(r)}
+                        className={`px-1.5 py-1 rounded text-[9px] font-semibold transition-colors capitalize text-center truncate ${
+                          role === r
+                            ? 'bg-[#052963] text-white'
+                            : 'bg-white border border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--bg-sunken)]'
+                        }`}
+                      >
+                        {r}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="mt-3 w-full py-1.5 px-2 rounded-[var(--r-sm)] bg-white border border-[#A03441] text-[#C62430] hover:bg-[#FADFE4] text-xs font-medium flex items-center justify-center gap-1.5 transition-colors"
+                >
+                  <LogOut size={13} />
+                  <span>{language === 'hi' ? 'लॉग आउट' : 'Sign out'}</span>
+                </button>
               </div>
-            </div>
+            )}
 
             <nav className="p-3 space-y-1 overflow-y-auto flex-1">
               {navItems.map((item) => {

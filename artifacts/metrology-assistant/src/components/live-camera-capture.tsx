@@ -255,9 +255,9 @@ export function LiveCameraCapture({ onCapture, onCancel }: LiveCameraCaptureProp
       })
     );
 
-    // Target width for composite image (preserve high clarity for OCR)
-    const targetWidth = Math.min(1600, Math.max(...loadedImages.map((img) => img.naturalWidth || 1200)));
-    const headerHeight = 36; // Header strip for each panel
+    // Target width for composite image (preserve high clarity for OCR without bloating payload)
+    const targetWidth = Math.min(1200, Math.max(...loadedImages.map((img) => img.naturalWidth || 1000)));
+    const dividerHeight = 4; // Thin separator strip between panels without artificial text
 
     // Compute scaled heights and total canvas height
     const scaledHeights = loadedImages.map((img) => {
@@ -265,7 +265,7 @@ export function LiveCameraCapture({ onCapture, onCancel }: LiveCameraCaptureProp
       return Math.round((img.naturalHeight || 800) * ratio);
     });
 
-    const totalHeight = scaledHeights.reduce((sum, h) => sum + h + headerHeight, 0);
+    const totalHeight = scaledHeights.reduce((sum, h, i) => sum + h + (i > 0 ? dividerHeight : 0), 0);
 
     const compositeCanvas = document.createElement('canvas');
     compositeCanvas.width = targetWidth;
@@ -280,33 +280,16 @@ export function LiveCameraCapture({ onCapture, onCancel }: LiveCameraCaptureProp
       };
     }
 
-    // Fill dark background
-    ctx.fillStyle = '#090d16';
-    ctx.fillRect(0, 0, targetWidth, totalHeight);
-
     let currentY = 0;
     loadedImages.forEach((img, idx) => {
-      const panel = panelsList[idx];
+      if (idx > 0) {
+        // Thin subtle divider line between consecutive panels
+        ctx.fillStyle = '#065f46';
+        ctx.fillRect(0, currentY, targetWidth, dividerHeight);
+        currentY += dividerHeight;
+      }
+
       const panelHeight = scaledHeights[idx];
-
-      // Draw header banner
-      ctx.fillStyle = '#0f172a';
-      ctx.fillRect(0, currentY, targetWidth, headerHeight);
-
-      // Header bottom border
-      ctx.fillStyle = '#14b8a6';
-      ctx.fillRect(0, currentY + headerHeight - 2, targetWidth, 2);
-
-      // Header text
-      ctx.fillStyle = '#f8fafc';
-      ctx.font = 'bold 15px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-      ctx.textBaseline = 'middle';
-      const labelText = `[ PANEL ${idx + 1} OF ${panelsList.length} ] — ${panel.label || `Panel ${idx + 1}`}`;
-      ctx.fillText(labelText, 16, currentY + headerHeight / 2);
-
-      currentY += headerHeight;
-
-      // Draw panel image
       ctx.drawImage(img, 0, currentY, targetWidth, panelHeight);
       currentY += panelHeight;
     });
@@ -316,7 +299,7 @@ export function LiveCameraCapture({ onCapture, onCancel }: LiveCameraCaptureProp
       contrastStretch: true,
       autoExposure: true,
     });
-    const compositeDataUrl = enhancedComposite.toDataURL('image/jpeg', 0.92);
+    const compositeDataUrl = enhancedComposite.toDataURL('image/jpeg', 0.80);
     return {
       dataUrl: compositeDataUrl,
       width: targetWidth,

@@ -14,8 +14,10 @@ import {
   ShieldCheck,
   X,
 } from 'lucide-react';
-import type { ComplianceCheck, OcrDetails } from '@workspace/api-client-react';
+import type { ComplianceCheck, ScanOcrDetails } from '@workspace/api-client-react';
+export type OcrDetails = NonNullable<ScanOcrDetails>;
 import { useI18n } from '@/lib/i18n';
+import { parsePackageLabelText } from '@/lib/label-parser';
 
 export interface VerdictPanelProps {
   reference: string;
@@ -68,14 +70,19 @@ export function VerdictPanel({
   triggerSignatureAnimation = true,
 }: VerdictPanelProps) {
   const { language } = useI18n();
-  const [passedExpanded, setPassedExpanded] = useState(false);
+  const [passedExpanded, setPassedExpanded] = useState(true);
   const [showOverlays, setShowOverlays] = useState(true);
   const [findingRecorded, setFindingRecorded] = useState(submitted);
   const [flaggedForReview, setFlaggedForReview] = useState(false);
+  const isRecorded = Boolean(submitted || findingRecorded);
 
-  // Normalize checks into Rule 6 requirements
+  // Normalize checks into Rule 6 requirements (fallback to dynamic parser if empty)
+  const effectiveChecks = checks && checks.length > 0
+    ? checks
+    : parsePackageLabelText(ocrText || '', category).checks;
+
   const checkMap = new Map<string, ComplianceCheck>();
-  checks.forEach((c) => checkMap.set(c.key, c));
+  effectiveChecks.forEach((c) => checkMap.set(c.key, c));
 
   const mrpCheck = checkMap.get('mrp');
   const uspCheck = checkMap.get('usp');
@@ -234,7 +241,7 @@ export function VerdictPanel({
     const matchMm = fontCheck.value.match(/(\d+(?:\.\d+)?)\s*mm/i);
     if (matchMm) measuredMm = parseFloat(matchMm[1]);
   } else if (ocrDetails?.words?.length) {
-    const heights = ocrDetails.words.map((w) => w.height).sort((a, b) => a - b);
+    const heights = ocrDetails.words.map((w: any) => w.height).sort((a: number, b: number) => a - b);
     const medianPx = heights[Math.floor(heights.length / 2)] || 25;
     measuredMm = parseFloat(((medianPx * 25.4) / 300).toFixed(1));
   } else if (failedItems.some((f) => f.key === 'net_quantity')) {
@@ -777,15 +784,15 @@ export function VerdictPanel({
           <button
             type="button"
             onClick={handleRecordFinding}
-            disabled={isSubmitting || findingRecorded}
+            disabled={isSubmitting || isRecorded}
             className={`inline-flex items-center gap-1.5 rounded-[var(--r-sm)] px-4 py-2 text-xs font-semibold transition-all ${
-              findingRecorded
+              isRecorded
                 ? 'bg-green-act text-white'
                 : 'bg-[var(--indigo-600)] text-white hover:bg-[var(--indigo-700)] active:scale-[0.985]'
             } disabled:opacity-75`}
             data-testid="button-record-finding"
           >
-            {findingRecorded ? (
+            {isRecorded ? (
               <>
                 <Check size={14} />
                 {language === 'hi' ? 'निष्कर्ष दर्ज किया गया' : 'Finding recorded'}

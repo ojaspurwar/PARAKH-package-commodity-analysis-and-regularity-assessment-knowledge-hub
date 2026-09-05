@@ -36,7 +36,7 @@ export interface OcrProgress {
  * Downscale the chosen photo so the evidence copy stays small and OCR runs
  * fast, then return it as a JPEG data URL (what gets stored with the scan).
  */
-export async function preparePhoto(file: File, maxDim = 1600): Promise<{ dataUrl: string; width: number; height: number }> {
+export async function preparePhoto(file: File, maxDim = 1200): Promise<{ dataUrl: string; width: number; height: number }> {
   let bitmap: ImageBitmap;
   if (typeof createImageBitmap === 'function') {
     bitmap = await createImageBitmap(file);
@@ -70,7 +70,7 @@ export async function preparePhoto(file: File, maxDim = 1600): Promise<{ dataUrl
   if (!ctx) throw new Error('Canvas is not available in this browser.');
   ctx.drawImage(bitmap, 0, 0, width, height);
   if (typeof bitmap.close === 'function') bitmap.close();
-  return { dataUrl: canvas.toDataURL('image/jpeg', 0.82), width, height };
+  return { dataUrl: canvas.toDataURL('image/jpeg', 0.78), width, height };
 }
 
 /**

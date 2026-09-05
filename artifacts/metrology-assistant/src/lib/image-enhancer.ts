@@ -142,7 +142,7 @@ export function enhanceCanvasImage(
  */
 export async function prepareEnhancedPhoto(
   file: File,
-  maxDim = 2000
+  maxDim = 1200
 ): Promise<{ dataUrl: string; width: number; height: number; rawDataUrl: string }> {
   let bitmap: ImageBitmap;
   if (typeof createImageBitmap === 'function') {
@@ -176,7 +176,7 @@ export async function prepareEnhancedPhoto(
   ctx.drawImage(bitmap, 0, 0, width, height);
   if (typeof bitmap.close === 'function') bitmap.close();
 
-  const rawDataUrl = canvas.toDataURL('image/jpeg', 0.92);
+  const rawDataUrl = canvas.toDataURL('image/jpeg', 0.78);
 
   // Run enhancement pipeline
   const enhancedCanvas = enhanceCanvasImage(canvas, {
@@ -185,7 +185,7 @@ export async function prepareEnhancedPhoto(
     autoExposure: true,
   });
 
-  const enhancedDataUrl = enhancedCanvas.toDataURL('image/jpeg', 0.92);
+  const enhancedDataUrl = enhancedCanvas.toDataURL('image/jpeg', 0.78);
 
   return {
     dataUrl: enhancedDataUrl,

@@ -1,5 +1,6 @@
 import { AlertTriangle, CheckCircle, FileText, Info, Ruler, Sparkles, Type } from 'lucide-react';
-import type { ComplianceCheck, OcrDetails } from '@workspace/api-client-react';
+import type { ComplianceCheck, ScanOcrDetails } from '@workspace/api-client-react';
+export type OcrDetails = NonNullable<ScanOcrDetails>;
 import { useI18n } from '@/lib/i18n';
 
 interface FontReadabilityCardProps {
@@ -20,32 +21,29 @@ export function FontReadabilityCard({ checks, ocrDetails, ocrText }: FontReadabi
   const netQtyText = netQtyCheck?.value || ocrText;
   const matchQty = netQtyText.match(/(\d+(?:\.\d+)?)\s*(g|kg|ml|l|m|cm|units?|u)/i);
 
-  let qtyNum = 0;
+  let qtyNum = 500;
   let qtyUnit = 'g';
   if (matchQty) {
     qtyNum = parseFloat(matchQty[1]);
     qtyUnit = matchQty[2].toLowerCase();
   }
 
-  // Normalize to grams or ml
-  const normalizedGrams = qtyUnit === 'kg' || qtyUnit === 'l' ? qtyNum * 1000 : qtyNum;
+  const normalizedGrams = (qtyUnit === 'kg' || qtyUnit === 'l') ? qtyNum * 1000 : qtyNum;
 
-  let tier = 'Standard';
-  let requiredMinMm = 2.0;
-  if (normalizedGrams > 0) {
-    if (normalizedGrams <= 50) {
-      tier = '≤ 50 g / ml (Tier 1)';
-      requiredMinMm = 1.0;
-    } else if (normalizedGrams <= 200) {
-      tier = '50 g – 200 g / ml (Tier 2)';
-      requiredMinMm = 2.0;
-    } else if (normalizedGrams <= 1000) {
-      tier = '200 g – 1000 g / ml (Tier 3)';
-      requiredMinMm = 4.0;
-    } else {
-      tier = '> 1000 g / ml (Tier 4)';
-      requiredMinMm = 6.0;
-    }
+  let tier = '200 g – 1000 g (Tier 3)';
+  let requiredMinMm = 4.0;
+  if (normalizedGrams <= 50) {
+    tier = '≤ 50 g / ml (Tier 1)';
+    requiredMinMm = 1.0;
+  } else if (normalizedGrams <= 200) {
+    tier = '50 g – 200 g / ml (Tier 2)';
+    requiredMinMm = 2.0;
+  } else if (normalizedGrams <= 1000) {
+    tier = '200 g – 1000 g / ml (Tier 3)';
+    requiredMinMm = 4.0;
+  } else {
+    tier = '> 1000 g / ml (Tier 4)';
+    requiredMinMm = 6.0;
   }
 
   // Measured font size estimation
@@ -54,7 +52,7 @@ export function FontReadabilityCard({ checks, ocrDetails, ocrText }: FontReadabi
     const matchMm = fontCheck.value.match(/(\d+(?:\.\d+)?)\s*mm/i);
     if (matchMm) measuredMm = parseFloat(matchMm[1]);
   } else if (ocrDetails?.words?.length) {
-    const heights = ocrDetails.words.map((w) => w.height).sort((a, b) => a - b);
+    const heights = ocrDetails.words.map((w: any) => w.height).sort((a: number, b: number) => a - b);
     const medianPx = heights[Math.floor(heights.length / 2)] || 25;
     measuredMm = parseFloat(((medianPx * 25.4) / 300).toFixed(1));
   }
@@ -67,7 +65,7 @@ export function FontReadabilityCard({ checks, ocrDetails, ocrText }: FontReadabi
     const matchConf = readabilityCheck.value.match(/(\d+)\s*%/);
     if (matchConf) avgConfidence = parseInt(matchConf[1], 10);
   } else if (ocrDetails?.words?.length) {
-    const sum = ocrDetails.words.reduce((acc, w) => acc + (w.confidence || 80), 0);
+    const sum = ocrDetails.words.reduce((acc: number, w: any) => acc + (w.confidence || 80), 0);
     avgConfidence = Math.round(sum / ocrDetails.words.length);
   }
 

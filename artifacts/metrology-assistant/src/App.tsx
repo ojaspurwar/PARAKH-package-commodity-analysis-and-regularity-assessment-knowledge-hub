@@ -1,10 +1,10 @@
-import { type ReactNode, lazy, Suspense } from 'react';
+import { type ReactNode, lazy, Suspense, useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { AppShell } from '@/components/app-shell';
-import { AuthProvider } from '@/hooks/use-auth';
+import { AuthProvider, useAuth } from '@/hooks/use-auth';
 import { LanguageProvider } from '@/lib/i18n';
 import NotFound from '@/pages/not-found';
 import {
@@ -21,8 +21,19 @@ const EcommercePage = lazy(() => import('@/pages/ecommerce'));
 const ProductsPage = lazy(() => import('@/pages/products'));
 const DocsPage = lazy(() => import('@/pages/docs'));
 const StyleguidePage = lazy(() => import('@/pages/styleguide'));
+const LoginPage = lazy(() => import('@/pages/login'));
+const CitizenPage = lazy(() => import('@/pages/citizen'));
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      gcTime: 5 * 60_000,
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 function PageLoadingFallback() {
   return (
@@ -38,6 +49,27 @@ function PageLoadingFallback() {
 }
 
 function Router() {
+  const { isAuthenticated } = useAuth();
+  const [location, setLocation] = useLocation();
+
+  const isPublicRoute = location === '/login' || location === '/citizen' || location === '/consumer';
+
+  useEffect(() => {
+    if (!isAuthenticated && !isPublicRoute) {
+      setLocation('/login');
+    }
+  }, [isAuthenticated, isPublicRoute, location, setLocation]);
+
+  if (!isAuthenticated && !isPublicRoute) {
+    return (
+      <RoutedErrorBoundary>
+        <Suspense fallback={<PageLoadingFallback />}>
+          <LoginPage />
+        </Suspense>
+      </RoutedErrorBoundary>
+    );
+  }
+
   return (
     // Keep a shared shell (sidebar, navbar) outside the boundary so it
     // survives a page crash.
@@ -52,6 +84,9 @@ function Router() {
           <Route path="/reports" component={ProductsPage} />
           <Route path="/docs" component={DocsPage} />
           <Route path="/styleguide" component={StyleguidePage} />
+          <Route path="/citizen" component={CitizenPage} />
+          <Route path="/consumer" component={CitizenPage} />
+          <Route path="/login" component={LoginPage} />
           <Route component={NotFound} />
         </Switch>
       </Suspense>

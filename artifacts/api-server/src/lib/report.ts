@@ -106,7 +106,7 @@ export function buildComplianceReportPdf(
     .fill("#FFFFFF")
     .font("Helvetica-Bold")
     .fontSize(9)
-    .text(statusLabel(scan.status), 56 + pillWidth / 2, y + 6.5, {
+    .text(statusLabel(scan.status), 56, y + 6.5, {
       width: pillWidth,
       align: "center",
     });
@@ -197,29 +197,40 @@ export function buildComplianceReportPdf(
   y += 22;
 
   scan.checks.forEach((check, index) => {
-    ensureSpace(34);
+    const statusWidth = colWidths.status - 24;
+    const declWidth = colWidths.declaration - 10;
+    const valWidth = colWidths.value - 10;
+    const noteWidth = colWidths.note - 10;
+
+    const declHeight = doc.fontSize(9).font("Helvetica").heightOfString(check.label, { width: declWidth, lineGap: 2 });
+    const valHeight = doc.fontSize(9).font("Helvetica").heightOfString(check.value || "Not detected", { width: valWidth, lineGap: 2 });
+    const noteHeight = doc.fontSize(8).font("Helvetica").heightOfString(check.note || "", { width: noteWidth, lineGap: 2 });
+    const rowHeight = Math.max(30, declHeight + 12, valHeight + 12, noteHeight + 12);
+
+    ensureSpace(rowHeight + 4);
+
     if (index % 2 === 1) {
-      doc.rect(56, y - 6, pageWidth, 34).fill("#F8FAFC");
+      doc.rect(56, y - 4, pageWidth, rowHeight).fill("#F8FAFC");
     }
     const statusColor = STATUS_COLORS[check.status];
-    doc.roundedRect(56 + 8, y, 10, 10, 2).fill(statusColor);
+    doc.roundedRect(56 + 8, y + 2, 10, 10, 2).fill(statusColor);
     doc
       .font("Helvetica-Bold")
       .fontSize(8)
       .fill(statusColor)
-      .text(STATUS_LABELS[check.status], 56 + 24, y, { width: colWidths.status - 24 })
+      .text(STATUS_LABELS[check.status], 56 + 24, y + 2, { width: statusWidth })
       .font("Helvetica")
       .fill("#0F172A")
       .fontSize(9)
-      .text(check.label, 56 + colWidths.status + 8, y, { width: colWidths.declaration - 8 })
+      .text(check.label, 56 + colWidths.status + 8, y, { width: declWidth, lineGap: 2 })
       .font("Helvetica")
       .fontSize(9)
-      .text(check.value, 56 + colWidths.status + colWidths.declaration + 8, y, { width: colWidths.value - 8 })
+      .text(check.value || "Not detected", 56 + colWidths.status + colWidths.declaration + 8, y, { width: valWidth, lineGap: 2 })
       .font("Helvetica")
       .fontSize(8)
       .fill("#64748B")
-      .text(check.note, 56 + colWidths.status + colWidths.declaration + colWidths.value + 8, y, { width: colWidths.note - 8 });
-    y += 34;
+      .text(check.note || "", 56 + colWidths.status + colWidths.declaration + colWidths.value + 8, y, { width: noteWidth, lineGap: 2 });
+    y += rowHeight;
   });
 
   // --- Violation summary ---
@@ -233,41 +244,49 @@ export function buildComplianceReportPdf(
       .font("Helvetica-Bold")
       .fontSize(12)
       .text("Violation summary", 56, y, { width: pageWidth });
-    y += 22;
-    doc.rect(56, y - 6, pageWidth, 34).fill(failed.length > 0 ? "#FFF1F2" : "#FFFBEB");
+    y += 20;
     const summaryLine = failed.length > 0
       ? `${failed.length} of ${scan.checks.length} mandatory declarations FAILED — ${failed.map((check) => check.label).join(", ")}.`
       : `No failed checks; ${needsReview.length} declaration(s) could not be confirmed from the evidence and need officer verification.`;
-    doc.y = y;
+    const summaryHeight = doc.fontSize(9).font("Helvetica").heightOfString(summaryLine, { width: pageWidth - 20, lineGap: 3 }) + 16;
+    doc.rect(56, y - 4, pageWidth, summaryHeight).fill(failed.length > 0 ? "#FFF1F2" : "#FFFBEB");
+    doc.y = y + 4;
     doc
       .font("Helvetica")
       .fontSize(9)
       .fill("#0F172A")
-      .text(summaryLine, 56 + 10, y, { width: pageWidth - 20, lineGap: 3 });
-    y += needsReview.length > 0 && failed.length > 0 ? 48 : 40;
+      .text(summaryLine, 56 + 10, y + 4, { width: pageWidth - 20, lineGap: 3 });
+    y += summaryHeight + 14;
   }
 
   // --- OCR / label evidence ---
-  y += 12;
-  const ocrBoxHeight = Math.min(140, Math.max(60, scan.ocrText.split("\n").length * 13 + 20));
-  ensureSpace(40 + ocrBoxHeight);
+  y += 10;
+  ensureSpace(80);
   doc
     .fill("#0F172A")
     .font("Helvetica-Bold")
     .fontSize(12)
     .text("Label text (OCR)", 56, y, { width: pageWidth });
-  y += 22;
-  doc.rect(56, y - 6, pageWidth, ocrBoxHeight).fill("#F8FAFC");
-  doc.y = y;
+  y += 20;
+  const rawOcr = scan.ocrText?.trim() || "No OCR text was recorded for this scan.";
+  const ocrLines = rawOcr.split("\n");
+  const displayOcr = ocrLines.length > 40
+    ? ocrLines.slice(0, 40).join("\n") + "\n\n... [remaining OCR text retained in electronic archive]"
+    : rawOcr;
+  const ocrHeight = doc.fontSize(8).font("Courier").heightOfString(displayOcr, { width: pageWidth - 20, lineGap: 3 });
+  const ocrBoxHeight = ocrHeight + 18;
+  ensureSpace(Math.min(ocrBoxHeight + 20, 200));
+  doc.rect(56, y - 4, pageWidth, ocrBoxHeight).fill("#F8FAFC");
+  doc.y = y + 4;
   doc
     .font("Courier")
-    .fontSize(8.5)
+    .fontSize(8)
     .fill("#0F172A")
-    .text(scan.ocrText || "No OCR text was recorded for this scan.", 56 + 10, y, {
+    .text(displayOcr, 56 + 10, y + 4, {
       width: pageWidth - 20,
-      lineGap: 4,
+      lineGap: 3,
     });
-  y += ocrBoxHeight + 16;
+  y += ocrBoxHeight + 20;
 
   // --- Evidence integrity ---
   ensureSpace(120);
